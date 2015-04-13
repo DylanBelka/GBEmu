@@ -21,6 +21,7 @@
 
 /*
 Fix so that rendering does not happen every cycle
+Add signed background rendering
 */
 
 class GB
@@ -48,6 +49,9 @@ private:
 	SDL_Surface* screenSurface = nullptr; // surface that is drawn to from the virtSurface, controlled by the scroll registers
 	SDL_Surface* screenBuffer = nullptr; // full 32x32 virtual gameboy screen
 	SDL_Rect srcSurfaceRect;
+
+	unsigned currentTime;
+	unsigned lastTime;
 };
 
 #endif

@@ -32,6 +32,7 @@
 #define SCY 0xFF42 // background scroll y
 #define SCX 0xFF43 // background scroll x
 #define LYC 0xFF45 // ly compare
+#define DMA 0xFF56 // DMA transfer
 #define BGP 0xFF47 // palette data
 #define OBP0 0xFF48 // object palette data 0
 #define OBP1 0xFF49 // object palette data 1
@@ -85,6 +86,12 @@
 
 #define CHR_MAP 0x8000
 #define CHR_MAP_END 0x97FF
+
+#define CHR_MAP_UNSIGNED 0x8000
+#define CHR_MAP_UNSIGNED_END 0x8FFF
+
+#define CHR_MAP_SIGNED 0x8800
+#define CHR_MAP_SIGNED_END 0x97FF
 
 // $9800-$9BFF - BG Map Data 0
 #define BG_MAP_0 0x9800

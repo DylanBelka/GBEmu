@@ -268,6 +268,16 @@ void CPU::decodeExtendedInstruction(char opcode)
 			PC += 2;
 			break;
 		}
+		case 0x37: // swap a
+		{
+			swapNibble(A);
+			updateZero(A);
+			resetCarry();
+			resetHC();
+			resetCarry();
+			PC += 2;
+			break;
+		}
 	}
 }
 
@@ -438,7 +448,7 @@ void CPU::emulateCycle()
 {
 	unsigned char opcode = mem[PC];
 	R++; // I think this is what R does
-	//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
+	std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
 	switch (opcode)
 	{
 		// increment PC by size (in bytes) of opcode

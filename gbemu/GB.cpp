@@ -33,7 +33,12 @@ void GB::run()
 {
 	while (running)
 	{
-		draw();
+		currentTime = SDL_GetTicks();
+		if (currentTime > 33)
+		{
+			draw();
+			currentTime = 0;
+		}
 		handleEvents();
 		cpu.emulateCycle();
 	}
@@ -58,10 +63,6 @@ void GB::clear()
 const std::string toBin(char val)
 {
 	std::string bin = std::bitset<8>(val).to_string(); // string conversion
-	//if (bin != "00000000")
-	//{
-	//	std::cout << bin << std::endl;
-	//}
 	return bin;
 }
 
@@ -109,62 +110,82 @@ void GB::draw()
 	{
 		char* mem = cpu.dumpMem();
 		// draw background first
-		if (!(lcdc & 0x40)) // 0 = bg0, 1 = bg1
+		if (lcdc & 0x1) // draw background?
 		{
-			// bg0, draw all of the 8x8 tiles
-			for (int i = BG_MAP_0; i < BG_MAP_0_END; i++)
+			if (!(lcdc & 0x40)) // 0 = bg0, 1 = bg1
 			{
-				// draw the 8x8 tile
-				unsigned short chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP; // get the location of the first tile slice in memory
-				for (int i = chrLocStart; i < chrLocStart + 0x10; i += 2) // note the += 2
+				// bg0, draw all of the 8x8 tiles
+				for (int i = BG_MAP_0; i < BG_MAP_0_END; i++)
 				{
-					drawBGSlice(mem[i], mem[i + 1]); // draw the slice
-				}
-				//std::cout << std::endl;
-				x += 8;
-				y -= 8;
-				if (x == WIDTH)
-				{
-					y += 16;
-					x = 0;
+					// draw the 8x8 tile
+					unsigned short chrLocStart;
+					if (lcdc & 0x10) // unsigned characters
+					{
+						chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
+					}
+					else // signed characters
+					{
+						chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP_SIGNED; // get the location of the first tile slice in memory
+					}
+					for (int i = chrLocStart; i < chrLocStart + 0x10; i += 2) // note the += 2
+					{
+						drawBGSlice(mem[i], mem[i + 1]); // draw the slice
+					}
+					x += 8;
+					y -= 8;
+					if (x == WIDTH)
+					{
+						y += 16;
+						x = 0;
+					}
 				}
 			}
-		}
-		else // bg1
-		{
-			// bg1 ^^^ make sure to fix this when done with bg0
-			for (int i = BG_MAP_1; i < BG_MAP_1_END; i++)
+			else // bg1
 			{
-				// draw the 8x8 tile
-				unsigned short chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP; // get the location of the first tile slice in memory
-				for (int i = chrLocStart; i < chrLocStart + 0x10; i += 2) // note the += 2
+				// bg1 ^^^ make sure to fix this when done with bg0
+				for (int i = BG_MAP_1; i < BG_MAP_1_END; i++)
 				{
-					drawBGSlice(mem[i], mem[i + 1]); // draw the slice
-				}
-				//std::cout << std::endl;
-				x += 8;
-				y -= 8;
-				if (x == WIDTH)
-				{
-					y += 16;
-					x = 50;
+					// draw the 8x8 tile
+					unsigned short chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP; // get the location of the first tile slice in memory
+					for (int i = chrLocStart; i < chrLocStart + 0x10; i += 2) // note the += 2
+					{
+						drawBGSlice(mem[i], mem[i + 1]); // draw the slice
+					}
+					x += 8;
+					y -= 8;
+					if (x == WIDTH)
+					{
+						y += 16;
+						x = 50;
+					}
 				}
 			}
+			mem[LY] = 0x91;
+			cpu.cpyMem(mem);
+			x = 0;
+			y = 0;
+			// copy the screen buffer from scroll positions x, y to display screen
+			srcSurfaceRect.x = mem[SCX];
+			srcSurfaceRect.y = mem[SCY];
+			srcSurfaceRect.h = HEIGHT;
+			srcSurfaceRect.w = WIDTH;
+			SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
 		}
-		mem[LY] = 0x91;
-		cpu.cpyMem(mem);
-		x = 0;
-		y = 0;
-		// draw rest of display here
+		// draw sprites
+		if (lcdc & 0x2) // draw sprites?
+		{
+			// sprite size: 1 = 8x16, 0 = 8x8
+			if (lcdc & 0x4)  // 8x16 wxh
+			{
+				for (int i = 0; i < 40; i++) // 40 sprite max
+				{
 
-		// copy the screen buffer from scroll positions x, y to display screen
-		srcSurfaceRect.x = mem[SCX]; 
-		srcSurfaceRect.y = mem[SCY];
-		srcSurfaceRect.h = HEIGHT;
-		srcSurfaceRect.w = WIDTH;
-		if (SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL) != 0)
-		{
-			std::cout << "blit failed " << SDL_GetError() << std::endl;
+				}
+			}
+			else // 8x8
+			{
+
+			}
 		}
 	}
 	SDL_UpdateWindowSurface(window);
