@@ -34,7 +34,7 @@
 #define LYC 0xFF45 // ly compare
 #define BGP 0xFF47 // palette data
 #define OBP0 0xFF48 // object palette data 0
-#define OBP1 0xFF4 // object palette data 1
+#define OBP1 0xFF49 // object palette data 1
 #define WY 0xFF4A // window x position
 #define WX 0xFF4B // window y position
 
