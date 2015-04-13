@@ -9,8 +9,6 @@
 
 #define DEBUG_GFX
 
-#define ever ;;
-
 #define ROM_LOAD_FAIL 1
 #define BAD_ARGS 2
 
