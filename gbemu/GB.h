@@ -46,7 +46,8 @@ private:
 	CPU cpu;
 	SDL_Window* window = nullptr;
 	SDL_Surface* screenSurface = nullptr; // surface that is drawn to from the virtSurface, controlled by the scroll registers
-	SDL_Surface* virtSurface = nullptr; // full 32x32 virtual gameboy screen
+	SDL_Surface* screenBuffer = nullptr; // full 32x32 virtual gameboy screen
+	SDL_Rect srcSurfaceRect;
 };
 
 #endif

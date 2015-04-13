@@ -14,6 +14,8 @@ cpu()
 		std::cout << "SDL window could not be created. Error: " << SDL_GetError() << std::endl;
 	}
 	screenSurface = SDL_GetWindowSurface(window);
+	SDL_PixelFormat* fmt = screenSurface->format;
+	screenBuffer = SDL_CreateRGBSurface(NULL, 256, 256, fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
 }
 
 GB::~GB()
@@ -45,12 +47,12 @@ void GB::drawPixel(const char color, const unsigned x, const unsigned y)
 	pix.x = x;
 	pix.y = y;
 	// draw the pixel to the screensurface
-	SDL_FillRect(screenSurface, &pix, SDL_MapRGB(screenSurface->format, color, color, color));
+	SDL_FillRect(screenBuffer, &pix, SDL_MapRGB(screenBuffer->format, color, color, color));
 }
 
 void GB::clear()
 {
-	SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0xFF, 0xFF, 0xFF));
+	SDL_FillRect(screenBuffer, NULL, SDL_MapRGB(screenBuffer->format, 0xFF, 0xFF, 0xFF));
 }
 
 const std::string toBin(char val)
@@ -128,7 +130,7 @@ void GB::draw()
 				}
 			}
 		}
-		else
+		else // bg1
 		{
 			// bg1 ^^^ make sure to fix this when done with bg0
 			for (int i = BG_MAP_1; i < BG_MAP_1_END; i++)
@@ -149,15 +151,22 @@ void GB::draw()
 				}
 			}
 		}
-		//std::cout << toHex(mem[LCDC]) << std::endl;
-		//SDL_Delay(500);
 		mem[LY] = 0x91;
 		cpu.cpyMem(mem);
 		x = 0;
 		y = 0;
-	}
-	// draw rest of display here
+		// draw rest of display here
 
+		// copy the screen buffer from scroll positions x, y to display screen
+		srcSurfaceRect.x = mem[SCX]; 
+		srcSurfaceRect.y = mem[SCY];
+		srcSurfaceRect.h = HEIGHT;
+		srcSurfaceRect.w = WIDTH;
+		if (SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL) != 0)
+		{
+			std::cout << "blit failed " << SDL_GetError() << std::endl;
+		}
+	}
 	SDL_UpdateWindowSurface(window);
 }
 

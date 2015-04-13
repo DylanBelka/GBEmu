@@ -8,7 +8,6 @@
 #include <iomanip>
 
 #include "memdefs.h"
-#include "video.h"
 
 /*
 Resources:

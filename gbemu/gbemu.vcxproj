@@ -14,13 +14,11 @@
     <ClCompile Include="cpu.cpp" />
     <ClCompile Include="GB.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="video.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cpu.h" />
     <ClInclude Include="GB.h" />
     <ClInclude Include="memdefs.h" />
-    <ClInclude Include="video.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2EAE9A66-D012-45B3-A00C-3D8FE1CFE167}</ProjectGuid>
