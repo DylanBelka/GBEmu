@@ -76,6 +76,7 @@ void CPU::reset()
 	mem[WY] = 0x00;
 	mem[WX] = 0x00;
 	mem[IE] = 0x00;
+	mem[LY] = 0x94;
 }
 
 void CPU::updateCarry(short reg)
@@ -424,15 +425,23 @@ void CPU::test()
 		std::cout << "rom load failed, rom too big" << std::endl;
 		return;
 	}
-	std::cout << toHex(mem[0x13]) << std::endl;
 	mem[LY] = 0x91;
-	std::cout << toHex(mem[0x13]) << std::endl;
 	for (int i = 0; i < 100; i++)
 	{
-		std::cout << toHex(mem[0x13]) << std::endl;
-
-		//std::cout << toHex(mem[i]) << " at " << toHex(i) << std::endl;
 		emulateCycle();
+		std::cout << "0x13: " << toHex(mem[0x13]) << std::endl;
+		std::cout << "A: " << toHex(A) << std::endl;
+		std::cout << "B: " << toHex(B) << std::endl;
+		std::cout << "C: " << toHex(C) << std::endl;
+		std::cout << "D: " << toHex(D) << std::endl;
+		std::cout << "E: " << toHex(E) << std::endl;
+		std::cout << "F: " << toHex(F) << std::endl;
+		std::cout << "AF: " << toHex(AF()) << std::endl;
+		std::cout << "BC: " << toHex(BC()) << std::endl;
+		std::cout << "DE: " << toHex(DE()) << std::endl;
+		std::cout << "HL: " << toHex(HL()) << std::endl;
+		std::cout << std::endl;
+		//std::cout << toHex(mem[i]) << " at " << toHex(i) << std::endl;
 	}
 	std::cout << std::endl;
 	std::cout << "A: " << toHex(A) << std::endl;
@@ -451,7 +460,7 @@ void CPU::emulateCycle()
 {
 	unsigned char opcode = mem[PC];
 	R++; // I think this is what R does
-	//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
+	std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
 	switch (opcode)
 	{
 		// increment PC by size (in bytes) of opcode
@@ -463,14 +472,13 @@ void CPU::emulateCycle()
 		}
 		case 0x01: // ld BC, **
 		{
-			//const short val = (mem[PC] << 8) | (mem[PC + 1] & 0xFF);
 			BC((unsigned short)get16());
 			PC += 3;
 			break;
 		}
 		case 0x02: // ld (BC), a
 		{
-			mem[BC()] = A;
+			mem[(unsigned short)BC()] = A;
 			PC++;
 			break;
 		}
@@ -868,7 +876,7 @@ void CPU::emulateCycle()
 		}
 		case 0x32: // ldd (hl), a
 		{
-			mem[HL()] = A;
+			mem[(unsigned short)HL()] = A;
 			const short hl = HL();
 			HL(hl - 1);
 			PC++;
@@ -2408,7 +2416,7 @@ void CPU::emulateCycle()
 		}
 		case 0xF0: //ld a, (0xFF00 + n) or ldh, (*)
 		{
-			A = mem[0xFF00 + mem[PC + 1]];
+			A = mem[(unsigned short)(0xFF00 + mem[PC + 1])];
 			PC += 2;
 			break;
 		}
@@ -2501,7 +2509,7 @@ void CPU::emulateCycle()
 		}
 		case 0xFE: // cp *
 		{
-			cmp(mem[PC + 1]);
+			cmp((unsigned short)mem[PC + 1]);
 			PC += 2;
 			break;
 		}
@@ -2522,6 +2530,7 @@ void CPU::emulateCycle()
 
 const std::string loadFile(const std::string& fileName)
 {
+	/*
 	std::ifstream file(fileName, std::ios::in | std::ios::binary);
 	std::string line;
 	std::string ret;
@@ -2540,6 +2549,22 @@ const std::string loadFile(const std::string& fileName)
 		return "";
 	}
 	return ret;
+	*/
+	std::ifstream file(fileName, std::ios::in | std::ios::binary | std::ios::ate);
+	char* fileStr;
+	if (file.is_open())
+	{
+		std::streampos size = file.tellg();
+		fileStr = new char[size];
+		std::cout << "Seek size: " << size << std::endl;
+		file.seekg(0, std::ios::beg);
+		file.read(fileStr, size);
+		file.close();
+		//std::string str(fileStr);
+		delete[] fileStr;
+		return fileStr;
+	}
+	return "";
 }
 
 const std::string toHex(const int val)
@@ -2552,21 +2577,40 @@ const std::string toHex(const int val)
 
 bool CPU::loadROM(const std::string& fileName)
 {
-	const std::string rom = loadFile(fileName);
-	// ^^^ add minimum required rom size
-	if (rom.size() > MAX_ROM_SIZE)
+	//const std::string rom = loadFile(fileName);
+	//// ^^^ add minimum required rom size
+	//if (rom.size() > MAX_ROM_SIZE)
+	//{
+	//	return false;
+	//}
+	//std::cout << "rom size " << rom.size() << std::endl;
+	//std::cout << toHex(rom[0x150]) << std::endl;
+	//// load the rom into memory
+	//for (unsigned int i = 0; i < rom.size(); i++)
+	//{
+	//	mem[i] = rom[i];
+	//}
+	//return true;
+	std::ifstream file(fileName, std::ios::in | std::ios::binary | std::ios::ate);
+	char* fileStr;
+	std::streampos size;
+	if (file.is_open())
+	{
+		size = file.tellg();
+		fileStr = new char[size];
+		std::cout << "Seek size: " << size << std::endl;
+		file.seekg(0, std::ios::beg);
+		file.read(fileStr, size);
+		file.close();
+	}
+	if (size > MAX_ROM_SIZE)
 	{
 		return false;
 	}
-	std::cout << "rom size " << rom.size() << std::endl;
-	for (int i = 0; i < 100; i++)
+	std::cout << toHex(fileStr[0x150]) << std::endl;
+	for (unsigned i = 0; i < size; i++)
 	{
-		//std::cout << toHex(rom[i]) << std::endl;
-	}
-	// load the rom into memory
-	for (unsigned int i = 0; i < rom.size(); i++)
-	{
-		mem[i] = rom[i];
+		mem[i] = fileStr[i];
 	}
 	return true;
 }

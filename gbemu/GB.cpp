@@ -38,7 +38,7 @@ void GB::run()
 		draw();
 		handleEvents();
 		cpu.emulateCycle();
-		std::cout << SDL_GetTicks() << std::endl; // 2251 - 2280
+		//std::cout << SDL_GetTicks() << std::endl; // 2251 - 2280
 	}
 }
 
