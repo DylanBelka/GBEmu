@@ -31,9 +31,10 @@ public:
 	char* dumpMem() { return mem; }
 	void cpyMem(char* mem) { this->mem = mem; }
 
-// CPU status getting functions
+// CPU status getting/ setting functions
 public:
-	char getLCDC() { return mem[LCDC]; }
+	void setByte(unsigned short addr, char val) { mem[addr] = val; }
+	char getByte(unsigned short addr) { return mem[addr]; }
 
 private:
 	void reset();

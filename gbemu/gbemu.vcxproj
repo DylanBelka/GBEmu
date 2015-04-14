@@ -16,6 +16,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="binLut.h" />
     <ClInclude Include="cpu.h" />
     <ClInclude Include="GB.h" />
     <ClInclude Include="memdefs.h" />

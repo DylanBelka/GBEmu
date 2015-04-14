@@ -8,6 +8,7 @@
 
 #include "cpu.h"
 #include "memdefs.h"
+#include "binLut.h"
 
 #define WIDTH 160
 #define HEIGHT 144
@@ -33,15 +34,17 @@ public:
 	bool init(const std::string& romName);
 	void run();
 
+
 private:
 	void draw();
 	void handleEvents();
-	void drawBGSlice(unsigned char b1, unsigned char b2);
+	void drawBGSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y);
 
 	void drawPixel(const char color, const unsigned x, const unsigned y);
 	inline void clear();
 
 	bool running = true;
+
 
 private:
 	CPU cpu;

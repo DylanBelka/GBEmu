@@ -418,17 +418,20 @@ void CPU::jp(bool cond, signed short to, unsigned char opsize)
 
 void CPU::test()
 {
-	std::string testROM = "hello2.gb";
+	std::string testROM = "tetris.gb";
 	if (!loadROM(testROM))
 	{
 		std::cout << "rom load failed, rom too big" << std::endl;
 		return;
 	}
+	std::cout << toHex(mem[0x13]) << std::endl;
 	mem[LY] = 0x91;
+	std::cout << toHex(mem[0x13]) << std::endl;
 	for (int i = 0; i < 100; i++)
 	{
-		std::cout << toHex(mem[BG_MAP_0 + 1]) << std::endl;
-		std::cout << i << " ";
+		std::cout << toHex(mem[0x13]) << std::endl;
+
+		//std::cout << toHex(mem[i]) << " at " << toHex(i) << std::endl;
 		emulateCycle();
 	}
 	std::cout << std::endl;
@@ -448,7 +451,7 @@ void CPU::emulateCycle()
 {
 	unsigned char opcode = mem[PC];
 	R++; // I think this is what R does
-	std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
+	//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
 	switch (opcode)
 	{
 		// increment PC by size (in bytes) of opcode
@@ -2556,6 +2559,10 @@ bool CPU::loadROM(const std::string& fileName)
 		return false;
 	}
 	std::cout << "rom size " << rom.size() << std::endl;
+	for (int i = 0; i < 100; i++)
+	{
+		//std::cout << toHex(rom[i]) << std::endl;
+	}
 	// load the rom into memory
 	for (unsigned int i = 0; i < rom.size(); i++)
 	{

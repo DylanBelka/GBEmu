@@ -35,5 +35,8 @@
     <ClInclude Include="memdefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="binLut.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
