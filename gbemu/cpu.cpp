@@ -392,7 +392,7 @@ void CPU::call(bool cond)
 	}
 }
 
-void CPU::rst(unsigned char mode)
+inline void CPU::rst(unsigned char mode)
 {
 	mem[SP] = PC + 1;
 	PC = mode;
@@ -400,7 +400,7 @@ void CPU::rst(unsigned char mode)
 
 // jrs PC to [to] if cond is true
 // Else it increases PC by [opsize]
-void CPU::jr(bool cond, signed char to, unsigned char opsize)
+inline void CPU::jr(bool cond, signed char to, unsigned char opsize)
 {
 	PC += (cond) ? to + opsize : opsize; // the + 2 is to jump past the initial instruction
 }
@@ -426,21 +426,21 @@ void CPU::test()
 		return;
 	}
 	mem[LY] = 0x91;
-	for (int i = 0; i < 100; i++)
+	for (;;)
 	{
 		emulateCycle();
-		std::cout << "0x13: " << toHex(mem[0x13]) << std::endl;
-		std::cout << "A: " << toHex(A) << std::endl;
-		std::cout << "B: " << toHex(B) << std::endl;
-		std::cout << "C: " << toHex(C) << std::endl;
-		std::cout << "D: " << toHex(D) << std::endl;
-		std::cout << "E: " << toHex(E) << std::endl;
-		std::cout << "F: " << toHex(F) << std::endl;
-		std::cout << "AF: " << toHex(AF()) << std::endl;
-		std::cout << "BC: " << toHex(BC()) << std::endl;
-		std::cout << "DE: " << toHex(DE()) << std::endl;
-		std::cout << "HL: " << toHex(HL()) << std::endl;
-		std::cout << std::endl;
+		//std::cout << "0x13: " << toHex(mem[0x13]) << std::endl;
+		//std::cout << "A: " << toHex(A) << std::endl;
+		//std::cout << "B: " << toHex(B) << std::endl;
+		//std::cout << "C: " << toHex(C) << std::endl;
+		//std::cout << "D: " << toHex(D) << std::endl;
+		//std::cout << "E: " << toHex(E) << std::endl;
+		//std::cout << "F: " << toHex(F) << std::endl;
+		//std::cout << "AF: " << toHex(AF()) << std::endl;
+		//std::cout << "BC: " << toHex(BC()) << std::endl;
+		//std::cout << "DE: " << toHex(DE()) << std::endl;
+		//std::cout << "HL: " << toHex(HL()) << std::endl;
+		//std::cout << std::endl;
 		//std::cout << toHex(mem[i]) << " at " << toHex(i) << std::endl;
 	}
 	std::cout << std::endl;
@@ -460,7 +460,7 @@ void CPU::emulateCycle()
 {
 	unsigned char opcode = mem[PC];
 	R++; // I think this is what R does
-	std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
+	//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
 	switch (opcode)
 	{
 		// increment PC by size (in bytes) of opcode
@@ -2528,45 +2528,6 @@ void CPU::emulateCycle()
 	}
 }
 
-const std::string loadFile(const std::string& fileName)
-{
-	/*
-	std::ifstream file(fileName, std::ios::in | std::ios::binary);
-	std::string line;
-	std::string ret;
-
-	if (file.is_open())
-	{
-		while (file.good())
-		{
-			std::getline(file, line);
-			ret.append(line);
-		}
-	}
-	else
-	{
-		std::cerr << "Unable to open file: " << fileName << std::endl;
-		return "";
-	}
-	return ret;
-	*/
-	std::ifstream file(fileName, std::ios::in | std::ios::binary | std::ios::ate);
-	char* fileStr;
-	if (file.is_open())
-	{
-		std::streampos size = file.tellg();
-		fileStr = new char[size];
-		std::cout << "Seek size: " << size << std::endl;
-		file.seekg(0, std::ios::beg);
-		file.read(fileStr, size);
-		file.close();
-		//std::string str(fileStr);
-		delete[] fileStr;
-		return fileStr;
-	}
-	return "";
-}
-
 const std::string toHex(const int val)
 {
 	std::stringstream stream;
@@ -2603,11 +2564,14 @@ bool CPU::loadROM(const std::string& fileName)
 		file.read(fileStr, size);
 		file.close();
 	}
+	else
+	{
+		return false;
+	}
 	if (size > MAX_ROM_SIZE)
 	{
 		return false;
 	}
-	std::cout << toHex(fileStr[0x150]) << std::endl;
 	for (unsigned i = 0; i < size; i++)
 	{
 		mem[i] = fileStr[i];

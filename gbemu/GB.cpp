@@ -18,6 +18,8 @@ cpu()
 	screenBuffer = SDL_CreateRGBSurface(NULL, 256, 256, fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
 	srcSurfaceRect.h = HEIGHT;
 	srcSurfaceRect.w = WIDTH;
+	pixel.h = 1;
+	pixel.w = 1;
 }
 
 GB::~GB()
@@ -31,6 +33,7 @@ bool GB::init(const std::string& romName)
 	return cpu.loadROM(romName);
 }
 
+// .0271 draws/ millisecond
 void GB::run()
 {
 	while (running)
@@ -38,19 +41,16 @@ void GB::run()
 		draw();
 		handleEvents();
 		cpu.emulateCycle();
-		//std::cout << SDL_GetTicks() << std::endl; // 2251 - 2280
+		std::cout << SDL_GetTicks() << std::endl; // 2251 - 2280
 	}
 }
 
 void GB::drawPixel(const char color, const unsigned x, const unsigned y)
 {
-	SDL_Rect pix; // create a 1x1 rect with coords (x, y)
-	pix.h = 1;
-	pix.w = 1;
-	pix.x = x;
-	pix.y = y;
+	pixel.x = x;
+	pixel.y = y;
 	// draw the pixel to the screensurface
-	SDL_FillRect(screenBuffer, &pix, SDL_MapRGB(screenBuffer->format, color, color, color));
+	SDL_FillRect(screenBuffer, &pixel, SDL_MapRGB(screenBuffer->format, color, color, color));
 }
 
 void GB::clear()
@@ -65,9 +65,9 @@ inline const std::string toBin(char val)
 
 void GB::drawBGSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y)
 {
-	std::string bin1 = toBin(b1);
-	std::string bin2 = toBin(b2);
-	for (int i = 0; i < bin1.size(); i++)
+	const char* bin1 = binLut[(unsigned char)b1];
+	const char* bin2 = binLut[(unsigned char)b2];
+	for (int i = 0; i < 8; i++)
 	{
 		unsigned char color = DARK_GREY;
 		if (bin1[i] == '1' && bin2[i] == '1')
@@ -82,7 +82,34 @@ void GB::drawBGSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& 
 		{
 			color = LIGHT_GREY;
 		}
-		// else color = dark grey
+		//// else color = dark grey
+		drawPixel(color, x, y); // draw the actual pixel to the surface 
+		x++;
+	}
+	x -= 8;
+	y++;
+}
+
+void GB::drawSpriteSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y)
+{
+	const char* bin1 = binLut[(unsigned char)b1];
+	const char* bin2 = binLut[(unsigned char)b2];
+	for (int i = 0; i < 8; i++)
+	{
+		unsigned char color = DARK_GREY;
+		if (bin1[i] == '1' && bin2[i] == '1')
+		{
+			color = BLACK;
+		}
+		else if (bin1[i] == '0' && bin2[i] == '0')
+		{
+			color = WHITE;
+		}
+		else if (bin1[i] == '1' && bin2[i] == '0')
+		{
+			color = LIGHT_GREY;
+		}
+		//// else color = dark grey
 		drawPixel(color, x, y); // draw the actual pixel to the surface 
 		x++;
 	}
@@ -102,7 +129,7 @@ void GB::draw()
 	const char lcdc = cpu.getByte(LCDC);
 	if (lcdc & 0x80) // LCD is enabled, do drawing
 	{
-		char* mem = cpu.dumpMem();
+		const char* mem = cpu.dumpMem();
 		// draw background first
 		if (lcdc & 0x1) // draw background?
 		{
@@ -123,7 +150,7 @@ void GB::draw()
 					{
 						chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP_SIGNED; // get the location of the first tile slice in memory
 					}
-					for (int i = chrLocStart; i < chrLocStart + 0x10; i += 2) // note the += 2
+					for (int i = chrLocStart; i < chrLocStart + 0x10; i += 2) // note the += 2, 2 bytes per slice
 					{
 						drawBGSlice(mem[i], mem[i + 1], x, y); // draw the slice
 					}
@@ -160,7 +187,7 @@ void GB::draw()
 			// copy the screen buffer from scroll positions x, y to display screen
 			srcSurfaceRect.x = mem[SCX];
 			srcSurfaceRect.y = mem[SCY];
-			SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
+			//SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
 		}
 		// draw sprites
 		if (lcdc & 0x2) // draw sprites?
@@ -168,20 +195,28 @@ void GB::draw()
 			// sprite size: 1 = 8x16, 0 = 8x8
 			if (lcdc & 0x4)  // 8x16 wxh
 			{
-				for (int i = 0; i < 40; i++) // 40 sprite max
+				for (int i = OAM; i < OAM_END; i++) 
 				{
 
 				}
 			}
 			else // 8x8
 			{
-				for (int i = 0; i < 40; i++)
+				for (int i = OAM; i < OAM_END; i += 4)
 				{
-
+					unsigned x = mem[i] - 8;
+					unsigned y = mem[i + 1] - 16;
+					unsigned short chrLocStart = (unsigned char)mem[i + 2] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
+					for (int j = chrLocStart; j < chrLocStart + 0x10; j += 2)
+					{
+						drawSpriteSlice(mem[j + 3], mem[j + 4], x, y);
+					}
 				}
 			}
 		}
+		SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
 	}
+	//cpu.setByte(IE, 0x1);
 	SDL_UpdateWindowSurface(window);
 }
 

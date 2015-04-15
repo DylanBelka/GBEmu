@@ -39,6 +39,7 @@ private:
 	void draw();
 	void handleEvents();
 	void drawBGSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y);
+	void drawSpriteSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y);
 
 	void drawPixel(const char color, const unsigned x, const unsigned y);
 	inline void clear();
@@ -52,6 +53,7 @@ private:
 	SDL_Surface* screenSurface = nullptr; // surface that is drawn to from the virtSurface, controlled by the scroll registers
 	SDL_Surface* screenBuffer = nullptr; // full 32x32 virtual gameboy screen
 	SDL_Rect srcSurfaceRect;
+	SDL_Rect pixel;
 
 	unsigned currentTime;
 	unsigned lastTime;
