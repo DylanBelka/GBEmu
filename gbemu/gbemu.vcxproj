@@ -13,14 +13,12 @@
   <ItemGroup>
     <ClCompile Include="binLut.cpp" />
     <ClCompile Include="cpu.cpp" />
-    <ClCompile Include="cpuFlag.cpp" />
     <ClCompile Include="GB.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="binLut.h" />
     <ClInclude Include="cpu.h" />
-    <ClInclude Include="cpuFlag.h" />
     <ClInclude Include="GB.h" />
     <ClInclude Include="memdefs.h" />
   </ItemGroup>
