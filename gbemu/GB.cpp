@@ -150,9 +150,9 @@ void GB::draw()
 					{
 						chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP_SIGNED; // get the location of the first tile slice in memory
 					}
-					for (int i = chrLocStart; i < chrLocStart + 0x10; i += 2) // note the += 2, 2 bytes per slice
+					for (int j = chrLocStart; j < chrLocStart + 0x10; j += 2) // note the += 2, 2 bytes per slice
 					{
-						drawBGSlice(mem[i], mem[i + 1], x, y); // draw the slice
+						drawBGSlice(mem[j], mem[j + 1], x, y); // draw the slice
 					}
 					x += 8;
 					y -= 8;
@@ -183,11 +183,6 @@ void GB::draw()
 					}
 				}
 			}
-			cpu.setByte(LY, 0x91);
-			// copy the screen buffer from scroll positions x, y to display screen
-			srcSurfaceRect.x = mem[SCX];
-			srcSurfaceRect.y = mem[SCY];
-			//SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
 		}
 		// draw sprites
 		if (lcdc & 0x2) // draw sprites?
@@ -195,25 +190,43 @@ void GB::draw()
 			// sprite size: 1 = 8x16, 0 = 8x8
 			if (lcdc & 0x4)  // 8x16 wxh
 			{
-				for (int i = OAM; i < OAM_END; i++) 
+				for (int i = OAM; i < OAM_END; i += 4)
 				{
-
+					unsigned y = mem[i] - 16;
+					unsigned x = mem[i + 1] - 8;
+					// draw the upper 8x8 tile
+					unsigned short chrLocStartUp = (unsigned char)mem[i + 2] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
+					for (int j = chrLocStartUp; j < chrLocStartUp + 0x10; j += 2)
+					{
+						drawSpriteSlice(mem[j], mem[j + 1], x, y);
+					}
+					// draw the lower 8x8 tile
+					unsigned short chrLocStartLow = chrLocStartUp + 0x10;
+					for (int j = chrLocStartLow; j < chrLocStartLow + 0x10; j += 2)
+					{
+						drawSpriteSlice(mem[j], mem[j + 1], x, y);
+					}
 				}
+
 			}
 			else // 8x8
 			{
 				for (int i = OAM; i < OAM_END; i += 4)
 				{
-					unsigned x = mem[i] - 8;
-					unsigned y = mem[i + 1] - 16;
+					unsigned y = mem[i] - 16;
+					unsigned x = mem[i + 1] - 8;
 					unsigned short chrLocStart = (unsigned char)mem[i + 2] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 					for (int j = chrLocStart; j < chrLocStart + 0x10; j += 2)
 					{
-						drawSpriteSlice(mem[j + 3], mem[j + 4], x, y);
+						drawSpriteSlice(mem[j], mem[j + 1], x, y);
 					}
 				}
 			}
 		}
+		cpu.setByte(LY, 0x91);
+		// copy the screen buffer from scroll positions x, y to display screen
+		srcSurfaceRect.x = mem[SCX];
+		srcSurfaceRect.y = mem[SCY];
 		SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
 	}
 	//cpu.setByte(IE, 0x1);
