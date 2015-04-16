@@ -199,83 +199,117 @@ void CPU::decodeExtendedInstruction(char opcode)
 {
 	switch (opcode)
 	{
-		case 0x30: // ^^^ check all swaps swap a?
+		case 0x00: // rlc b
 		{
-			swapNibble(A);
-			updateZero(A);
-			resetCarry();
-			resetHC();
-			resetCarry();
+			rlc(B);
 			PC += 2;
 			break;
 		}
-		case 0x31: // swap b
+		case 0x01: // rlc c
 		{
-			swapNibble(B);
-			updateZero(B);
-			resetCarry();
-			resetHC();
-			resetCarry();
+			rlc(C);
 			PC += 2;
 			break;
 		}
-		case 0x32: // swap c
+		case 0x02: // rlc d
 		{
-			swapNibble(C);
-			updateZero(C);
-			resetCarry();
-			resetHC();
-			resetCarry();
+			rlc(D);
 			PC += 2;
 			break;
 		}
-		case 0x33: // swap d
+		case 0x03: // rlc e
 		{
-			swapNibble(D);
-			updateZero(D);
-			resetCarry();
-			resetHC();
-			resetCarry();
+			rlc(E);
 			PC += 2;
 			break;
 		}
-		case 0x34: // swap e
+		case 0x04: // rlc h
 		{
-			swapNibble(E);
-			updateZero(E);
-			resetCarry();
-			resetHC();
-			resetCarry();
+			rlc(H);
 			PC += 2;
 			break;
 		}
-		case 0x35: // swap f
+		case 0x05: // rlc l
 		{
-			swapNibble(F);
-			updateZero(F);
-			resetCarry();
-			resetHC();
-			resetCarry();
+			rlc(L);
 			PC += 2;
 			break;
 		}
-		case 0x36: // swap (hl)
+		case 0x06: // rlc (hl)
 		{
-			swapNibble(mem[(unsigned short)HL()]);
-			updateZero(mem[(unsigned short)HL()]);
+			char val = mem[(unsigned short)HL()];
+			val <<= 1;
 			resetCarry();
-			resetHC();
-			resetCarry();
+			F |= val & 0x80;
+			val |= val & 0x80;
+			resetN();
+			updateParity(val);
+			updateZero(val);
+			updateSign(val);
+			mem[(unsigned short)HL()] = val;
 			PC += 2;
 			break;
 		}
-		case 0x37: // swap a
+		case 0x07: // rlc a
 		{
-			swapNibble(A);
-			updateZero(A);
+			rlc(A);
+			PC += 2;
+			break;
+		}
+		case 0x08: // rrc b
+		{
+			rrc(B);
+			PC += 2;
+			break;
+		}
+		case 0x09: // rrc c
+		{
+			rrc(C);
+			PC += 2;
+			break;
+		}
+		case 0x0A: // rrc d
+		{
+			rrc(D);
+			PC += 2;
+			break;
+		}
+		case 0x0B: // rrc e
+		{
+			rrc(E);
+			PC += 2;
+			break;
+		}
+		case 0x0C: // rrc h
+		{
+			rrc(H);
+			PC += 2;
+			break;
+		}
+		case 0x0D: // rrc l
+		{
+			rrc(L);
+			PC += 2;
+			break;
+		}
+		case 0x0E: // rrc (hl)
+		{
+			char val = mem[(unsigned short)HL()];
+			val >>= 1;
 			resetCarry();
-			resetHC();
-			resetCarry();
+			F |= val & 0x1;
+			val |= val & 0x1;
+			resetN();
+			updateParity(val);
+			updateZero(val);
+			updateSign(val);
+			mem[(unsigned short)HL()] = val;
+			PC += 2;
+			break;
+		}
+		case 0x0F: // rrc a
+		{
+			rrc(A);
 			PC += 2;
 			break;
 		}
@@ -310,6 +344,30 @@ const unsigned short CPU::get16()
 const unsigned short CPU::get16(const short where)
 {
 	return ((mem[where + 2] << 8) | (mem[where + 1] & 0xFF));
+}
+
+void CPU::rlc(signed char& reg)
+{
+	reg <<= 1;
+	resetCarry();
+	F |= reg & 0x80;
+	reg |= reg & 0x80;
+	resetN();
+	updateParity(reg);
+	updateZero(reg);
+	updateSign(reg);
+}
+
+void CPU::rrc(signed char& reg)
+{
+	reg >>= 1;
+	resetCarry();
+	F |= reg & 0x1;
+	reg |= reg & 0x1;
+	resetN();
+	updateParity(reg);
+	updateZero(reg);
+	updateSign(reg);
 }
 
 // wait for interrupt
@@ -419,7 +477,7 @@ void CPU::jp(bool cond, signed short to, unsigned char opsize)
 
 void CPU::test()
 {
-	std::string testROM = "tetris.gb";
+	std::string testROM = "apocnow.gb";
 	if (!loadROM(testROM))
 	{
 		std::cout << "rom load failed, rom too big" << std::endl;

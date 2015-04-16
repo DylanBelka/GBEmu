@@ -124,6 +124,9 @@ private:
 
 	void decodeExtendedInstruction(char opcode);
 	void swapNibble(signed char reg);
+	inline void rlc(signed char& reg);
+	inline void rrc(signed char& reg);
+	inline void rl(signed char& reg);
 
 	void halt();
 };

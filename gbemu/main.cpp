@@ -5,9 +5,9 @@
 #include "GB.h"
 #include "cpu.h"
 
-#define DEBUG_CPU
+//#define DEBUG_CPU
 
-//#define DEBUG_GFX
+#define DEBUG_GFX
 
 #define ROM_LOAD_FAIL 1
 #define BAD_ARGS 2
