@@ -38,8 +38,7 @@ public:
 private:
 	void draw();
 	void handleEvents();
-	void drawBGSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y);
-	void drawSpriteSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y);
+	void drawSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y);
 
 	void drawPixel(const char color, const unsigned x, const unsigned y);
 	inline void clear();

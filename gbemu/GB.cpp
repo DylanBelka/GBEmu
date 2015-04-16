@@ -63,34 +63,7 @@ inline const std::string toBin(char val)
 	return binLut[(unsigned char)val];
 }
 
-void GB::drawBGSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y)
-{
-	const char* bin1 = binLut[(unsigned char)b1];
-	const char* bin2 = binLut[(unsigned char)b2];
-	for (int i = 0; i < 8; i++)
-	{
-		unsigned char color = DARK_GREY;
-		if (bin1[i] == '1' && bin2[i] == '1')
-		{
-			color = BLACK;
-		}
-		else if (bin1[i] == '0' && bin2[i] == '0')
-		{
-			color = WHITE;
-		}
-		else if (bin1[i] == '1' && bin2[i] == '0')
-		{
-			color = LIGHT_GREY;
-		}
-		//// else color = dark grey
-		drawPixel(color, x, y); // draw the actual pixel to the surface 
-		x++;
-	}
-	x -= 8;
-	y++;
-}
-
-void GB::drawSpriteSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y)
+void GB::drawSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y)
 {
 	const char* bin1 = binLut[(unsigned char)b1];
 	const char* bin2 = binLut[(unsigned char)b2];
@@ -152,7 +125,7 @@ void GB::draw()
 					}
 					for (int j = chrLocStart; j < chrLocStart + 0x10; j += 2) // note the += 2, 2 bytes per slice
 					{
-						drawBGSlice(mem[j], mem[j + 1], x, y); // draw the slice
+						drawSlice(mem[j], mem[j + 1], x, y); // draw the slice
 					}
 					x += 8;
 					y -= 8;
@@ -172,7 +145,7 @@ void GB::draw()
 					unsigned short chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP; // get the location of the first tile slice in memory
 					for (int i = chrLocStart; i < chrLocStart + 0x10; i += 2) // note the += 2
 					{
-						drawBGSlice(mem[i], mem[i + 1], x, y); // draw the slice
+						drawSlice(mem[i], mem[i + 1], x, y); // draw the slice
 					}
 					x += 8;
 					y -= 8;
@@ -198,13 +171,13 @@ void GB::draw()
 					unsigned short chrLocStartUp = (unsigned char)mem[i + 2] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 					for (int j = chrLocStartUp; j < chrLocStartUp + 0x10; j += 2)
 					{
-						drawSpriteSlice(mem[j], mem[j + 1], x, y);
+						drawSlice(mem[j], mem[j + 1], x, y);
 					}
 					// draw the lower 8x8 tile
 					unsigned short chrLocStartLow = chrLocStartUp + 0x10;
 					for (int j = chrLocStartLow; j < chrLocStartLow + 0x10; j += 2)
 					{
-						drawSpriteSlice(mem[j], mem[j + 1], x, y);
+						drawSlice(mem[j], mem[j + 1], x, y);
 					}
 				}
 
@@ -218,7 +191,7 @@ void GB::draw()
 					unsigned short chrLocStart = (unsigned char)mem[i + 2] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 					for (int j = chrLocStart; j < chrLocStart + 0x10; j += 2)
 					{
-						drawSpriteSlice(mem[j], mem[j + 1], x, y);
+						drawSlice(mem[j], mem[j + 1], x, y);
 					}
 				}
 			}

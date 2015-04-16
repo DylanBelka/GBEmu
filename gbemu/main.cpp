@@ -5,9 +5,9 @@
 #include "GB.h"
 #include "cpu.h"
 
-//#define DEBUG_CPU
+#define DEBUG_CPU
 
-#define DEBUG_GFX
+//#define DEBUG_GFX
 
 #define ROM_LOAD_FAIL 1
 #define BAD_ARGS 2
@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 	else
 	{
 #ifdef DEBUG_GFX
-		gb.init("hello_sprite.gb");
+		gb.init("apocnow.gb");
 #else
 		std::cout << "Usage: gbemu <rom file>" << std::endl;
 		return BAD_ARGS;

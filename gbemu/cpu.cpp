@@ -426,7 +426,7 @@ void CPU::test()
 		return;
 	}
 	mem[LY] = 0x91;
-	for (;;)
+	for (int i = 0; i < 100; i++)
 	{
 		emulateCycle();
 		//std::cout << "0x13: " << toHex(mem[0x13]) << std::endl;
@@ -460,7 +460,7 @@ void CPU::emulateCycle()
 {
 	unsigned char opcode = mem[PC];
 	R++; // I think this is what R does
-	//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
+	std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
 	switch (opcode)
 	{
 		// increment PC by size (in bytes) of opcode
@@ -2566,15 +2566,18 @@ bool CPU::loadROM(const std::string& fileName)
 	}
 	else
 	{
+		delete[] fileStr;
 		return false;
 	}
 	if (size > MAX_ROM_SIZE)
 	{
+		delete[] fileStr;
 		return false;
 	}
 	for (unsigned i = 0; i < size; i++)
 	{
 		mem[i] = fileStr[i];
 	}
+	delete[] fileStr;
 	return true;
 }
