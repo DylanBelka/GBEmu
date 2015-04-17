@@ -80,6 +80,8 @@ private:
 
 	char* mem;
 
+	bool interruptsEnabled = false;
+
 // Flag helper functions
 private:
 	inline void updateSign(short reg);
@@ -127,6 +129,9 @@ private:
 	inline void rlc(signed char& reg);
 	inline void rrc(signed char& reg);
 	inline void rl(signed char& reg);
+	inline void bit(signed char reg, unsigned char bit);
+	void dma();
+	void interrupt(const char loc);
 
 	void halt();
 };

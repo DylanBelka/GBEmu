@@ -41,7 +41,7 @@ void GB::run()
 		draw();
 		handleEvents();
 		cpu.emulateCycle();
-		//std::cout << SDL_GetTicks() << std::endl; // 2251 - 2280
+		//std::cout << "Ticks: " << SDL_GetTicks() << std::endl; // 2251 - 2280
 	}
 }
 
@@ -49,7 +49,7 @@ void GB::drawPixel(const char color, const unsigned x, const unsigned y)
 {
 	pixel.x = x;
 	pixel.y = y;
-	// draw the pixel to the screensurface
+	// draw the pixel to the screenBuffer
 	SDL_FillRect(screenBuffer, &pixel, SDL_MapRGB(screenBuffer->format, color, color, color));
 }
 
@@ -202,7 +202,8 @@ void GB::draw()
 		srcSurfaceRect.y = mem[SCY];
 		SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
 	}
-	//cpu.setByte(IE, 0x1);
+	cpu.setByte(IE, 0x1);
+	//cpu.setByte(LY, 0x94);
 	SDL_UpdateWindowSurface(window);
 }
 

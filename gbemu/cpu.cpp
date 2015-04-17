@@ -313,6 +313,60 @@ void CPU::decodeExtendedInstruction(char opcode)
 			PC += 2;
 			break;
 		}
+		case 0x37: // swap a
+		{
+			swapNibble(A);
+			PC += 2;
+			break;
+		}
+		case 0x47: // bit 0, a
+		{
+			bit(A, 0x1);
+			PC += 2;
+			break;
+		}
+		case 0x4F: // bit 1, a
+		{
+			bit(A, 0x2);
+			PC += 2;
+			break;
+		}
+		case 0x57: // bit 2, a
+		{
+			bit(A, 0x4);
+			PC += 2;
+			break;
+		}
+		case 0x5F: // bit 3, a
+		{
+			bit(A, 0x8);
+			PC += 2;
+			break;
+		}
+		case 0x67: // bit 4, a
+		{
+			bit(A, 0x10);
+			PC += 2;
+			break;
+		}
+		case 0x6F: // bit 5, a
+		{
+			bit(A, 0x20);
+			PC += 2;
+			break;
+		}
+		case 0x77: // bit 6, a
+		{
+			bit(A, 0x40);
+			PC += 2;
+			break;
+		}
+		case 0x7F: // bit 7, a
+		{
+			bit(A, 0x80);
+			PC += 2;
+			break;
+		}
 	}
 }
 
@@ -368,6 +422,13 @@ void CPU::rrc(signed char& reg)
 	updateParity(reg);
 	updateZero(reg);
 	updateSign(reg);
+}
+
+void CPU::bit(signed char reg, unsigned char bit)
+{
+	updateZero(B & bit);
+	setHC();
+	resetN();
 }
 
 // wait for interrupt
@@ -475,16 +536,35 @@ void CPU::jp(bool cond, signed short to, unsigned char opsize)
 	}
 }
 
+void CPU::dma()
+{
+	for (int i = 0; i < 0x8C; i++)
+	{
+		mem[OAM + i] = mem[A + i];
+	}
+	std::cout << "DMA" << std::endl;
+	system("pause");
+}
+
+void CPU::interrupt(const char to)
+{
+	SP--;
+	mem[SP] = (PC + 3) & 0xFF; // + 3 is for jumping past the 3 bytes for the opcode and dest
+	SP--;
+	mem[SP] = (((PC + 3) >> 8));
+	PC = to;
+}
+
 void CPU::test()
 {
-	std::string testROM = "apocnow.gb";
+	std::string testROM = "tetris.gb";
 	if (!loadROM(testROM))
 	{
 		std::cout << "rom load failed, rom too big" << std::endl;
 		return;
 	}
 	mem[LY] = 0x91;
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 0x4500; i++)
 	{
 		emulateCycle();
 		//std::cout << "0x13: " << toHex(mem[0x13]) << std::endl;
@@ -516,6 +596,10 @@ void CPU::test()
 
 void CPU::emulateCycle()
 {
+	if (mem[IE] == 0x1 && interruptsEnabled) // vblank
+	{
+		interrupt(0x40);
+	}
 	unsigned char opcode = mem[PC];
 	R++; // I think this is what R does
 	std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
@@ -601,7 +685,7 @@ void CPU::emulateCycle()
 		}
 		case 0x0A: // ld a, (BC)
 		{
-			A = mem[BC()];
+			A = mem[(unsigned short)BC()];
 			PC++;
 			break;
 		}
@@ -2310,7 +2394,7 @@ void CPU::emulateCycle()
 		case 0xD9: // reti 
 		{
 			ret(true);
-			mem[IE] = 0x1;
+			interruptsEnabled = true;
 			PC++;
 			break;
 		}
@@ -2356,6 +2440,10 @@ void CPU::emulateCycle()
 		case 0xE0: //ld (0xFF00 + n), a
 		{
 			mem[0xFF00 + mem[PC + 1]] = A;
+			if ((unsigned char )mem[PC + 1] == 0x46)
+			{
+				dma();
+			}
 			PC += 2;
 			break;
 		}
@@ -2495,7 +2583,7 @@ void CPU::emulateCycle()
 		}
 		case 0xF3: // di ^^^
 		{
-			mem[IE] = 0; // disable interrupts
+			interruptsEnabled = false;
 			PC++;
 			break;
 		}
@@ -2551,7 +2639,7 @@ void CPU::emulateCycle()
 		}
 		case 0xFB: // ei ^^^
 		{
-			mem[IE] = 1; // enable interrupts
+			interruptsEnabled = true;
 			PC++;
 			break;
 		}

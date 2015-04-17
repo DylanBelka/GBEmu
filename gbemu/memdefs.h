@@ -32,7 +32,7 @@
 #define SCY 0xFF42 // background scroll y
 #define SCX 0xFF43 // background scroll x
 #define LYC 0xFF45 // ly compare
-#define DMA 0xFF56 // DMA transfer
+#define DMA 0xFF46 // DMA transfer
 #define BGP 0xFF47 // palette data
 #define OBP0 0xFF48 // object palette data 0
 #define OBP1 0xFF49 // object palette data 1
