@@ -205,6 +205,7 @@ void GB::draw()
 	SDL_UpdateWindowSurface(window);
 
 	// setup for vblank
+	// emulate some cycles through the v-blank, many games wait for certain LY values before continuing execution
 	for (int i = 0x90; i < 0x99; i++)
 	{
 		cpu.setByte(LY, i);
