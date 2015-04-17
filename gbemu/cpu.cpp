@@ -538,12 +538,13 @@ void CPU::jp(bool cond, signed short to, unsigned char opsize)
 
 void CPU::dma()
 {
+	const unsigned short dmaStart = A << 0x8;
 	for (int i = 0; i < 0x8C; i++)
 	{
-		mem[OAM + i] = mem[A + i];
+		mem[OAM + i] = mem[dmaStart + i];
 	}
-	std::cout << "DMA" << std::endl;
-	system("pause");
+	std::cout << "DMA start: " << toHex(dmaStart) << std::endl;
+	//system("pause");
 }
 
 void CPU::interrupt(const char to)
@@ -553,6 +554,7 @@ void CPU::interrupt(const char to)
 	SP--;
 	mem[SP] = (((PC + 3) >> 8));
 	PC = to;
+	IME = false; 
 }
 
 void CPU::test()
@@ -596,7 +598,7 @@ void CPU::test()
 
 void CPU::emulateCycle()
 {
-	if (mem[IE] == 0x1 && interruptsEnabled) // vblank
+	if (mem[IE] == 0x1 && IME) // vblank
 	{
 		interrupt(0x40);
 	}
@@ -2394,7 +2396,7 @@ void CPU::emulateCycle()
 		case 0xD9: // reti 
 		{
 			ret(true);
-			interruptsEnabled = true;
+			IME = true;
 			PC++;
 			break;
 		}
@@ -2583,7 +2585,7 @@ void CPU::emulateCycle()
 		}
 		case 0xF3: // di ^^^
 		{
-			interruptsEnabled = false;
+			IME = false;
 			PC++;
 			break;
 		}
@@ -2639,7 +2641,7 @@ void CPU::emulateCycle()
 		}
 		case 0xFB: // ei ^^^
 		{
-			interruptsEnabled = true;
+			IME = true;
 			PC++;
 			break;
 		}

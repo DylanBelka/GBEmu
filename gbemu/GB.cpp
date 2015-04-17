@@ -196,15 +196,20 @@ void GB::draw()
 				}
 			}
 		}
-		cpu.setByte(LY, 0x91);
 		// copy the screen buffer from scroll positions x, y to display screen
 		srcSurfaceRect.x = mem[SCX];
 		srcSurfaceRect.y = mem[SCY];
 		SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
 	}
 	cpu.setByte(IE, 0x1);
-	//cpu.setByte(LY, 0x94);
 	SDL_UpdateWindowSurface(window);
+
+	// setup for vblank
+	for (int i = 0x90; i < 0x99; i++)
+	{
+		cpu.setByte(LY, i);
+		cpu.emulateCycle();
+	}
 }
 
 void GB::handleEvents()

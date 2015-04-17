@@ -1,48 +1,6 @@
 #ifndef GB_MEM_REGS_H
 #define GB_MEM_REGS_H
 
-// Memory locations of various memory registers
-// timer registers
-#define TIMA 0xFF05
-#define TMA 0xFF06
-#define TAC 0xFF07
-
-// sound registers
-#define NR10 0xFF10
-#define NR11 0xFF11
-#define NR12 0xFF12
-#define NR14 0xFF14
-#define NR21 0xFF16
-#define NR22 0xFF17
-#define NR24 0xFF19
-#define NR30 0xFF1A
-#define NR31 0xFF1B
-#define NR32 0xFF1C
-#define NR33 0xFF1E
-#define NR41 0xFF20
-#define NR42 0xFF21
-#define NR43 0xFF22
-#define NR30 0xFF23
-#define NR50 0xFF24
-#define NR51 0xFF25
-#define NR52 0xFF26
-
-// display control registers
-#define LCDC 0xFF40 // lcd control
-#define SCY 0xFF42 // background scroll y
-#define SCX 0xFF43 // background scroll x
-#define LYC 0xFF45 // ly compare
-#define DMA 0xFF46 // DMA transfer
-#define BGP 0xFF47 // palette data
-#define OBP0 0xFF48 // object palette data 0
-#define OBP1 0xFF49 // object palette data 1
-#define WY 0xFF4A // window x position
-#define WX 0xFF4B // window y position
-
-#define LY 0xFF44 // lcd y coordinate, Values range from 0->153. 144->153 is the VBlank period.
-
-#define IE 0xFFFF // interrupt register
-
 // Locations of important locations in memory
 // $0000-$00FF - Restart and Interrupt Vector Table
 #define RESTART 0x00
@@ -119,6 +77,47 @@
 
 // $FF00-$FF7F - Hardware I/O Registers
 #define JOYPAD 0xFF00
+// Memory locations of various memory registers
+// timer registers
+#define TIMA 0xFF05
+#define TMA 0xFF06
+#define TAC 0xFF07
+
+// sound registers
+#define NR10 0xFF10
+#define NR11 0xFF11
+#define NR12 0xFF12
+#define NR14 0xFF14
+#define NR21 0xFF16
+#define NR22 0xFF17
+#define NR24 0xFF19
+#define NR30 0xFF1A
+#define NR31 0xFF1B
+#define NR32 0xFF1C
+#define NR33 0xFF1E
+#define NR41 0xFF20
+#define NR42 0xFF21
+#define NR43 0xFF22
+#define NR30 0xFF23
+#define NR50 0xFF24
+#define NR51 0xFF25
+#define NR52 0xFF26
+
+// display control registers
+#define LCDC 0xFF40 // lcd control
+#define SCY 0xFF42 // background scroll y
+#define SCX 0xFF43 // background scroll x
+#define LYC 0xFF45 // ly compare
+#define DMA 0xFF46 // DMA transfer
+#define BGP 0xFF47 // palette data
+#define OBP0 0xFF48 // object palette data 0
+#define OBP1 0xFF49 // object palette data 1
+#define WY 0xFF4A // window x position
+#define WX 0xFF4B // window y position
+
+#define LY 0xFF44 // lcd y coordinate, Values range from 0->153. 144->153 is the VBlank period.
+
+#define IE 0xFFFF // interrupt register
 
 // $FF80-$FFFE - High RAM Area
 #define HIGH_RAM 0xFF80

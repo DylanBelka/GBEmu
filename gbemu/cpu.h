@@ -80,7 +80,7 @@ private:
 
 	char* mem;
 
-	bool interruptsEnabled = false;
+	bool IME = false; // interrupt master enable
 
 // Flag helper functions
 private:

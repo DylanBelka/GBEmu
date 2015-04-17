@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 	else
 	{
 #ifdef DEBUG_GFX
-		gb.init("hello.gb");
+		gb.init("apocnow.gb");
 #else
 		std::cout << "Usage: gbemu <rom file>" << std::endl;
 		return BAD_ARGS;
