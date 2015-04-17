@@ -1,2 +1,2 @@
 # GBEmu
-A simple Gameboy emulator
+A work in progress Nintendo Gameboy emulator
