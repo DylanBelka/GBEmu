@@ -79,6 +79,8 @@ void CPU::reset()
 	mem[LY] = 0x94;
 }
 
+#pragma region FlagFuncs
+
 void CPU::updateCarry(short reg)
 {
 	F |= (reg > 0xFF || reg < 0x00) ? 0x1 : F;
@@ -194,6 +196,8 @@ void CPU::setZero()
 {
 	F |= 0x40;
 }
+
+#pragma endregion
 
 void CPU::decodeExtendedInstruction(char opcode)
 {
@@ -370,6 +374,8 @@ void CPU::decodeExtendedInstruction(char opcode)
 	}
 }
 
+#pragma region OpFuncs
+
 void CPU::swapNibble(signed char val)
 {
 	val = ((val & 0x0F) << 4 | (val & 0xF0) >> 4);
@@ -431,55 +437,6 @@ void CPU::bit(signed char reg, unsigned char bit)
 	resetN();
 }
 
-// wait for interrupt
-void CPU::halt()
-{
-	while (!mem[IE])
-	{
-		std::cout << "halted" << std::endl;
-		//for (int i = BG_MAP_0; i < BG_MAP_0 + 100; i++)
-		//{
-		//	/*
-		//	unsigned short chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP;
-		//	this is the starting address of the 16 byte tile - (this is the first 'slice' of the tile)\
-		//	each slice is made up of 2 bytes that define the color
-		//	// 1. A bit that is 0 in both bytes will be a WHITE pixel
-		//	// 2. A bit that is 1 in the first byte and 0 in the second will be a GREY pixel
-		//	// 3. A bit that is 0 in the first byte and 1 in the second will be a DARK GREY pixel
-		//	// 4. A bit that is 1 in both bytes will be a BLACK pixel
-		//	// https://slashbinbash.wordpress.com/2013/02/07/gameboy-tile-mapping-between-image-and-memory/
-		//
-		//	loop through the 16 bytes of this tile starting at chrLocStart until the end of the tile (16 bytes)
-		//	for (int i = chrLocStart; i < chrLocStart + 0x10; i++)
-		//	{
-		//		convert mem[i] into a binary string
-		//		then display each pixel
-		//		then go to next 2 bytes which will be displayed on the next line
-		//		ex: mem[0x8010] = 0xc6 = 1100110
-		//			mem[0x8011] = 0xc6 = 1100110
-		//			so the display will look like: BBWWBBW
-		//			mem[0x8012] = 0xc6 = 1100110
-		//			mem[0x8013] = 0xc6 = 1100110
-		//			so the display will now look like : BBWWBBW
-		//												BBWWBBW
-		//	}
-		//	*/
-		//
-		//	//std::cout << toHex((unsigned short)mem[mem[i] + CHR_MAP]) << " at " << toHex((unsigned short)mem[i] + CHR_MAP) << std::endl;
-		//	//std::cout << toHex((unsigned char)mem[i]) << " " << toHex(i) << std::endl;
-		//	unsigned short loc = (unsigned char)mem[i] * 0x10 + CHR_MAP;
-		//	std::cout << toHex((unsigned short)mem[loc]) << " at " << toHex((unsigned short)loc) << std::endl;
-		//	std::cout << toHex((unsigned char)mem[0x8010]) << std::endl;
-		//}
-		//for (int i = CHR_MAP; i < CHR_MAP + 40; i++)
-		//{
-		//	std::cout << toHex((char)mem[i]) << " at " << toHex((unsigned short)i) << std::endl;
-		//}
-		//std::cout << std::endl;
-		system("pause");
-	}
-}
-
 void CPU::ret(bool cond)
 {
 	if (cond)
@@ -536,6 +493,57 @@ void CPU::jp(bool cond, signed short to, unsigned char opsize)
 	}
 }
 
+// wait for interrupt
+void CPU::halt()
+{
+	while (!mem[IE])
+	{
+		std::cout << "halted" << std::endl;
+		//for (int i = BG_MAP_0; i < BG_MAP_0 + 100; i++)
+		//{
+		//	/*
+		//	unsigned short chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP;
+		//	this is the starting address of the 16 byte tile - (this is the first 'slice' of the tile)\
+				//	each slice is made up of 2 bytes that define the color
+		//	// 1. A bit that is 0 in both bytes will be a WHITE pixel
+		//	// 2. A bit that is 1 in the first byte and 0 in the second will be a GREY pixel
+		//	// 3. A bit that is 0 in the first byte and 1 in the second will be a DARK GREY pixel
+		//	// 4. A bit that is 1 in both bytes will be a BLACK pixel
+		//	// https://slashbinbash.wordpress.com/2013/02/07/gameboy-tile-mapping-between-image-and-memory/
+		//
+		//	loop through the 16 bytes of this tile starting at chrLocStart until the end of the tile (16 bytes)
+		//	for (int i = chrLocStart; i < chrLocStart + 0x10; i++)
+		//	{
+		//		convert mem[i] into a binary string
+		//		then display each pixel
+		//		then go to next 2 bytes which will be displayed on the next line
+		//		ex: mem[0x8010] = 0xc6 = 1100110
+		//			mem[0x8011] = 0xc6 = 1100110
+		//			so the display will look like: BBWWBBW
+		//			mem[0x8012] = 0xc6 = 1100110
+		//			mem[0x8013] = 0xc6 = 1100110
+		//			so the display will now look like : BBWWBBW
+		//												BBWWBBW
+		//	}
+		//	*/
+		//
+		//	//std::cout << toHex((unsigned short)mem[mem[i] + CHR_MAP]) << " at " << toHex((unsigned short)mem[i] + CHR_MAP) << std::endl;
+		//	//std::cout << toHex((unsigned char)mem[i]) << " " << toHex(i) << std::endl;
+		//	unsigned short loc = (unsigned char)mem[i] * 0x10 + CHR_MAP;
+		//	std::cout << toHex((unsigned short)mem[loc]) << " at " << toHex((unsigned short)loc) << std::endl;
+		//	std::cout << toHex((unsigned char)mem[0x8010]) << std::endl;
+		//}
+		//for (int i = CHR_MAP; i < CHR_MAP + 40; i++)
+		//{
+		//	std::cout << toHex((char)mem[i]) << " at " << toHex((unsigned short)i) << std::endl;
+		//}
+		//std::cout << std::endl;
+		system("pause");
+	}
+}
+
+#pragma endregion
+
 void CPU::dma()
 {
 	const unsigned short dmaStart = A << 0x8;
@@ -544,7 +552,6 @@ void CPU::dma()
 		mem[OAM + i] = mem[dmaStart + i];
 	}
 	std::cout << "DMA start: " << toHex(dmaStart) << std::endl;
-	//system("pause");
 }
 
 void CPU::interrupt(const char to)
@@ -600,11 +607,12 @@ void CPU::emulateCycle()
 {
 	if (mem[IE] == 0x1 && IME) // vblank
 	{
-		interrupt(0x40);
+		//interrupt(0x40);
 	}
 	unsigned char opcode = mem[PC];
 	R++; // I think this is what R does
 	std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
+	//std::cout << toHex(mem[OAM + 1]) << std::endl;
 	switch (opcode)
 	{
 		// increment PC by size (in bytes) of opcode
@@ -2715,6 +2723,7 @@ bool CPU::loadROM(const std::string& fileName)
 	else
 	{
 		delete[] fileStr;
+		std::cout << "File load error" << std::endl;
 		return false;
 	}
 	if (size > MAX_ROM_SIZE)

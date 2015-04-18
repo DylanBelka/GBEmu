@@ -31,6 +31,10 @@ GB::~GB()
 bool GB::init(const std::string& romName)
 {
 	return cpu.loadROM(romName);
+	for (int i = 0; i < 100; i++)
+	{
+		cpu.emulateCycle();
+	}
 }
 
 // .0271 draws/ millisecond
@@ -40,7 +44,9 @@ void GB::run()
 	{
 		draw();
 		handleEvents();
-		cpu.emulateCycle();
+		unsigned ticks = SDL_GetTicks();
+		while (SDL_GetTicks() - ticks < 10)
+			cpu.emulateCycle();
 		//std::cout << "Ticks: " << SDL_GetTicks() << std::endl; // 2251 - 2280
 	}
 }
