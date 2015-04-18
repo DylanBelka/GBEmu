@@ -127,54 +127,6 @@ void CPU::setN()
 	F |= 0x2;
 }
 
-void CPU::updateOverflow(short reg)
-{
-	F |= (reg & 0x80) ? 0x4 : F;
-}
-
-void CPU::resetOverflow()
-{	
-	F &= 0xFB;
-}
-
-void CPU::setOverflow()
-{
-	F |= 0x4;
-}
-
-void CPU::updateParity(char reg)
-{
-	bool parity =
-		(((reg * 0x0101010101010101ULL) & 0x8040201008040201ULL) % 0x1FF) & 1; // https://graphics.stanford.edu/~seander/bithacks.html#ParityNaive 
-																				// (uses Compute parity of a byte using 64-bit multiply and modulus division)
-	F |= (!parity) ? 0x4 : F;
-}
-
-void CPU::resetParity()
-{
-	F &= 0xFB;
-}
-
-void CPU::setParity()
-{
-	F |= 0x4;
-}
-
-void CPU::updateSign(short reg)
-{
-	F |= reg & 0x80;
-}
-
-void CPU::resetSign()
-{
-	F &= 0x7F;
-}
-
-void CPU::setSign()
-{
-	F |= 0x80;
-}
-
 void CPU::updateZero(short reg)
 {
 	if (reg == 0)
@@ -247,9 +199,7 @@ void CPU::decodeExtendedInstruction(char opcode)
 			F |= val & 0x80;
 			val |= val & 0x80;
 			resetN();
-			updateParity(val);
 			updateZero(val);
-			updateSign(val);
 			mem[(unsigned short)HL()] = val;
 			PC += 2;
 			break;
@@ -304,9 +254,7 @@ void CPU::decodeExtendedInstruction(char opcode)
 			F |= val & 0x1;
 			val |= val & 0x1;
 			resetN();
-			updateParity(val);
 			updateZero(val);
-			updateSign(val);
 			mem[(unsigned short)HL()] = val;
 			PC += 2;
 			break;
@@ -376,7 +324,7 @@ void CPU::decodeExtendedInstruction(char opcode)
 
 #pragma region OpFuncs
 
-void CPU::swapNibble(signed char val)
+void CPU::swapNibble(unsigned char val)
 {
 	val = ((val & 0x0F) << 4 | (val & 0xF0) >> 4);
 }
@@ -385,10 +333,8 @@ void CPU::cmp(const char val)
 {
 	updateCarry(A - val);
 	updateN(SUB);
-	updateOverflow(A - val);
 	updateHC(A - val);
 	updateZero(A - val);
-	updateSign(A - val);
 }
 
 const unsigned short CPU::load16()
@@ -406,31 +352,27 @@ const unsigned short CPU::get16(const short where)
 	return ((mem[where + 2] << 8) | (mem[where + 1] & 0xFF));
 }
 
-void CPU::rlc(signed char& reg)
+void CPU::rlc(unsigned char& reg)
 {
 	reg <<= 1;
 	resetCarry();
 	F |= reg & 0x80;
 	reg |= reg & 0x80;
 	resetN();
-	updateParity(reg);
 	updateZero(reg);
-	updateSign(reg);
 }
 
-void CPU::rrc(signed char& reg)
+void CPU::rrc(unsigned char& reg)
 {
 	reg >>= 1;
 	resetCarry();
 	F |= reg & 0x1;
 	reg |= reg & 0x1;
 	resetN();
-	updateParity(reg);
 	updateZero(reg);
-	updateSign(reg);
 }
 
-void CPU::bit(signed char reg, unsigned char bit)
+void CPU::bit(unsigned char reg, unsigned char bit)
 {
 	updateZero(B & bit);
 	setHC();
@@ -612,6 +554,7 @@ void CPU::emulateCycle()
 	unsigned char opcode = mem[PC];
 	R++; // I think this is what R does
 	std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
+	std::cout << toHex(mem[0x8100]) << " " << toHex(mem[0x8100]) << std::endl;
 	//std::cout << toHex(mem[OAM + 1]) << std::endl;
 	switch (opcode)
 	{
@@ -645,10 +588,8 @@ void CPU::emulateCycle()
 		{
 			B++;
 			updateN(ADD);
-			updateOverflow(B);
 			updateHC(B);
 			updateZero(B);
-			updateSign(B);
 			PC++;
 			break;
 		}
@@ -656,10 +597,8 @@ void CPU::emulateCycle()
 		{
 			B--;
 			updateN(SUB);
-			updateOverflow(B);
 			updateHC(B);
 			updateZero(B);
-			updateSign(B);
 			PC++;
 			break;
 		}
@@ -710,10 +649,8 @@ void CPU::emulateCycle()
 		{
 			C++;
 			updateN(ADD);
-			updateOverflow(C);
 			updateHC(C);
 			updateZero(C);
-			updateSign(C);
 			PC++;
 			break;
 		}
@@ -721,10 +658,8 @@ void CPU::emulateCycle()
 		{
 			C--;
 			updateN(SUB);
-			updateOverflow(C);
 			updateHC(C);
 			updateZero(C);
-			updateSign(C);
 			PC++;
 			break;
 		}
@@ -780,10 +715,8 @@ void CPU::emulateCycle()
 		{
 			D++;
 			updateN(ADD);
-			updateOverflow(D);
 			updateHC(D);
 			updateZero(D);
-			updateSign(D);
 			PC++;
 			break;
 		}
@@ -791,10 +724,8 @@ void CPU::emulateCycle()
 		{
 			D--;
 			updateN(SUB);
-			updateOverflow(D);
 			updateHC(D);
 			updateZero(D);
-			updateSign(D);
 			PC++;
 			break;
 		}
@@ -846,9 +777,7 @@ void CPU::emulateCycle()
 			E++;
 			updateCarry(E);
 			updateN(ADD);
-			updateOverflow(E);
 			updateHC(E);
-			updateSign(E);
 			PC++;
 			break;
 		}
@@ -857,9 +786,7 @@ void CPU::emulateCycle()
 			E--;
 			updateCarry(E);
 			updateN(SUB);
-			updateOverflow(E);
 			updateHC(E);
-			updateSign(E);
 			PC++;
 			break;
 		}
@@ -908,11 +835,9 @@ void CPU::emulateCycle()
 		{
 			H++;
 			updateN(ADD);
-			updateOverflow(H);
 			updateHC(H);
 			updateZero(H);
 			updateZero(H);
-			updateSign(H);
 			PC++;
 			break;
 		}
@@ -920,11 +845,9 @@ void CPU::emulateCycle()
 		{
 			H--;
 			updateN(SUB);
-			updateOverflow(H);
 			updateHC(H);
 			updateZero(H);
 			updateZero(H);
-			updateSign(H);
 			PC++;
 			break;
 		}
@@ -943,11 +866,9 @@ void CPU::emulateCycle()
 				uiResult |= A % 10;
 				A /= 10;
 			}
-			updateOverflow(A);
 			updateCarry(A);
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
 			PC++;
 			break;
 		}
@@ -984,22 +905,18 @@ void CPU::emulateCycle()
 		case 0x2C: // inc l
 		{
 			L++;
-			updateOverflow(L);
 			updateHC(L);
 			updateN(ADD);
 			updateZero(L);
-			updateSign(L);
 			PC++;
 			break;
 		}
 		case 0x2D: // dec l
 		{
 			L--;
-			updateOverflow(L);
 			updateHC(L);
 			updateN(SUB);
 			updateZero(L);
-			updateSign(L);
 			PC++;
 			break;
 		}
@@ -1043,22 +960,18 @@ void CPU::emulateCycle()
 		case 0x34: // inc (hl) ^^^
 		{
 			mem[HL()]++;
-			updateOverflow(HL());
 			updateN(ADD);
 			updateZero(HL());
 			updateHC(HL());
-			updateSign(HL());
 			PC++;
 			break;
 		}
 		case 0x35: // dec (hl) ^^^
 		{
 			mem[HL()]--;
-			updateOverflow(HL());
 			updateN(SUB);
 			updateZero(HL());
 			updateHC(HL());
-			updateSign(HL());
 			PC++;
 			break;
 		}
@@ -1089,7 +1002,6 @@ void CPU::emulateCycle()
 			updateN(ADD);
 			updateHC(HL());
 			updateZero(HL());
-			updateSign(HL());
 			PC++;
 			break;
 		}
@@ -1111,10 +1023,8 @@ void CPU::emulateCycle()
 		{
 			A++;
 			updateN(ADD);
-			updateOverflow(A);
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
 			PC++;
 			break;
 		}
@@ -1122,10 +1032,8 @@ void CPU::emulateCycle()
 		{
 			A--;
 			updateN(SUB);
-			updateOverflow(A);
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
 			PC++;
 			break;
 		}
@@ -1523,10 +1431,8 @@ void CPU::emulateCycle()
 			A += B;
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
 			PC++;
 			break;
 		}
@@ -1535,10 +1441,8 @@ void CPU::emulateCycle()
 			A += C;
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
 			PC++;
 			break;
 		}
@@ -1547,10 +1451,8 @@ void CPU::emulateCycle()
 			A += D;
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
 			PC++;
 			break;
 		}
@@ -1559,10 +1461,8 @@ void CPU::emulateCycle()
 			A += E;
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
 			PC++;
 			break;
 		}
@@ -1571,10 +1471,10 @@ void CPU::emulateCycle()
 			A += H;
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1583,10 +1483,10 @@ void CPU::emulateCycle()
 			A += L;
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1595,10 +1495,10 @@ void CPU::emulateCycle()
 			A += mem[(unsigned short)HL()];
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1607,10 +1507,10 @@ void CPU::emulateCycle()
 			A += A;
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1619,10 +1519,10 @@ void CPU::emulateCycle()
 			A += B + carry();
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1631,10 +1531,10 @@ void CPU::emulateCycle()
 			A += B + carry();
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1643,10 +1543,10 @@ void CPU::emulateCycle()
 			A += D + carry();
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1655,10 +1555,10 @@ void CPU::emulateCycle()
 			A += E + carry();
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1667,10 +1567,10 @@ void CPU::emulateCycle()
 			A += H + carry();
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1679,10 +1579,10 @@ void CPU::emulateCycle()
 			A += L + carry();
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1691,10 +1591,10 @@ void CPU::emulateCycle()
 			A += mem[(unsigned short)HL()] + carry();
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1703,10 +1603,10 @@ void CPU::emulateCycle()
 			A += A + carry();
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1715,10 +1615,10 @@ void CPU::emulateCycle()
 			A -= B;
 			updateCarry(A);
 			updateN(SUB);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1727,10 +1627,10 @@ void CPU::emulateCycle()
 			A -= C;
 			updateCarry(A);
 			updateN(SUB);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1739,10 +1639,10 @@ void CPU::emulateCycle()
 			A -= D;
 			updateCarry(A);
 			updateN(SUB);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1751,10 +1651,10 @@ void CPU::emulateCycle()
 			A -= E;
 			updateCarry(A);
 			updateN(SUB);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1763,10 +1663,10 @@ void CPU::emulateCycle()
 			A -= H;
 			updateCarry(A);
 			updateN(SUB);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1775,10 +1675,10 @@ void CPU::emulateCycle()
 			A -= L;
 			updateCarry(A);
 			updateN(SUB);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1787,10 +1687,10 @@ void CPU::emulateCycle()
 			A -= mem[(unsigned short)HL()];
 			updateCarry(A);
 			updateN(SUB);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1799,10 +1699,10 @@ void CPU::emulateCycle()
 			A -= A;
 			updateCarry(A);
 			updateN(SUB);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1811,10 +1711,10 @@ void CPU::emulateCycle()
 			A -= B - carry();
 			updateCarry(A);
 			updateN(SUB);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1823,10 +1723,10 @@ void CPU::emulateCycle()
 			A -= C - carry();
 			updateCarry(A);
 			updateN(SUB);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1835,10 +1735,10 @@ void CPU::emulateCycle()
 			A -= D - carry();
 			updateCarry(A);
 			updateN(SUB);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1847,10 +1747,10 @@ void CPU::emulateCycle()
 			A -= E - carry();
 			updateCarry(A);
 			updateN(SUB);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1859,10 +1759,10 @@ void CPU::emulateCycle()
 			A -= H - carry();
 			updateCarry(A);
 			updateN(SUB);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1871,10 +1771,10 @@ void CPU::emulateCycle()
 			A -= L - carry();
 			updateCarry(A);
 			updateN(SUB);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1883,10 +1783,10 @@ void CPU::emulateCycle()
 			A -= mem[(unsigned short)HL()] - carry();
 			updateCarry(A);
 			updateN(SUB);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1895,10 +1795,10 @@ void CPU::emulateCycle()
 			A -= A - carry();
 			updateCarry(A);
 			updateN(SUB);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1907,10 +1807,10 @@ void CPU::emulateCycle()
 			A &= B;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			setHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1919,10 +1819,10 @@ void CPU::emulateCycle()
 			A &= C;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			setHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1931,10 +1831,10 @@ void CPU::emulateCycle()
 			A &= D;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			setHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1943,10 +1843,10 @@ void CPU::emulateCycle()
 			A &= E;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			setHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1955,10 +1855,10 @@ void CPU::emulateCycle()
 			A &= H;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			setHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1967,10 +1867,10 @@ void CPU::emulateCycle()
 			A &= L;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			setHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1979,10 +1879,10 @@ void CPU::emulateCycle()
 			A &= mem[(unsigned short)HL()];
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			setHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -1991,10 +1891,10 @@ void CPU::emulateCycle()
 			// A &= A;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			setHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -2003,10 +1903,10 @@ void CPU::emulateCycle()
 			A ^= B;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -2015,10 +1915,10 @@ void CPU::emulateCycle()
 			A ^= C;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -2027,10 +1927,10 @@ void CPU::emulateCycle()
 			A ^= D;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -2039,10 +1939,10 @@ void CPU::emulateCycle()
 			A ^= E;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -2051,10 +1951,10 @@ void CPU::emulateCycle()
 			A ^= H;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -2063,10 +1963,10 @@ void CPU::emulateCycle()
 			A ^= L;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -2075,10 +1975,10 @@ void CPU::emulateCycle()
 			A ^= mem[(unsigned short)HL()];
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -2087,10 +1987,10 @@ void CPU::emulateCycle()
 			A = 0;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -2099,10 +1999,10 @@ void CPU::emulateCycle()
 			A |= B;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -2111,10 +2011,10 @@ void CPU::emulateCycle()
 			A |= C;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -2123,10 +2023,10 @@ void CPU::emulateCycle()
 			A |= D;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -2135,10 +2035,10 @@ void CPU::emulateCycle()
 			A |= E;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -2147,10 +2047,10 @@ void CPU::emulateCycle()
 			A |= H;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -2159,10 +2059,10 @@ void CPU::emulateCycle()
 			A |= L;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -2171,10 +2071,10 @@ void CPU::emulateCycle()
 			A |= mem[(unsigned short)HL()];
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -2183,10 +2083,10 @@ void CPU::emulateCycle()
 			// A |= A;
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC++;
 			break;
 		}
@@ -2281,10 +2181,10 @@ void CPU::emulateCycle()
 			A += mem[PC + 1];
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC += 2;
 			break;
 		}
@@ -2328,10 +2228,10 @@ void CPU::emulateCycle()
 			A += mem[PC + 1] + carry();
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC += 2;
 			break;
 		}
@@ -2384,10 +2284,10 @@ void CPU::emulateCycle()
 			A -= mem[PC + 1];
 			updateCarry(A);
 			updateN(SUB);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC += 2;
 			break;
 		}
@@ -2435,10 +2335,10 @@ void CPU::emulateCycle()
 			A -= mem[PC + 1] - carry();
 			updateCarry(A);
 			updateN(ADD);
-			updateOverflow(A);
+			
 			updateHC(A);
 			updateZero(A);
-			updateSign(A);
+			
 			PC += 2;
 			break;
 		}
@@ -2502,10 +2402,10 @@ void CPU::emulateCycle()
 			A &= mem[PC + 1];
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			setHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC += 2;
 			break;
 		}
@@ -2558,10 +2458,10 @@ void CPU::emulateCycle()
 			A ^= mem[PC + 1];
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC += 2;
 			break;
 		}
@@ -2616,10 +2516,10 @@ void CPU::emulateCycle()
 			A |= mem[PC + 1];
 			resetCarry();
 			resetN();
-			updateParity(A);
+			
 			resetHC();
 			updateZero(A);
-			updateSign(A);
+			
 			PC += 2;
 			break;
 		}
