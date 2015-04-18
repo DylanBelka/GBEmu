@@ -441,45 +441,6 @@ void CPU::halt()
 	while (!mem[IE])
 	{
 		std::cout << "halted" << std::endl;
-		//for (int i = BG_MAP_0; i < BG_MAP_0 + 100; i++)
-		//{
-		//	/*
-		//	unsigned short chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP;
-		//	this is the starting address of the 16 byte tile - (this is the first 'slice' of the tile)\
-				//	each slice is made up of 2 bytes that define the color
-		//	// 1. A bit that is 0 in both bytes will be a WHITE pixel
-		//	// 2. A bit that is 1 in the first byte and 0 in the second will be a GREY pixel
-		//	// 3. A bit that is 0 in the first byte and 1 in the second will be a DARK GREY pixel
-		//	// 4. A bit that is 1 in both bytes will be a BLACK pixel
-		//	// https://slashbinbash.wordpress.com/2013/02/07/gameboy-tile-mapping-between-image-and-memory/
-		//
-		//	loop through the 16 bytes of this tile starting at chrLocStart until the end of the tile (16 bytes)
-		//	for (int i = chrLocStart; i < chrLocStart + 0x10; i++)
-		//	{
-		//		convert mem[i] into a binary string
-		//		then display each pixel
-		//		then go to next 2 bytes which will be displayed on the next line
-		//		ex: mem[0x8010] = 0xc6 = 1100110
-		//			mem[0x8011] = 0xc6 = 1100110
-		//			so the display will look like: BBWWBBW
-		//			mem[0x8012] = 0xc6 = 1100110
-		//			mem[0x8013] = 0xc6 = 1100110
-		//			so the display will now look like : BBWWBBW
-		//												BBWWBBW
-		//	}
-		//	*/
-		//
-		//	//std::cout << toHex((unsigned short)mem[mem[i] + CHR_MAP]) << " at " << toHex((unsigned short)mem[i] + CHR_MAP) << std::endl;
-		//	//std::cout << toHex((unsigned char)mem[i]) << " " << toHex(i) << std::endl;
-		//	unsigned short loc = (unsigned char)mem[i] * 0x10 + CHR_MAP;
-		//	std::cout << toHex((unsigned short)mem[loc]) << " at " << toHex((unsigned short)loc) << std::endl;
-		//	std::cout << toHex((unsigned char)mem[0x8010]) << std::endl;
-		//}
-		//for (int i = CHR_MAP; i < CHR_MAP + 40; i++)
-		//{
-		//	std::cout << toHex((char)mem[i]) << " at " << toHex((unsigned short)i) << std::endl;
-		//}
-		//std::cout << std::endl;
 		system("pause");
 	}
 }
