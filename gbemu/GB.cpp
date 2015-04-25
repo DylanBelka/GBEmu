@@ -13,13 +13,6 @@ cpu()
 	{
 		std::cout << "SDL window could not be created. Error: " << SDL_GetError() << std::endl;
 	}
-	//glContext = SDL_GL_CreateContext(window);
-	//GLenum glewStatus = glewInit();
-	//if (glewStatus != GLEW_OK)
-	//{
-	//	std::cout << "Glew Failed to initialize" << std::endl;
-	//}
-	//glClearColor(1.0, 1.0, 1.0, 1.0);
 	screenSurface = SDL_GetWindowSurface(window);
 	SDL_PixelFormat* fmt = screenSurface->format;
 	screenBuffer = SDL_CreateRGBSurface(NULL, 256, 256, fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
@@ -31,7 +24,6 @@ cpu()
 
 GB::~GB()
 {
-	SDL_GL_DeleteContext(glContext);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 }
@@ -39,23 +31,20 @@ GB::~GB()
 bool GB::init(const std::string& romName)
 {
 	return cpu.loadROM(romName);
-	for (int i = 0; i < 100; i++)
-	{
-		cpu.emulateCycle();
-	}
 }
 
-// .0271 draws/ millisecond
 void GB::run()
 {
 	while (running)
 	{
 		draw();
 		handleEvents();
-		unsigned ticks = SDL_GetTicks();
-		while (SDL_GetTicks() - ticks < 10)
-			cpu.emulateCycle();
-		//std::cout << "Ticks: " << SDL_GetTicks() << std::endl; // 2251 - 2280
+		//unsigned ticks = SDL_GetTicks();
+		//while (SDL_GetTicks() - ticks > 30)
+		//{
+		//	cpu.emulateCycle();
+		//}
+		cpu.emulateCycle();
 	}
 }
 
@@ -69,7 +58,6 @@ void GB::drawPixel(const char color, const unsigned x, const unsigned y)
 
 void GB::clear()
 {
-	//glClear(GL_COLOR_BUFFER_BIT);
 	SDL_FillRect(screenBuffer, NULL, SDL_MapRGB(screenBuffer->format, 0xFF, 0xFF, 0xFF));
 }
 
@@ -218,10 +206,8 @@ void GB::draw()
 	}
 	cpu.setByte(IE, 0x1);
 	SDL_UpdateWindowSurface(window);
-	//SDL_GL_SwapWindow(window);
 
 	// setup for vblank
-	// emulate some cycles through the v-blank, many games wait for certain LY values before continuing execution
 	for (int i = 0x90; i < 0x99; i++)
 	{
 		cpu.setByte(LY, i);
@@ -240,22 +226,22 @@ void GB::handleEvents()
 		}
 		if (e.type == SDL_KEYDOWN)
 		{
-			//if (e.key.keysym.sym == SDLK_1)
-			//{
-			//	SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0xFF, 0xFF, 0xFF));
-			//}
-			//if (e.key.keysym.sym == SDLK_2)
-			//{
-			//	SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0x55, 0x55, 0x55));
-			//}
-			//if (e.key.keysym.sym == SDLK_3)
-			//{
-			//	SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0xAA, 0xAA, 0xAA));
-			//}
-			//if (e.key.keysym.sym == SDLK_4)
-			//{
-			//	SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0x00));
-			//}
+			if (e.key.keysym.sym == SDLK_1)
+			{
+				SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0xFF, 0xFF, 0xFF));
+			}
+			if (e.key.keysym.sym == SDLK_2)
+			{
+				SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0x55, 0x55, 0x55));
+			}
+			if (e.key.keysym.sym == SDLK_3)
+			{
+				SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0xAA, 0xAA, 0xAA));
+			}
+			if (e.key.keysym.sym == SDLK_4)
+			{
+				SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0x00));
+			}
 		}
 		if (e.type == SDL_KEYUP)
 		{

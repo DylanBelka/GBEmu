@@ -42,13 +42,13 @@ private:
 // registers
 private:
 	// 8 bit registers
-	unsigned char A;
-	unsigned char B;
-	unsigned char C;
-	unsigned char D;
-	unsigned char E;
-	unsigned char H;
-	unsigned char L;
+	signed char A;
+	signed char B;
+	signed char C;
+	signed char D;
+	signed char E;
+	signed char H;
+	signed char L;
 
 	unsigned char F;		// flag register
 
@@ -84,6 +84,10 @@ private:
 
 // Flag helper functions
 private:
+	inline void updateSign(short reg);
+	inline void resetSign();
+	inline void setSign();
+
 	inline void updateZero(short reg);
 	inline void resetZero();
 	inline void setZero();
@@ -91,6 +95,14 @@ private:
 	inline void updateHC(short reg);
 	inline void resetHC();
 	inline void setHC();
+
+	inline void updateParity(char reg);
+	inline void resetParity();
+	inline void setParity();
+
+	inline void updateOverflow(short reg);
+	inline void resetOverflow();
+	inline void setOverflow();
 
 	inline void updateN(bool add);
 	inline void resetN();
@@ -113,11 +125,11 @@ private:
 	inline const unsigned short get16(const short where);
 
 	void decodeExtendedInstruction(char opcode);
-	void swapNibble(unsigned char reg);
-	inline void rlc(unsigned char& reg);
-	inline void rrc(unsigned char& reg);
-	inline void rl(unsigned char& reg);
-	inline void bit(unsigned char reg, unsigned char bit);
+	void swapNibble(signed char reg);
+	inline void rlc(signed char& reg);
+	inline void rrc(signed char& reg);
+	inline void rl(signed char& reg);
+	inline void bit(signed char reg, unsigned char bit);
 	void dma();
 	void interrupt(const char loc);
 

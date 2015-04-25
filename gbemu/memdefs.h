@@ -105,7 +105,6 @@
 
 // display control registers
 #define LCDC 0xFF40 // lcd control
-#define STAT 0xFF41 // lcd status
 #define SCY 0xFF42 // background scroll y
 #define SCX 0xFF43 // background scroll x
 #define LYC 0xFF45 // ly compare

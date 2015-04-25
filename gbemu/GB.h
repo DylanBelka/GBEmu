@@ -1,9 +1,7 @@
 #ifndef GB_GB_H
 #define GB_GB_H
 
-#include <glew.h>
 #include <SDL.h>
-#include <SDL_opengl.h>
 #include <iostream>
 #include <string>
 
@@ -18,11 +16,6 @@
 #define DARK_GREY 0x55
 #define LIGHT_GREY 0xAA
 #define WHITE 0xFF
-
-#define GL_BLACK 0.0f
-#define GL_DARK_GREY 0.2f
-#define GL_LIGHT_GREY 0.7f
-#define GL_WHITE 1.0f
 
 #define DEBUG
 
@@ -55,12 +48,13 @@ private:
 private:
 	CPU cpu;
 	SDL_Window* window = nullptr;
-	SDL_GLContext glContext = NULL;
-
 	SDL_Surface* screenSurface = nullptr; // surface that is drawn to from the virtSurface, controlled by the scroll registers
 	SDL_Surface* screenBuffer = nullptr; // full 32x32 virtual gameboy screen
 	SDL_Rect srcSurfaceRect;
 	SDL_Rect pixel;
+
+	unsigned currentTime;
+	unsigned lastTime;
 };
 
 #endif
