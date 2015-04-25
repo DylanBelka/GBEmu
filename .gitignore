@@ -15,6 +15,7 @@
 *.inc
 *.dll
 *.tsm
+*.dat
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
