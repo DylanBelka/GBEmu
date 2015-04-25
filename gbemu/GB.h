@@ -21,7 +21,6 @@
 
 /*
 Fix so that rendering does not happen every cycle
-Add signed background rendering
 */
 
 class GB
@@ -33,7 +32,6 @@ public:
 	bool init(const std::string& romName);
 	void run();
 
-
 private:
 	void draw();
 	void handleEvents();
@@ -43,7 +41,6 @@ private:
 	inline void clear();
 
 	bool running = true;
-
 
 private:
 	CPU cpu;

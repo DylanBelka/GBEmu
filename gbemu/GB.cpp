@@ -39,12 +39,11 @@ void GB::run()
 	{
 		draw();
 		handleEvents();
-		//unsigned ticks = SDL_GetTicks();
+		unsigned ticks = SDL_GetTicks();
 		//while (SDL_GetTicks() - ticks > 30)
-		//{
-		//	cpu.emulateCycle();
-		//}
-		cpu.emulateCycle();
+		{
+			cpu.emulateCycle();
+		}
 	}
 }
 
@@ -103,7 +102,7 @@ void GB::draw()
 {
 	clear();
 	const char lcdc = cpu.getByte(LCDC);
-	if (lcdc & 0x80) // LCD is enabled, do drawing
+	if (lcdc & 0x80 && drawing) // LCD is enabled, do drawing
 	{
 		const char* mem = cpu.dumpMem();
 		// draw background first
@@ -203,15 +202,15 @@ void GB::draw()
 		srcSurfaceRect.x = mem[SCX];
 		srcSurfaceRect.y = mem[SCY];
 		SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
-	}
-	cpu.setByte(IE, 0x1);
-	SDL_UpdateWindowSurface(window);
+		cpu.setByte(IE, 0x1);
+		SDL_UpdateWindowSurface(window);
 
-	// setup for vblank
-	for (int i = 0x90; i < 0x99; i++)
-	{
-		cpu.setByte(LY, i);
-		cpu.emulateCycle();
+		// emulate through v-blank: many games wait for a specific value of LY during v-blank before continuing execution
+		for (int i = 0x90; i < 0x99; i++)
+		{
+			cpu.setByte(LY, i);
+			cpu.emulateCycle();
+		}
 	}
 }
 
@@ -226,26 +225,10 @@ void GB::handleEvents()
 		}
 		if (e.type == SDL_KEYDOWN)
 		{
-			if (e.key.keysym.sym == SDLK_1)
+			if (e.key.keysym.sym == SDLK_ESCAPE)
 			{
-				SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0xFF, 0xFF, 0xFF));
+				running = false;
 			}
-			if (e.key.keysym.sym == SDLK_2)
-			{
-				SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0x55, 0x55, 0x55));
-			}
-			if (e.key.keysym.sym == SDLK_3)
-			{
-				SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0xAA, 0xAA, 0xAA));
-			}
-			if (e.key.keysym.sym == SDLK_4)
-			{
-				SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0x00));
-			}
-		}
-		if (e.type == SDL_KEYUP)
-		{
-			//SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0x00, 0xFF, 0xFF));
 		}
 	}
 }

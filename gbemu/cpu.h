@@ -129,6 +129,8 @@ private:
 	inline void rlc(signed char& reg);
 	inline void rrc(signed char& reg);
 	inline void rl(signed char& reg);
+	inline void rr(signed char& reg);
+	inline void sla(signed char& reg);
 	inline void bit(signed char reg, unsigned char bit);
 	void dma();
 	void interrupt(const char loc);
