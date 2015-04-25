@@ -10,6 +10,8 @@
 
 #define ROM_LOAD_FAIL 1
 #define BAD_ARGS 2
+#define ROM_TOO_BIG 3
+#define MALLOC_FAIL 4
 
 int main(int argc, char **argv)
 {
@@ -21,15 +23,30 @@ int main(int argc, char **argv)
 	GB gb;
 	if (argc == 2)
 	{
-		if (!gb.init(argv[1]))
+		int gbLoadStatus = gb.init(argv[1]);
+		if (gbLoadStatus != 0)
 		{
-			return ROM_LOAD_FAIL;
+			if (gbLoadStatus == 1)
+			{
+				std::cout << "ROM <" << argv[1] << "> not failed to load" << std::endl;
+				return ROM_LOAD_FAIL;
+			}
+			else if (gbLoadStatus == 2)
+			{
+				std::cout << "ROM <" << argv[1] << "> too large - memory mappers not supported by this emulator" << std::endl;
+				return ROM_TOO_BIG;
+			}
+			else if (gbLoadStatus == 3)
+			{
+				std::cout << "Failed to allocate memory for ROM file - nothing you can really do about this one" << std::endl;
+				return MALLOC_FAIL;
+			}
 		}
 	}
 	else
 	{
 #ifdef DEBUG_GFX
-		gb.init("tetris.gb");
+		gb.init("si.gb");
 #else
 		std::cout << "Usage: gbemu <rom file>" << std::endl;
 		return BAD_ARGS;

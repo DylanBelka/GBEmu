@@ -582,7 +582,6 @@ void CPU::halt()
 	while (!mem[IE])
 	{
 		std::cout << "halted" << std::endl;
-		system("pause");
 	}
 }
 
@@ -652,7 +651,6 @@ void CPU::dma()
 		mem[OAM + i] = mem[dmaStart + i];
 	}
 	std::cout << "DMA start: " << toHex(dmaStart) << std::endl;
-	//system("pause");
 }
 
 void CPU::interrupt(const char to)
@@ -663,6 +661,22 @@ void CPU::interrupt(const char to)
 	mem[SP] = (((PC + 3) >> 8));
 	PC = to;
 	IME = false; 
+}
+
+void CPU::handleInterrupts()
+{
+	if (IME) // are interrupts enabled?
+	{
+		switch (mem[IE])
+		{
+			case 0x1: // vblank
+			{
+				const int vblank = 0x40;
+				interrupt(vblank);
+				break;
+			}
+		}
+	}
 }
 
 void CPU::test()
@@ -677,19 +691,6 @@ void CPU::test()
 	for (int i = 0; i < 0x4500; i++)
 	{
 		emulateCycle();
-		//std::cout << "0x13: " << toHex(mem[0x13]) << std::endl;
-		//std::cout << "A: " << toHex(A) << std::endl;
-		//std::cout << "B: " << toHex(B) << std::endl;
-		//std::cout << "C: " << toHex(C) << std::endl;
-		//std::cout << "D: " << toHex(D) << std::endl;
-		//std::cout << "E: " << toHex(E) << std::endl;
-		//std::cout << "F: " << toHex(F) << std::endl;
-		//std::cout << "AF: " << toHex(AF()) << std::endl;
-		//std::cout << "BC: " << toHex(BC()) << std::endl;
-		//std::cout << "DE: " << toHex(DE()) << std::endl;
-		//std::cout << "HL: " << toHex(HL()) << std::endl;
-		//std::cout << std::endl;
-		//std::cout << toHex(mem[i]) << " at " << toHex(i) << std::endl;
 	}
 	std::cout << std::endl;
 	std::cout << "A: " << toHex(A) << std::endl;
@@ -706,18 +707,13 @@ void CPU::test()
 
 void CPU::emulateCycle()
 {
-	if (mem[IE] == 0x1 && IME) // vblank
-	{
-		interrupt(0x40);
-	}
-	unsigned char opcode = mem[PC];
+	handleInterrupts();
+	unsigned char opcode = mem[PC]; // get next opcode
 	R++; // I think this is what R does
 	std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
-	//std::cout << toHex(mem[OAM]) << std::endl;
+	// emulate the opcode (compiles to a jump table)
 	switch (opcode)
 	{
-		// increment PC by size (in bytes) of opcode
-
 		case 0x00: // NOP
 		{
 			PC++;
@@ -844,17 +840,9 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		case 0x10: // djnz * (^^^ low power mode?)
+		case 0x10: // STOP
 		{
-			B--;
-			if (B != 0)
-			{
-				PC += mem[PC + 1];
-			}
-			else
-			{ 
-				PC += 2;
-			}
+			PC++;
 			break;
 		}
 		case 0x11: // ld de, **
@@ -2793,7 +2781,7 @@ const std::string toHex(const int val)
 	return "0x" + result;
 }
 
-bool CPU::loadROM(const std::string& fileName)
+int CPU::loadROM(const std::string& fileName)
 {
 	std::ifstream file(fileName, std::ios::in | std::ios::binary | std::ios::ate);
 	char* fileStr;
@@ -2801,25 +2789,32 @@ bool CPU::loadROM(const std::string& fileName)
 	if (file.is_open())
 	{
 		size = file.tellg();
-		fileStr = new char[size];
+		fileStr = new char[size]; // get rom size
 		std::cout << "Seek size: " << size << std::endl;
 		file.seekg(0, std::ios::beg);
-		file.read(fileStr, size);
+		file.read(fileStr, size); // load the rom file into the std::string file
 		file.close();
 	}
 	else
 	{
-		return false;
+		return 1; // file load fail
 	}
+	// make sure the ROM fits within the memory
 	if (size > MAX_ROM_SIZE)
 	{
 		delete[] fileStr;
-		return false;
+		return 2; // ROM too big
 	}
+	if (fileStr == nullptr)
+	{
+		delete[] fileStr;
+		return 3; // mem alloc failure
+	}
+	// load the rom into memory starting at 0x00
 	for (unsigned i = 0; i < size; i++)
 	{
 		mem[i] = fileStr[i];
 	}
 	delete[] fileStr;
-	return true;
+	return 0; // ROM load completed succesfully
 }

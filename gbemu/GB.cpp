@@ -31,6 +31,7 @@ GB::~GB()
 bool GB::init(const std::string& romName)
 {
 	return cpu.loadROM(romName);
+	clear();
 }
 
 void GB::run()
@@ -102,7 +103,7 @@ void GB::draw()
 {
 	clear();
 	const char lcdc = cpu.getByte(LCDC);
-	if (lcdc & 0x80 && drawing) // LCD is enabled, do drawing
+	if (lcdc & 0x80) // LCD is enabled, do drawing
 	{
 		const char* mem = cpu.dumpMem();
 		// draw background first
@@ -198,11 +199,11 @@ void GB::draw()
 				}
 			}
 		}
+		cpu.setByte(IE, 0x1);
 		// copy the screen buffer from scroll positions x, y to display screen
 		srcSurfaceRect.x = mem[SCX];
 		srcSurfaceRect.y = mem[SCY];
 		SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
-		cpu.setByte(IE, 0x1);
 		SDL_UpdateWindowSurface(window);
 
 		// emulate through v-blank: many games wait for a specific value of LY during v-blank before continuing execution
@@ -228,6 +229,10 @@ void GB::handleEvents()
 			if (e.key.keysym.sym == SDLK_ESCAPE)
 			{
 				running = false;
+			}
+			if (e.key.keysym.sym == SDLK_1)
+			{
+				std::cout << e.key.keysym.sym << std::endl;
 			}
 		}
 	}

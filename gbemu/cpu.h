@@ -5,7 +5,6 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <iomanip>
 
 #include "memdefs.h"
 
@@ -25,7 +24,7 @@ public:
 	~CPU();
 
 	void emulateCycle();
-	bool loadROM(const std::string& fileName);
+	int loadROM(const std::string& fileName);
 	void test();
 
 	char* dumpMem() { return mem; }
@@ -111,6 +110,7 @@ private:
 	inline void updateCarry(short reg);
 	inline void resetCarry();
 	inline void setCarry();
+
 // opcode functions
 private:
 	inline void jr(bool cond, signed char to, unsigned char opsize);
@@ -132,10 +132,12 @@ private:
 	inline void rr(signed char& reg);
 	inline void sla(signed char& reg);
 	inline void bit(signed char reg, unsigned char bit);
-	void dma();
-	void interrupt(const char loc);
 
 	void halt();
+
+	void dma();
+	void interrupt(const char loc);
+	void handleInterrupts();
 };
 
 const std::string toHex(int);
