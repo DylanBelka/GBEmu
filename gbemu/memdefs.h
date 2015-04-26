@@ -9,24 +9,38 @@
 #define IRV_END 0x00FF
 
 // $0100-$014F - Cartridge Header Area
-#define PROGRAM_START 0x100
-#define NINTEN_LOGO 0x104
-#define NINTEN_LOGO_END 0x0133
-#define TITLE 0x0134
-#define TITLE_END 0x013E
+#define PROGRAM_START 0x100 // program(PC) starts here
+// Nintendo logo
+#define NINTEN_LOGO 0x104 
+#define NINTEN_LOGO_END 0x0133 
+// Game title
+#define TITLE 0x0134 
+#define TITLE_END 0x013E 
+// 
 #define GAME_DES 0x013F
 #define GAME_DES_END 0x0142
+// Is it a GBC Game?
 #define GBC_COMPAT 0x0143
+// Game license code
 #define NEW_LICENSE_CODE 0x0144
 #define NEW_LICENSE_CODE_END 0x0145
+// IS it compatable with the Super Gameboy?
 #define SGB_COMPAT 0x0146
+// Cartridge type
 #define CART_TYPE 0x0147
+// Rom size
 #define CART_ROM_SIZE 0x0148
+// External RAM size
 #define CART_RAM_SIZE 0x0149
+// Game destination/ region code
 #define DEST_CODE 0x014A
+// Old license code
 #define OLD_LICENSE_CODE 0x014B
+// Mask ROM version/ type
 #define MASK_ROM_VERSION 0x014C
+// Complement checksum
 #define COMPL_CHECKSUM 0x014D
+// Checksum
 #define CHECKSUM 0x014E
 #define CHECKSUM_END 0x014F
 
@@ -38,7 +52,7 @@
 #define ROM_BANK_N 0x4000
 #define ROM_BANK_N_END 0x07FFF
 
-// $8000-$97FF - Character RAM
+// $8000-$97FF - Character RAM (tile RAM)
 #define CHARACTER_RAM 0x8000
 #define CHARACTER_RAM_END 0x97FF
 
@@ -108,6 +122,7 @@
 #define STAT 0xFF41 // lcd status
 #define SCY 0xFF42 // background scroll y
 #define SCX 0xFF43 // background scroll x
+#define LY 0xFF44 // lcd y coordinate, Values range from 0->153. 144->153 is the VBlank period.
 #define LYC 0xFF45 // ly compare
 #define DMA 0xFF46 // DMA transfer
 #define BGP 0xFF47 // palette data
@@ -116,7 +131,6 @@
 #define WY 0xFF4A // window x position
 #define WX 0xFF4B // window y position
 
-#define LY 0xFF44 // lcd y coordinate, Values range from 0->153. 144->153 is the VBlank period.
 
 #define IE 0xFFFF // interrupt register
 
