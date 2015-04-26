@@ -35,6 +35,11 @@ public:
 	void setByte(unsigned short addr, char val) { mem[addr] = val; }
 	char getByte(unsigned short addr) { return mem[addr]; }
 
+	bool isHalted() { return halted; }
+	bool isStopped() { return stopped; }
+	void stopHalt() { halted = false; }
+	void stopStop() { stopped = false; }
+
 private:
 	void reset();
 
@@ -80,6 +85,8 @@ private:
 	char* mem;
 
 	bool IME = false; // interrupt master enable
+	bool halted = false; // HALT(ed)?
+	bool stopped = false; // STOP(ed)?
 
 // Flag helper functions
 private:
@@ -134,6 +141,7 @@ private:
 	inline void bit(signed char reg, unsigned char bit);
 
 	void halt();
+	void stop();
 
 	void dma();
 	void interrupt(const char loc);

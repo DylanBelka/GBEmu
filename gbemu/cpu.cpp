@@ -4,7 +4,7 @@
 // &&& = redundant opcode - 'optimized' ex: ld a, a
 
 #define MAX_ROM_SIZE 0xBFFF
-#define MEM_SIZE 65535
+#define MEM_SIZE 0xFFFF + 0x1 // give one byte padding
 
 #define ADD true
 #define SUB false
@@ -576,14 +576,15 @@ void CPU::bit(signed char reg, unsigned char bit)
 	resetN();
 }
 
-// wait for interrupt
+// set halted flag
 void CPU::halt()
 {
-	while (!mem[IE])
-	{
-		std::cout << "halted" << std::endl;
-	}
-	system("pause");
+	halted = true;
+}
+
+void CPU::stop()
+{
+	stopped = true;
 }
 
 void CPU::ret(bool cond)
