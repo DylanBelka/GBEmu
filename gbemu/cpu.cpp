@@ -583,6 +583,7 @@ void CPU::halt()
 	{
 		std::cout << "halted" << std::endl;
 	}
+	system("pause");
 }
 
 void CPU::ret(bool cond)
@@ -650,17 +651,18 @@ void CPU::dma()
 	{
 		mem[OAM + i] = mem[dmaStart + i];
 	}
-	std::cout << "DMA start: " << toHex(dmaStart) << std::endl;
+	//std::cout << "DMA start: " << toHex(dmaStart) << std::endl;
 }
 
 void CPU::interrupt(const char to)
 {
 	SP--;
-	mem[SP] = (PC + 3) & 0xFF; // + 3 is for jumping past the 3 bytes for the opcode and dest
+	mem[SP] = (PC) & 0xFF;
 	SP--;
-	mem[SP] = (((PC + 3) >> 8));
+	mem[SP] = (((PC) >> 8));
 	PC = to;
-	IME = false; 
+	IME = false; // turn off interrupts
+	mem[IE] = 0x0; // reset IE
 }
 
 void CPU::handleInterrupts()

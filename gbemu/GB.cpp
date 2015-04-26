@@ -40,8 +40,8 @@ void GB::run()
 	{
 		draw();
 		handleEvents();
-		unsigned ticks = SDL_GetTicks();
-		//while (SDL_GetTicks() - ticks > 30)
+		int ticks = SDL_GetTicks();
+		while ((int)SDL_GetTicks() - ticks < 30)
 		{
 			cpu.emulateCycle();
 		}
@@ -101,10 +101,12 @@ void GB::drawSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y)
 
 void GB::draw()
 {
+	std::cout << "drawing" << std::endl;
 	clear();
 	const char lcdc = cpu.getByte(LCDC);
 	if (lcdc & 0x80) // LCD is enabled, do drawing
 	{
+		// get a dump of the cpu's memory (gfx data is stored in this memory)
 		const char* mem = cpu.dumpMem();
 		// draw background first
 		if (lcdc & 0x1) // draw background?
@@ -130,7 +132,7 @@ void GB::draw()
 					{
 						drawSlice(mem[j], mem[j + 1], x, y); // draw the slice
 					}
-					x += 8;
+					x += 8; 
 					y -= 8;
 					if (x == WIDTH)
 					{
@@ -145,7 +147,16 @@ void GB::draw()
 				for (int i = BG_MAP_1; i < BG_MAP_1_END; i++)
 				{
 					// draw the 8x8 tile
-					unsigned short chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP; // get the location of the first tile slice in memory
+					// draw the 8x8 tile
+					unsigned short chrLocStart;
+					if (lcdc & 0x10) // unsigned characters
+					{
+						chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
+					}
+					else // signed characters
+					{
+						chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP_SIGNED; // get the location of the first tile slice in memory
+					}
 					for (int i = chrLocStart; i < chrLocStart + 0x10; i += 2) // note the += 2
 					{
 						drawSlice(mem[i], mem[i + 1], x, y); // draw the slice
@@ -155,7 +166,7 @@ void GB::draw()
 					if (x == WIDTH)
 					{
 						y += 16;
-						x = 50;
+						x = 0;
 					}
 				}
 			}

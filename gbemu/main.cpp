@@ -38,15 +38,15 @@ int main(int argc, char **argv)
 			}
 			else if (gbLoadStatus == 3)
 			{
-				std::cout << "Failed to allocate memory for ROM file - nothing you can really do about this one" << std::endl;
+				std::cout << "Failed to allocate memory for ROM file (new/malloc returned nullptr) - nothing you can really do about this one" << std::endl;
 				return MALLOC_FAIL;
 			}
 		}
 	}
-	else
+	else 
 	{
 #ifdef DEBUG_GFX
-		gb.init("si.gb");
+		gb.init("apocnow.gb");
 #else
 		std::cout << "Usage: gbemu <rom file>" << std::endl;
 		return BAD_ARGS;
