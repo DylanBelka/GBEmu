@@ -45,6 +45,10 @@ void GB::run()
 		{
 			cpu.emulateCycle();
 		}
+		if (cpu.isHalted())
+		{
+			halt();
+		}
 	}
 }
 
@@ -101,7 +105,6 @@ void GB::drawSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y)
 
 void GB::draw()
 {
-	std::cout << "drawing" << std::endl;
 	clear();
 	const char lcdc = cpu.getByte(LCDC);
 	if (lcdc & 0x80) // LCD is enabled, do drawing
@@ -247,4 +250,14 @@ void GB::handleEvents()
 			}
 		}
 	}
+}
+
+void GB::halt()
+{
+	while (!cpu.getByte(IE)) // wait for interrupt
+	{
+		draw();
+		handleEvents();
+	}
+	cpu.stopHalt();
 }

@@ -42,6 +42,8 @@ private:
 
 	bool running = true;
 
+	void halt();
+
 private:
 	CPU cpu;
 	SDL_Window* window = nullptr;
