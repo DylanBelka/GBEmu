@@ -131,7 +131,6 @@
 #define WY 0xFF4A // window x position
 #define WX 0xFF4B // window y position
 
-
 #define IE 0xFFFF // interrupt register
 
 // $FF80-$FFFE - High RAM Area

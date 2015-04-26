@@ -9,8 +9,10 @@
 #include "memdefs.h"
 #include "binLut.h"
 
-#define WIDTH 160
-#define HEIGHT 144
+#define MODIFIER 1
+
+#define WIDTH 160 * MODIFIER
+#define HEIGHT 144 * MODIFIER
 
 #define BLACK 0x00
 #define DARK_GREY 0x55
@@ -43,6 +45,7 @@ private:
 	bool running = true;
 
 	void halt();
+	void stop();
 
 private:
 	CPU cpu;

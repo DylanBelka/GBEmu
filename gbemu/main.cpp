@@ -46,7 +46,11 @@ int main(int argc, char **argv)
 	else 
 	{
 #ifdef DEBUG_GFX
-		gb.init("apocnow.gb");
+		if (gb.init("apocnow.gb") != 0)
+		{
+			std::cout << "rom not found" << std::endl;
+			return ROM_LOAD_FAIL;
+		}
 #else
 		std::cout << "Usage: gbemu <rom file>" << std::endl;
 		return BAD_ARGS;

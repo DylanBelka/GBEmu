@@ -15,11 +15,11 @@ cpu()
 	}
 	screenSurface = SDL_GetWindowSurface(window);
 	SDL_PixelFormat* fmt = screenSurface->format;
-	screenBuffer = SDL_CreateRGBSurface(NULL, 256, 256, fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
-	srcSurfaceRect.h = HEIGHT;
-	srcSurfaceRect.w = WIDTH;
-	pixel.h = 1;
-	pixel.w = 1;
+	screenBuffer = SDL_CreateRGBSurface(NULL, 256 * MODIFIER, 256 * MODIFIER, fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
+	srcSurfaceRect.h = HEIGHT * MODIFIER;
+	srcSurfaceRect.w = WIDTH * MODIFIER;
+	pixel.h = 1 * MODIFIER;
+	pixel.w = 1 * MODIFIER;
 }
 
 GB::~GB()
@@ -49,6 +49,10 @@ void GB::run()
 		{
 			halt();
 		}
+		if (cpu.isStopped())
+		{
+			stop();
+		}
 	}
 }
 
@@ -62,6 +66,7 @@ void GB::drawPixel(const char color, const unsigned x, const unsigned y)
 
 void GB::clear()
 {
+	// clear the screen to white
 	SDL_FillRect(screenBuffer, NULL, SDL_MapRGB(screenBuffer->format, 0xFF, 0xFF, 0xFF));
 }
 
@@ -72,6 +77,13 @@ inline const std::string toBin(char val)
 
 void GB::drawSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y)
 {
+	// get the binary strings of both bytes
+	// the bits of the string are compared to create the color of each pixel
+	// 1. A bit that is 0 in both bytes will be a WHITE pixel
+	// 2. A bit that is 1 in the first byte and 0 in the second will be a GREY pixel
+	// 3. A bit that is 0 in the first byte and 1 in the second will be a DARK GREY pixel
+	// 4. A bit that is 1 in both bytes will be a BLACK pixel
+	// https://slashbinbash.wordpress.com/2013/02/07/gameboy-tile-mapping-between-image-and-memory/
 	const char* bin1 = binLut[(unsigned char)b1];
 	const char* bin2 = binLut[(unsigned char)b2];
 	for (int i = 0; i < 8; i++)
@@ -90,18 +102,12 @@ void GB::drawSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y)
 			color = LIGHT_GREY;
 		}
 		//// else color = dark grey
-		drawPixel(color, x, y); // draw the actual pixel to the surface 
+		drawPixel(color, x, y); // draw the pixel to the screenBuffer 
 		x++;
 	}
 	x -= 8;
 	y++;
 }
-
-// 1. A bit that is 0 in both bytes will be a WHITE pixel
-// 2. A bit that is 1 in the first byte and 0 in the second will be a GREY pixel
-// 3. A bit that is 0 in the first byte and 1 in the second will be a DARK GREY pixel
-// 4. A bit that is 1 in both bytes will be a BLACK pixel
-// https://slashbinbash.wordpress.com/2013/02/07/gameboy-tile-mapping-between-image-and-memory/
 
 void GB::draw()
 {
@@ -122,6 +128,7 @@ void GB::draw()
 				for (int i = BG_MAP_0; i < BG_MAP_0_END; i++)
 				{
 					// draw the 8x8 tile
+					// first get the location in memory of the tile
 					unsigned short chrLocStart;
 					if (lcdc & 0x10) // unsigned characters
 					{
@@ -131,14 +138,15 @@ void GB::draw()
 					{
 						chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP_SIGNED; // get the location of the first tile slice in memory
 					}
+					// draw the slice pixel by pixel
 					for (int j = chrLocStart; j < chrLocStart + 0x10; j += 2) // note the += 2, 2 bytes per slice
 					{
-						drawSlice(mem[j], mem[j + 1], x, y); // draw the slice
+						drawSlice(mem[j], mem[j + 1], x, y); // draw the pixel of the slice
 					}
 					x += 8; 
 					y -= 8;
-					if (x == WIDTH)
-					{
+					if (x == WIDTH) // "hblank" (kind of) - at the end of the horiziontal screen, 
+					{				// move the x back to 0 and move y down 8 (y -= 8 after each slice so y += 16 === y += 8)
 						y += 16;
 						x = 0;
 					}
@@ -178,12 +186,13 @@ void GB::draw()
 		if (lcdc & 0x2) // draw sprites?
 		{
 			// sprite size: 1 = 8x16, 0 = 8x8
-			if (lcdc & 0x4)  // 8x16 wxh
+			if (lcdc & 0x4)  // 8x16 wxh ie 2 8x8 sprites stacked on top of each other
 			{
 				for (int i = OAM; i < OAM_END; i += 4)
 				{
-					unsigned y = mem[i] - 16;
-					unsigned x = mem[i + 1] - 8;
+					unsigned y = mem[i] - 16; // sprite are offset on the GB hardware by (-8, -16) so a sprite at (0, 0) is offscreen and actually at (-8, -16)
+					unsigned x = mem[i + 1] - 8; // emulate that offset here
+					// sprites are always unsigned
 					// draw the upper 8x8 tile
 					unsigned short chrLocStartUp = (unsigned char)mem[i + 2] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 					for (int j = chrLocStartUp; j < chrLocStartUp + 0x10; j += 2)
@@ -205,6 +214,7 @@ void GB::draw()
 				{
 					unsigned y = mem[i] - 16;
 					unsigned x = mem[i + 1] - 8;
+					// sprites are always unsigned
 					unsigned short chrLocStart = (unsigned char)mem[i + 2] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 					for (int j = chrLocStart; j < chrLocStart + 0x10; j += 2)
 					{
@@ -213,13 +223,18 @@ void GB::draw()
 				}
 			}
 		}
-		cpu.setByte(IE, 0x1);
-		// copy the screen buffer from scroll positions x, y to display screen
+		// copy the screen buffer to the screensurface from scroll positions (x, y) to display screen
 		srcSurfaceRect.x = mem[SCX];
 		srcSurfaceRect.y = mem[SCY];
 		SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
 		SDL_UpdateWindowSurface(window);
 
+		cpu.setByte(IE, 0x1); // set v-blank interrupt
+		// emulate through the v-blank interrupt (vblank interrupt starts at 0x40 and ends at 0x48)
+		for (int i = 0x40; i < 0x48; i++)
+		{
+			cpu.emulateCycle();
+		}
 		// emulate through v-blank: many games wait for a specific value of LY during v-blank before continuing execution
 		for (int i = 0x90; i < 0x99; i++)
 		{
@@ -256,8 +271,14 @@ void GB::halt()
 {
 	while (!cpu.getByte(IE)) // wait for interrupt
 	{
+		// run everything except for emulation of cpu cycles
 		draw();
 		handleEvents();
 	}
 	cpu.stopHalt();
+}
+
+void GB::stop()
+{
+	
 }

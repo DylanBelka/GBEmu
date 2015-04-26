@@ -484,6 +484,12 @@ void CPU::decodeExtendedInstruction(char opcode)
 			PC += 2;
 			break;
 		}
+		default:
+		{
+			PC += 2;
+			std::cout << "Unimplemented instruction: " << toHex(opcode) << std::endl;
+			system("pause");
+		}
 	}
 }
 
@@ -713,7 +719,8 @@ void CPU::emulateCycle()
 	handleInterrupts();
 	unsigned char opcode = mem[PC]; // get next opcode
 	R++; // I think this is what R does
-	std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
+	//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
+	std::cout << toHex(mem[OAM + 0x00]) << std::endl;
 	// emulate the opcode (compiles to a jump table)
 	switch (opcode)
 	{
@@ -850,7 +857,6 @@ void CPU::emulateCycle()
 		}
 		case 0x11: // ld de, **
 		{
-			//const short val = (mem[PC] << 8) | (mem[PC + 1] & 0xFF);
 			DE(load16());
 			PC += 3;
 			break;
@@ -2451,10 +2457,9 @@ void CPU::emulateCycle()
 			jp(!carry(), get16(), 3);
 			break;
 		}
-		case 0xD3: // out (*), a ~!GB
+		case 0xD3: // NOP
 		{
-			//ports[mem[PC + 1]] = A;
-			PC += 2;
+			PC++;
 			break;
 		}
 		case 0xD4: // call nc, **
@@ -2497,7 +2502,7 @@ void CPU::emulateCycle()
 		{
 			ret(true);
 			IME = true;
-			PC++;
+			//PC++; //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 			break;
 		}
 		case 0xDA: // jp c, **
@@ -2564,14 +2569,8 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		case 0xE3: // ex (sp), hl ~!GB
+		case 0xE3: // NOP
 		{
-			const short sp = SP; 
-			SP = ((L >> 8) & 0xFF);
-			SP |= (char)HL();
-
-			L = ((sp >> 8) & 0xFF);
-			H = (char)sp;
 			PC++;
 			break;
 		}
