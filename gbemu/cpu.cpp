@@ -3,15 +3,9 @@
 // ^^^ = check this
 // &&& = redundant opcode - 'optimized' ex: ld a, a
 
-#define MAX_ROM_SIZE 0xBFFF
-#define MEM_SIZE 0xFFFF + 0x1 // give one byte padding
-
-#define ADD true
-#define SUB false
-
 CPU::CPU()
 {
-	mem = new char[MEM_SIZE];
+	mem = new byte[MEM_SIZE];
 	reset();
 }
 
@@ -72,7 +66,7 @@ void CPU::reset()
 
 #pragma region FlagFuncs
 
-void CPU::updateCarry(short reg)
+void CPU::updateCarry(reg16 reg)
 {
 	F |= (reg > 0xFF || reg < 0x00) ? 0x1 : F;
 }
@@ -87,7 +81,7 @@ void CPU::setCarry()
 	F |= 0x1;
 }
 
-void CPU::updateHC(short reg)
+void CPU::updateHC(reg16 reg)
 {
 	F |= (reg > 0xF) ? 0x10 : F;
 }
@@ -118,7 +112,7 @@ void CPU::setN()
 	F |= 0x2;
 }
 
-void CPU::updateOverflow(short reg)
+void CPU::updateOverflow(reg16 reg)
 {
 	F |= (reg & 0x80) ? 0x4 : F;
 }
@@ -133,7 +127,7 @@ void CPU::setOverflow()
 	F |= 0x4;
 }
 
-void CPU::updateParity(char reg)
+void CPU::updateParity(reg16 reg)
 {
 	bool parity =
 		(((reg * 0x0101010101010101ULL) & 0x8040201008040201ULL) % 0x1FF) & 1; // https://graphics.stanford.edu/~seander/bithacks.html#ParityNaive 
@@ -151,7 +145,7 @@ void CPU::setParity()
 	F |= 0x4;
 }
 
-void CPU::updateSign(short reg)
+void CPU::updateSign(reg16 reg)
 {
 	F |= reg & 0x80;
 }
@@ -166,7 +160,7 @@ void CPU::setSign()
 	F |= 0x80;
 }
 
-void CPU::updateZero(short reg)
+void CPU::updateZero(reg16 reg)
 {
 	if (reg == 0)
 	{
@@ -234,7 +228,7 @@ void CPU::decodeExtendedInstruction(char opcode)
 		}
 		case 0x06: // rlc (hl)
 		{
-			char val = mem[(unsigned short)HL()];
+			char val = mem[(addr16)HL()];
 			val <<= 1;
 			resetCarry();
 			F |= val & 0x80;
@@ -243,7 +237,7 @@ void CPU::decodeExtendedInstruction(char opcode)
 			updateParity(val);
 			updateZero(val);
 			updateSign(val);
-			mem[(unsigned short)HL()] = val;
+			mem[(addr16)HL()] = val;
 			PC += 2;
 			break;
 		}
@@ -291,7 +285,7 @@ void CPU::decodeExtendedInstruction(char opcode)
 		}
 		case 0x0E: // rrc (hl)
 		{
-			char val = mem[(unsigned short)HL()];
+			char val = mem[(addr16)HL()];
 			val >>= 1;
 			resetCarry();
 			F |= val & 0x1;
@@ -300,7 +294,7 @@ void CPU::decodeExtendedInstruction(char opcode)
 			updateParity(val);
 			updateZero(val);
 			updateSign(val);
-			mem[(unsigned short)HL()] = val;
+			mem[(addr16)HL()] = val;
 			PC += 2;
 			break;
 		}
@@ -348,7 +342,7 @@ void CPU::decodeExtendedInstruction(char opcode)
 		}
 		case 0x16: // rl (hl)
 		{
-			char val = mem[(unsigned short)HL()];
+			char val = mem[(addr16)HL()];
 			val <<= 1;
 			val |= overflow();
 			F |= val & 0x80;
@@ -358,7 +352,7 @@ void CPU::decodeExtendedInstruction(char opcode)
 			resetHC();
 			updateZero(val);
 			updateSign(val);
-			mem[(unsigned short)HL()] = val;
+			mem[(addr16)HL()] = val;
 			PC += 2;
 			break;
 		}
@@ -406,7 +400,7 @@ void CPU::decodeExtendedInstruction(char opcode)
 		}
 		case 0x1E: // rr (hl)
 		{
-			char val = mem[(unsigned short)HL()];
+			char val = mem[(addr16)HL()];
 			val >>= 1;
 			val &= F & 0x80;
 			F |= val & 0x1;
@@ -416,7 +410,7 @@ void CPU::decodeExtendedInstruction(char opcode)
 			resetHC();
 			updateZero(val);
 			updateSign(val);
-			mem[(unsigned short)HL()] = val;
+			mem[(addr16)HL()] = val;
 			PC += 2;
 			break;
 		}
@@ -493,7 +487,7 @@ void CPU::decodeExtendedInstruction(char opcode)
 	}
 }
 
-void CPU::swapNibble(signed char val)
+void CPU::swapNibble(reg val)
 {
 	val = ((val & 0x0F) << 4 | (val & 0xF0) >> 4);
 }
@@ -508,22 +502,22 @@ void CPU::cmp(const char val)
 	updateSign(A - val);
 }
 
-const unsigned short CPU::load16()
+const addr16 CPU::load16()
 {
 	return ((mem[PC + 2] << 8) | (mem[PC + 1] & 0xFF));
 }
 
-const unsigned short CPU::get16()
+const addr16 CPU::get16()
 {
 	return ((mem[PC + 2] << 8) | (mem[PC + 1] & 0xFF));
 }
 
-const unsigned short CPU::get16(const short where)
+const addr16 CPU::get16(const addr16 where)
 {
 	return ((mem[where + 2] << 8) | (mem[where + 1] & 0xFF));
 }
 
-void CPU::rlc(signed char& reg)
+void CPU::rlc(reg& reg)
 {
 	reg <<= 1;
 	resetCarry();
@@ -537,7 +531,7 @@ void CPU::rlc(signed char& reg)
 	resetHC();
 }
 
-void CPU::rl(signed char& reg)
+void CPU::rl(reg& reg)
 {
 	reg <<= 1;
 	reg |= F & 0x1;
@@ -550,7 +544,7 @@ void CPU::rl(signed char& reg)
 	updateSign(reg);
 }
 
-void CPU::rrc(signed char& reg)
+void CPU::rrc(reg& reg)
 {
 	reg >>= 1;
 	resetCarry();
@@ -562,7 +556,7 @@ void CPU::rrc(signed char& reg)
 	updateSign(reg);
 }
 
-void CPU::rr(signed char& reg)
+void CPU::rr(reg& reg)
 {
 	reg >>= 1;
 	reg &= F & 0x80;
@@ -575,7 +569,7 @@ void CPU::rr(signed char& reg)
 	updateSign(reg);
 }
 
-void CPU::bit(signed char reg, unsigned char bit)
+void CPU::bit(reg reg, unsigned char bit)
 {
 	updateZero(B & bit);
 	setHC();
@@ -624,7 +618,7 @@ void CPU::call(bool cond)
 	}
 }
 
-inline void CPU::rst(unsigned char mode)
+inline void CPU::rst(const u8 mode)
 {
 	mem[SP] = PC + 1;
 	PC = mode;
@@ -632,12 +626,12 @@ inline void CPU::rst(unsigned char mode)
 
 // jrs PC to [to] if cond is true
 // Else it increases PC by [opsize]
-inline void CPU::jr(bool cond, signed char to, unsigned char opsize)
+inline void CPU::jr(bool cond, s8 to, u8 opsize)
 {
 	PC += (cond) ? to + opsize : opsize; // the + 2 is to jump past the initial instruction
 }
 
-void CPU::jp(bool cond, signed short to, unsigned char opsize)
+void CPU::jp(bool cond, s16 to, u8 opsize)
 {
 	if (cond)
 	{
@@ -653,7 +647,7 @@ void CPU::jp(bool cond, signed short to, unsigned char opsize)
 
 void CPU::dma()
 {
-	const unsigned short dmaStart = A << 0x8;
+	const addr16 dmaStart = A << 0x8;
 	for (int i = 0; i < 0x8C; i++)
 	{
 		mem[OAM + i] = mem[dmaStart + i];
@@ -719,8 +713,11 @@ void CPU::emulateCycle()
 	handleInterrupts();
 	unsigned char opcode = mem[PC]; // get next opcode
 	R++; // I think this is what R does
-	//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
-	std::cout << toHex(mem[OAM + 0x00]) << std::endl;
+	std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
+	if (mem[OAM] != 0)
+	{
+		system("pause");
+	}
 	// emulate the opcode (compiles to a jump table)
 	switch (opcode)
 	{
@@ -731,13 +728,13 @@ void CPU::emulateCycle()
 		}
 		case 0x01: // ld BC, **
 		{
-			BC((unsigned short)get16());
+			BC((addr16)get16());
 			PC += 3;
 			break;
 		}
 		case 0x02: // ld (BC), a
 		{
-			mem[(unsigned short)BC()] = A;
+			mem[(addr16)BC()] = A;
 			PC++;
 			break;
 		}
@@ -802,7 +799,7 @@ void CPU::emulateCycle()
 		}
 		case 0x0A: // ld a, (BC)
 		{
-			A = mem[(unsigned short)BC()];
+			A = mem[(addr16)BC()];
 			PC++;
 			break;
 		}
@@ -863,7 +860,7 @@ void CPU::emulateCycle()
 		}
 		case 0x12: // ld (de), a
 		{
-			mem[(unsigned short)DE()] = A;
+			mem[(addr16)DE()] = A;
 			PC++;
 			break;
 		}
@@ -989,7 +986,7 @@ void CPU::emulateCycle()
 		}
 		case 0x22: // ldi (hl), a   or   ld (hl+), a
 		{
-			mem[(unsigned short)HL()] = A;
+			mem[(addr16)HL()] = A;
 			const short hl = HL();
 			HL(hl + 1);
 			PC++;
@@ -1066,7 +1063,7 @@ void CPU::emulateCycle()
 		}
 		case 0x2A: // ldi a, (hl) 
 		{
-			A = mem[(unsigned short)HL()];
+			A = mem[(addr16)HL()];
 			const short hl = HL();
 			HL(hl + 1);
 			PC++;
@@ -1126,7 +1123,7 @@ void CPU::emulateCycle()
 		}
 		case 0x32: // ldd (hl), a
 		{
-			mem[(unsigned short)HL()] = A;
+			mem[(addr16)HL()] = A;
 			const short hl = HL();
 			HL(hl - 1);
 			PC++;
@@ -1464,7 +1461,7 @@ void CPU::emulateCycle()
 		}
 		case 0x66: // ld h, (hl)
 		{
-			H = mem[(unsigned short)HL()];
+			H = mem[(addr16)HL()];
 			PC++;
 			break;
 		}
@@ -1511,7 +1508,7 @@ void CPU::emulateCycle()
 		}
 		case 0x6E: // ld l, (hl)
 		{
-			L = mem[(unsigned short)HL()];
+			L = mem[(addr16)HL()];
 			PC++;
 			break;
 		}
@@ -1523,37 +1520,37 @@ void CPU::emulateCycle()
 		}
 		case 0x70: // ld (hl), b
 		{
-			mem[(unsigned short)HL()] = B;
+			mem[(addr16)HL()] = B;
 			PC++;
 			break;
 		}
 		case 0x71: // ld (hl), c
 		{
-			mem[(unsigned short)HL()] = C;
+			mem[(addr16)HL()] = C;
 			PC++;
 			break;
 		}
 		case 0x72: // ld (hl), d
 		{
-			mem[(unsigned short)HL()] = D;
+			mem[(addr16)HL()] = D;
 			PC++;
 			break;
 		}
 		case 0x73: // ld (hl), e
 		{
-			mem[(unsigned short)HL()] = E;
+			mem[(addr16)HL()] = E;
 			PC++;
 			break;
 		}
 		case 0x74: // ld (hl), h
 		{
-			mem[(unsigned short)HL()] = H;
+			mem[(addr16)HL()] = H;
 			PC++;
 			break;
 		}
 		case 0x75: // ld (hl), l
 		{
-			mem[(unsigned short)HL()] = L;
+			mem[(addr16)HL()] = L;
 			PC++;
 			break;
 		}
@@ -1565,7 +1562,7 @@ void CPU::emulateCycle()
 		}
 		case 0x77: // ld (hl), a
 		{
-			mem[(unsigned short)HL()] = A;
+			mem[(addr16)HL()] = A;
 			PC++;
 			break;
 		}
@@ -1607,7 +1604,7 @@ void CPU::emulateCycle()
 		}
 		case 0x7E: // ld a, (hl)
 		{
-			A = mem[(unsigned short)HL()];
+			A = mem[(addr16)HL()];
 			PC++;
 			break;
 		}
@@ -1690,7 +1687,7 @@ void CPU::emulateCycle()
 		}
 		case 0x86: // add a, (hl)
 		{
-			A += mem[(unsigned short)HL()];
+			A += mem[(addr16)HL()];
 			updateCarry(A);
 			updateN(ADD);
 			updateOverflow(A);
@@ -1786,7 +1783,7 @@ void CPU::emulateCycle()
 		}
 		case 0x8E: // adc a, (hl)
 		{
-			A += mem[(unsigned short)HL()] + carry();
+			A += mem[(addr16)HL()] + carry();
 			updateCarry(A);
 			updateN(ADD);
 			updateOverflow(A);
@@ -1882,7 +1879,7 @@ void CPU::emulateCycle()
 		}
 		case 0x96: // sub (hl)
 		{
-			A -= mem[(unsigned short)HL()];
+			A -= mem[(addr16)HL()];
 			updateCarry(A);
 			updateN(SUB);
 			updateOverflow(A);
@@ -1978,7 +1975,7 @@ void CPU::emulateCycle()
 		}
 		case 0x9E: // sbc a, (hl)
 		{
-			A -= mem[(unsigned short)HL()] - carry();
+			A -= mem[(addr16)HL()] - carry();
 			updateCarry(A);
 			updateN(SUB);
 			updateOverflow(A);
@@ -2074,7 +2071,7 @@ void CPU::emulateCycle()
 		}
 		case 0xA6: // and (hl)
 		{
-			A &= mem[(unsigned short)HL()];
+			A &= mem[(addr16)HL()];
 			resetCarry();
 			resetN();
 			updateParity(A);
@@ -2170,7 +2167,7 @@ void CPU::emulateCycle()
 		}
 		case 0xAE: // xor (hl)
 		{
-			A ^= mem[(unsigned short)HL()];
+			A ^= mem[(addr16)HL()];
 			resetCarry();
 			resetN();
 			updateParity(A);
@@ -2266,7 +2263,7 @@ void CPU::emulateCycle()
 		}
 		case 0xB6: // or (hl)
 		{
-			A |= mem[(unsigned short)HL()];
+			A |= mem[(addr16)HL()];
 			resetCarry();
 			resetN();
 			updateParity(A);
@@ -2326,7 +2323,7 @@ void CPU::emulateCycle()
 		}
 		case 0xBE: // cp (hl)
 		{
-			cmp(mem[(unsigned short)HL()]);
+			cmp(mem[(addr16)HL()]);
 			PC++;
 			break;
 		}
@@ -2547,7 +2544,7 @@ void CPU::emulateCycle()
 		case 0xE0: //ld (0xFF00 + n), a
 		{
 			mem[0xFF00 + mem[PC + 1]] = A;
-			if ((unsigned char )mem[PC + 1] == 0x46)
+			if ((byte)mem[PC + 1] == 0x46)
 			{
 				dma();
 			}
@@ -2617,7 +2614,7 @@ void CPU::emulateCycle()
 		}
 		case 0xE9: // jp (hl)
 		{
-			jp(true, (unsigned short)HL(), 1);
+			jp(true, (addr16)HL(), 1);
 			break;
 		}
 		case 0xEA: // ld (**), a
@@ -2663,7 +2660,7 @@ void CPU::emulateCycle()
 		}
 		case 0xF0: //ld a, (0xFF00 + n) or ldh, (*)
 		{
-			A = mem[(unsigned short)(0xFF00 + mem[PC + 1])];
+			A = mem[(addr16)(0xFF00 + mem[PC + 1])];
 			PC += 2;
 			break;
 		}
@@ -2756,7 +2753,7 @@ void CPU::emulateCycle()
 		}
 		case 0xFE: // cp *
 		{
-			cmp((unsigned short)mem[PC + 1]);
+			cmp((addr16)mem[PC + 1]);
 			PC += 2;
 			break;
 		}
@@ -2818,5 +2815,5 @@ int CPU::loadROM(const std::string& fileName)
 		mem[i] = fileStr[i];
 	}
 	delete[] fileStr;
-	return 0; // ROM load completed succesfully
+	return EXIT_SUCCESS; // ROM load completed succesfully
 }

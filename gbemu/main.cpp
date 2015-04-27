@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 	else 
 	{
 #ifdef DEBUG_GFX
-		if (gb.init("apocnow.gb") != 0)
+		if (gb.init("hello_sprite.gb") != 0)
 		{
 			std::cout << "rom not found" << std::endl;
 			return ROM_LOAD_FAIL;

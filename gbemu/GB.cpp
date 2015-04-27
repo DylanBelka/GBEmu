@@ -75,7 +75,7 @@ inline const std::string toBin(char val)
 	return binLut[(unsigned char)val];
 }
 
-void GB::drawSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y)
+void GB::drawSlice(const byte b1, const byte b2, unsigned& x, unsigned& y)
 {
 	// get the binary strings of both bytes
 	// the bits of the string are compared to create the color of each pixel
@@ -109,119 +109,132 @@ void GB::drawSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y)
 	y++;
 }
 
+void GB::drawBG(const char* mem)
+{
+	unsigned x = 0;
+	unsigned y = 0;
+	const byte lcdc = cpu.getByte(LCDC);
+	if (!(lcdc & 0x40)) // 0 = bg0, 1 = bg1
+	{
+		// bg0, draw all of the 8x8 tiles
+		for (int i = BG_MAP_0; i < BG_MAP_0_END; i++)
+		{
+			// draw the 8x8 tile
+			// first get the location in memory of the tile
+			addr16 chrLocStart;
+			if (lcdc & 0x10) // unsigned characters
+			{
+				chrLocStart = (ubyte)mem[i] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
+			}
+			else // signed characters
+			{
+				chrLocStart = (ubyte)mem[i] * 0x10 + CHR_MAP_SIGNED; // get the location of the first tile slice in memory
+			}
+			// draw the slice pixel by pixel
+			for (int j = chrLocStart; j < chrLocStart + 0x10; j += 2) // note the += 2, 2 bytes per slice
+			{
+				drawSlice(mem[j], mem[j + 1], x, y); // draw the pixel of the slice
+			}
+			x += 8;
+			y -= 8;
+			if (x == WIDTH) // "hblank" (kind of) - at the end of the horiziontal screen, 
+			{				// move the x back to 0 and move y down 8 (y -= 8 after each slice so y += 16 === y += 8)
+				y += 16;
+				x = 0;
+			}
+		}
+	}
+	else // bg1
+	{
+		// bg1 ^^^ make sure to fix this when done with bg0
+		for (int i = BG_MAP_1; i < BG_MAP_1_END; i++)
+		{
+			// draw the 8x8 tile
+			// draw the 8x8 tile
+			addr16 chrLocStart;
+			if (lcdc & 0x10) // unsigned characters
+			{
+				chrLocStart = (ubyte)mem[i] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
+			}
+			else // signed characters
+			{
+				chrLocStart = (ubyte)mem[i] * 0x10 + CHR_MAP_SIGNED; // get the location of the first tile slice in memory
+			}
+			for (int i = chrLocStart; i < chrLocStart + 0x10; i += 2) // note the += 2
+			{
+				drawSlice(mem[i], mem[i + 1], x, y); // draw the slice
+			}
+			x += 8;
+			y -= 8;
+			if (x == WIDTH)
+			{
+				y += 16;
+				x = 0;
+			}
+		}
+	}
+}
+
+void GB::drawSprites(const byte* mem)
+{
+	const byte lcdc = cpu.getByte(LCDC);
+	// sprite size: 1 = 8x16, 0 = 8x8
+	if (lcdc & 0x4)  // 8x16 wxh ie 2 8x8 sprites stacked on top of each other
+	{
+		for (int i = OAM; i < OAM_END; i += 4)
+		{
+			unsigned y = mem[i] - 16; // sprite are offset on the GB hardware by (-8, -16) so a sprite at (0, 0) is offscreen and actually at (-8, -16)
+			unsigned x = mem[i + 1] - 8; // emulate that offset here
+			// sprites are always unsigned
+			// draw the upper 8x8 tile
+			addr16 chrLocStartUp = (ubyte)mem[i + 2] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
+			for (int j = chrLocStartUp; j < chrLocStartUp + 0x10; j += 2)
+			{
+				drawSlice(mem[j], mem[j + 1], x, y);
+			}
+			// draw the lower 8x8 tile
+			addr16 chrLocStartLow = chrLocStartUp + 0x10;
+			for (int j = chrLocStartLow; j < chrLocStartLow + 0x10; j += 2)
+			{
+				drawSlice(mem[j], mem[j + 1], x, y);
+			}
+		}
+
+	}
+	else // 8x8
+	{
+		for (int i = OAM; i < OAM_END; i += 4)
+		{
+			unsigned y = mem[i] - 16;
+			unsigned x = mem[i + 1] - 8;
+			// sprites are always unsigned
+			addr16 chrLocStart = (ubyte)mem[i + 2] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
+			for (int j = chrLocStart; j < chrLocStart + 0x10; j += 2)
+			{
+				drawSlice(mem[j], mem[j + 1], x, y);
+			}
+		}
+	}
+
+}
+
 void GB::draw()
 {
 	clear();
-	const char lcdc = cpu.getByte(LCDC);
+	const byte lcdc = cpu.getByte(LCDC);
 	if (lcdc & 0x80) // LCD is enabled, do drawing
 	{
 		// get a dump of the cpu's memory (gfx data is stored in this memory)
-		const char* mem = cpu.dumpMem();
+		const byte* mem = cpu.dumpMem();
 		// draw background first
 		if (lcdc & 0x1) // draw background?
 		{
-			unsigned x = 0;
-			unsigned y = 0;
-			if (!(lcdc & 0x40)) // 0 = bg0, 1 = bg1
-			{
-				// bg0, draw all of the 8x8 tiles
-				for (int i = BG_MAP_0; i < BG_MAP_0_END; i++)
-				{
-					// draw the 8x8 tile
-					// first get the location in memory of the tile
-					unsigned short chrLocStart;
-					if (lcdc & 0x10) // unsigned characters
-					{
-						chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
-					}
-					else // signed characters
-					{
-						chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP_SIGNED; // get the location of the first tile slice in memory
-					}
-					// draw the slice pixel by pixel
-					for (int j = chrLocStart; j < chrLocStart + 0x10; j += 2) // note the += 2, 2 bytes per slice
-					{
-						drawSlice(mem[j], mem[j + 1], x, y); // draw the pixel of the slice
-					}
-					x += 8; 
-					y -= 8;
-					if (x == WIDTH) // "hblank" (kind of) - at the end of the horiziontal screen, 
-					{				// move the x back to 0 and move y down 8 (y -= 8 after each slice so y += 16 === y += 8)
-						y += 16;
-						x = 0;
-					}
-				}
-			}
-			else // bg1
-			{
-				// bg1 ^^^ make sure to fix this when done with bg0
-				for (int i = BG_MAP_1; i < BG_MAP_1_END; i++)
-				{
-					// draw the 8x8 tile
-					// draw the 8x8 tile
-					unsigned short chrLocStart;
-					if (lcdc & 0x10) // unsigned characters
-					{
-						chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
-					}
-					else // signed characters
-					{
-						chrLocStart = (unsigned char)mem[i] * 0x10 + CHR_MAP_SIGNED; // get the location of the first tile slice in memory
-					}
-					for (int i = chrLocStart; i < chrLocStart + 0x10; i += 2) // note the += 2
-					{
-						drawSlice(mem[i], mem[i + 1], x, y); // draw the slice
-					}
-					x += 8;
-					y -= 8;
-					if (x == WIDTH)
-					{
-						y += 16;
-						x = 0;
-					}
-				}
-			}
+			drawBG(mem);
 		}
 		// draw sprites
 		if (lcdc & 0x2) // draw sprites?
 		{
-			// sprite size: 1 = 8x16, 0 = 8x8
-			if (lcdc & 0x4)  // 8x16 wxh ie 2 8x8 sprites stacked on top of each other
-			{
-				for (int i = OAM; i < OAM_END; i += 4)
-				{
-					unsigned y = mem[i] - 16; // sprite are offset on the GB hardware by (-8, -16) so a sprite at (0, 0) is offscreen and actually at (-8, -16)
-					unsigned x = mem[i + 1] - 8; // emulate that offset here
-					// sprites are always unsigned
-					// draw the upper 8x8 tile
-					unsigned short chrLocStartUp = (unsigned char)mem[i + 2] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
-					for (int j = chrLocStartUp; j < chrLocStartUp + 0x10; j += 2)
-					{
-						drawSlice(mem[j], mem[j + 1], x, y);
-					}
-					// draw the lower 8x8 tile
-					unsigned short chrLocStartLow = chrLocStartUp + 0x10;
-					for (int j = chrLocStartLow; j < chrLocStartLow + 0x10; j += 2)
-					{
-						drawSlice(mem[j], mem[j + 1], x, y);
-					}
-				}
-
-			}
-			else // 8x8
-			{
-				for (int i = OAM; i < OAM_END; i += 4)
-				{
-					unsigned y = mem[i] - 16;
-					unsigned x = mem[i + 1] - 8;
-					// sprites are always unsigned
-					unsigned short chrLocStart = (unsigned char)mem[i + 2] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
-					for (int j = chrLocStart; j < chrLocStart + 0x10; j += 2)
-					{
-						drawSlice(mem[j], mem[j + 1], x, y);
-					}
-				}
-			}
+			drawSprites(mem); 
 		}
 		// copy the screen buffer to the screensurface from scroll positions (x, y) to display screen
 		srcSurfaceRect.x = mem[SCX];

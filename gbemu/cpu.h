@@ -17,6 +17,27 @@ http://tutorials.eeems.ca/ASMin28Days/lesson/day04.html
 http://www.zophar.net/fileuploads/2/10807fvllz/z80-1.txt
 */
 
+#define MAX_ROM_SIZE 0xBFFF
+#define MEM_SIZE 0xFFFF + 0x1 // give one byte padding
+
+#define ADD true
+#define SUB false
+
+typedef unsigned short addr16; // 16-bit address
+typedef unsigned char addr8; // 8-bit address
+
+typedef signed char reg; // register
+typedef signed short reg16; // 16-bit register
+
+typedef unsigned char u8;
+typedef signed char s8;
+typedef char byte; // use if sign does not matter
+typedef unsigned char ubyte;
+typedef signed char sbyte;
+
+typedef unsigned short u16;
+typedef signed short s16;
+
 class CPU
 {
 public:
@@ -27,13 +48,13 @@ public:
 	int loadROM(const std::string& fileName);
 	void test();
 
-	char* dumpMem() { return mem; }
-	void cpyMem(char* mem) { this->mem = mem; }
+	byte* dumpMem() { return mem; }
+	void cpyMem(byte* mem) { this->mem = mem; }
 
 // CPU status getting/ setting functions
 public:
-	void setByte(unsigned short addr, char val) { mem[addr] = val; }
-	char getByte(unsigned short addr) { return mem[addr]; }
+	void setByte(addr16 addr, byte val) { mem[addr] = val; }
+	byte getByte(addr16 addr) { return mem[addr]; }
 
 	bool isHalted() { return halted; }
 	bool isStopped() { return stopped; }
@@ -46,13 +67,13 @@ private:
 // registers
 private:
 	// 8 bit registers
-	signed char A;
-	signed char B;
-	signed char C;
-	signed char D;
-	signed char E;
-	signed char H;
-	signed char L;
+	reg A;
+	reg B;
+	reg C;
+	reg D;
+	reg E;
+	reg H;
+	reg L;
 
 	unsigned char F;		// flag register
 
@@ -61,28 +82,28 @@ private:
 	inline bool zero() { return F & 0x40; }
 	inline bool half_carry() { return F & 0x10; }
 	inline bool parity() { return F & 0x4; }
-#define overflow() parity()
+	inline bool overflow() { return F & 0x4; }
 	inline bool N() { return F & 0x2; } // add or subtract
 	inline bool carry() { return F & 0x1; }
 
 	// 16 bit "registers"
-	inline short AF() { return ((A << 8) | (F & 0xFF)); }
-	inline short BC() { return ((B << 8) | (C & 0xFF)); }
-	inline short DE() { return ((D << 8) | (E & 0xFF)); }
-	inline short HL() { return ((H << 8) | (L & 0xFF)); }
+	inline reg16 AF() { return ((A << 8) | (F & 0xFF)); }
+	inline reg16 BC() { return ((B << 8) | (C & 0xFF)); }
+	inline reg16 DE() { return ((D << 8) | (E & 0xFF)); }
+	inline reg16 HL() { return ((H << 8) | (L & 0xFF)); }
 
-	inline void AF(signed short val) { A = ((val >> 8) & 0xFF); F = (char)val; } // For Hb: shift the value up and mask off lower bits
-	inline void BC(signed short val) { B = ((val >> 8) & 0xFF); C = (char)val; } // For Lb: cast to char which automatically masks upper bits
-	inline void DE(signed short val) { D = ((val >> 8) & 0xFF); E = (char)val; }
-	inline void HL(signed short val) { H = ((val >> 8) & 0xFF); L = (char)val; }
+	inline void AF(s16 val) { A = ((val >> 8) & 0xFF); F = (byte)val; } // For Hb: shift the value up and mask off lower bits
+	inline void BC(s16 val) { B = ((val >> 8) & 0xFF); C = (byte)val; } // For Lb: cast to char which automatically masks upper bits
+	inline void DE(s16 val) { D = ((val >> 8) & 0xFF); E = (byte)val; }
+	inline void HL(s16 val) { H = ((val >> 8) & 0xFF); L = (byte)val; }
 
-	char I;		// interrupt page address register
+	byte I;		// interrupt page address register
 	//short IX, IY;	// 16 bit index registers ~!GB
 	unsigned short PC;		// program counter register
-	char R;		// memory refresh register
+	byte R;		// memory refresh register
 	unsigned short SP;		// stack pointer
 
-	char* mem;
+	byte* mem; // cpu memory (0xFFFF in size)
 
 	bool IME = false; // interrupt master enable
 	bool halted = false; // HALT(ed)?
@@ -90,23 +111,23 @@ private:
 
 // Flag helper functions
 private:
-	inline void updateSign(short reg);
+	inline void updateSign(reg16 reg);
 	inline void resetSign();
 	inline void setSign();
 
-	inline void updateZero(short reg);
+	inline void updateZero(reg16 reg);
 	inline void resetZero();
 	inline void setZero();
 
-	inline void updateHC(short reg);
+	inline void updateHC(reg16 reg);
 	inline void resetHC();
 	inline void setHC();
 
-	inline void updateParity(char reg);
+	inline void updateParity(reg16 reg);
 	inline void resetParity();
 	inline void setParity();
 
-	inline void updateOverflow(short reg);
+	inline void updateOverflow(reg16 reg);
 	inline void resetOverflow();
 	inline void setOverflow();
 
@@ -114,37 +135,37 @@ private:
 	inline void resetN();
 	inline void setN();
 
-	inline void updateCarry(short reg);
+	inline void updateCarry(reg16 reg);
 	inline void resetCarry();
 	inline void setCarry();
 
 // opcode functions
 private:
-	inline void jr(bool cond, signed char to, unsigned char opsize);
-	void jp(bool cond, signed short to, unsigned char opsize);
-	void cmp(const char val);
+	inline void jr(bool cond, s8 to, u8 opsize);
+	void jp(bool cond, s16 to, u8 opsize);
+	void cmp(const byte val);
 	void ret(bool cond);
 	void call(bool cond);
-	void rst(const unsigned char mode);
+	void rst(const u8 mode);
 
 	inline const unsigned short load16();
 	inline const unsigned short get16();
-	inline const unsigned short get16(const short where);
+	inline const unsigned short get16(const addr16 where);
 
-	void decodeExtendedInstruction(char opcode);
-	void swapNibble(signed char reg);
-	inline void rlc(signed char& reg);
-	inline void rrc(signed char& reg);
-	inline void rl(signed char& reg);
-	inline void rr(signed char& reg);
-	inline void sla(signed char& reg);
-	inline void bit(signed char reg, unsigned char bit);
+	void decodeExtendedInstruction(byte opcode);
+	void swapNibble(reg reg);
+	inline void rlc(reg& reg);
+	inline void rrc(reg& reg);
+	inline void rl(reg& reg);
+	inline void rr(reg& reg);
+	inline void sla(reg& reg);
+	inline void bit(reg reg, unsigned char bit);
 
 	void halt();
 	void stop();
 
 	void dma();
-	void interrupt(const char loc);
+	void interrupt(const byte loc);
 	void handleInterrupts();
 };
 

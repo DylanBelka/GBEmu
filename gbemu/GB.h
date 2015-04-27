@@ -19,8 +19,6 @@
 #define LIGHT_GREY 0xAA
 #define WHITE 0xFF
 
-#define DEBUG
-
 /*
 Fix so that rendering does not happen every cycle
 */
@@ -37,9 +35,11 @@ public:
 private:
 	void draw();
 	void handleEvents();
-	void drawSlice(unsigned char b1, unsigned char b2, unsigned& x, unsigned& y);
+	void drawSlice(const byte b1, const byte b2, unsigned& x, unsigned& y);
 
 	void drawPixel(const char color, const unsigned x, const unsigned y);
+	void drawBG(const byte* mem);
+	void drawSprites(const byte* mem);
 	inline void clear();
 
 	bool running = true;
@@ -54,9 +54,6 @@ private:
 	SDL_Surface* screenBuffer = nullptr; // full 32x32 virtual gameboy screen
 	SDL_Rect srcSurfaceRect;
 	SDL_Rect pixel;
-
-	unsigned currentTime;
-	unsigned lastTime;
 };
 
 #endif
