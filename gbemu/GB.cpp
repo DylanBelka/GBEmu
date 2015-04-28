@@ -70,22 +70,17 @@ void GB::clear()
 	SDL_FillRect(screenBuffer, NULL, SDL_MapRGB(screenBuffer->format, 0xFF, 0xFF, 0xFF));
 }
 
-inline const std::string toBin(char val)
-{
-	return binLut[(unsigned char)val];
-}
-
+// get the binary strings of both bytes
 void GB::drawSlice(const byte b1, const byte b2, unsigned& x, unsigned& y)
 {
-	// get the binary strings of both bytes
 	// the bits of the string are compared to create the color of each pixel
 	// 1. A bit that is 0 in both bytes will be a WHITE pixel
 	// 2. A bit that is 1 in the first byte and 0 in the second will be a GREY pixel
 	// 3. A bit that is 0 in the first byte and 1 in the second will be a DARK GREY pixel
 	// 4. A bit that is 1 in both bytes will be a BLACK pixel
 	// https://slashbinbash.wordpress.com/2013/02/07/gameboy-tile-mapping-between-image-and-memory/
-	const char* bin1 = binLut[(unsigned char)b1];
-	const char* bin2 = binLut[(unsigned char)b2];
+	const char* bin1 = binLut[(ubyte)b1];
+	const char* bin2 = binLut[(ubyte)b2];
 	for (int i = 0; i < 8; i++)
 	{
 		unsigned char color = DARK_GREY;
@@ -242,12 +237,17 @@ void GB::draw()
 		SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
 		SDL_UpdateWindowSurface(window);
 
-		cpu.setByte(IE, 0x1); // set v-blank interrupt
-		// emulate through the v-blank interrupt (vblank interrupt starts at 0x40 and ends at 0x48)
-		for (int i = 0x40; i < 0x48; i++)
+		if (framesSinceLastVBlank >= framesBetweenVBlank)
 		{
-			cpu.emulateCycle();
+			framesSinceLastVBlank = 0;
+			cpu.setByte(IF, 0x1); // set v-blank interrupt
 		}
+		framesSinceLastVBlank++;
+		//// emulate through the v-blank interrupt (vblank interrupt starts at 0x40 and ends at 0x48)
+		//for (int i = 0x40; i < 0x48; i++)
+		//{
+		//	cpu.emulateCycle();
+		//}
 		// emulate through v-blank: many games wait for a specific value of LY during v-blank before continuing execution
 		for (int i = 0x90; i < 0x99; i++)
 		{

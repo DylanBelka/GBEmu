@@ -662,8 +662,8 @@ void CPU::jp(bool cond, s16 to, u8 opsize)
 
 void CPU::dma()
 {
-	const addr16 dmaStart = A << 0x8;
-	for (int i = 0; i < 0x8C; i++)
+	const addr16 dmaStart = A << 0x8; // get the location that the DMA will be copying from
+	for (int i = 0; i < 0x8C; i++) // copy the 0x8C bytes from dmaStart to the OAM
 	{
 		mem[OAM + i] = mem[dmaStart + i];
 	}
@@ -671,8 +671,9 @@ void CPU::dma()
 
 void CPU::interrupt(const char to)
 {
-	push(PC);
-	PC = to;
+	push(PC); // push the program counter onto the stack
+	PC = to; // jump to the interrupt location
+	// disable interrupts
 	IME = false; 
 	mem[IF] = 0x0;
 }
