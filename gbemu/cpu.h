@@ -8,14 +8,15 @@
 
 #include "memdefs.h"
 
-/*
+/**
 Resources:
-http://clrhome.org/table/
-http://fms.komkon.org/GameBoy/Tech/Software.html
-http://gameboy.mongenel.com/dmg/asmmemmap.html
-http://tutorials.eeems.ca/ASMin28Days/lesson/day04.html
-http://www.zophar.net/fileuploads/2/10807fvllz/z80-1.txt
-*/
+* http://clrhome.org/table/
+* http://fms.komkon.org/GameBoy/Tech/Software.html
+* http://gameboy.mongenel.com/dmg/asmmemmap.html
+* http://tutorials.eeems.ca/ASMin28Days/lesson/day04.html
+* http://www.zophar.net/fileuploads/2/10807fvllz/z80-1.txt
+* And many more
+**/
 
 #define MAX_ROM_SIZE 0xBFFF
 #define MEM_SIZE 0xFFFF + 0x1 // give one byte padding
@@ -31,7 +32,7 @@ typedef signed short reg16; // 16-bit register
 
 typedef unsigned char u8;
 typedef signed char s8;
-typedef char byte; // use if sign does not matter
+typedef char byte; // 8-bit for when sign is unspecified
 typedef unsigned char ubyte;
 typedef signed char sbyte;
 
@@ -105,7 +106,8 @@ private:
 
 	byte* mem; // cpu memory (0xFFFF in size)
 
-	bool IME = false; // interrupt master enable
+	bool IME = true; // interrupt master enable
+
 	bool halted = false; // HALT(ed)?
 	bool stopped = false; // STOP(ed)?
 
@@ -147,6 +149,9 @@ private:
 	void ret(bool cond);
 	void call(bool cond);
 	void rst(const u8 mode);
+
+	void push(reg16 val);
+	reg16 pop();
 
 	inline const unsigned short load16();
 	inline const unsigned short get16();

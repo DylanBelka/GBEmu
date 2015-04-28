@@ -591,10 +591,7 @@ void CPU::ret(bool cond)
 {
 	if (cond)
 	{
-		PC = mem[SP] << 8;
-		SP++;
-		PC |= mem[SP] & 0xFF;
-		SP++;
+		PC = pop(); // pop PC off the stack
 	}
 	else
 	{
@@ -618,9 +615,27 @@ void CPU::call(bool cond)
 	}
 }
 
+void CPU::push(reg16 val)
+{
+	SP--;
+	mem[SP] = val & 0xFF;
+	SP--;
+	mem[SP] = val >> 8;
+}
+
+reg16 CPU::pop()
+{
+	reg16 ret = 0;
+	ret = mem[SP] << 8;
+	SP++;
+	ret |= mem[SP] & 0xFF;
+	SP++;
+	return ret;
+}
+
 inline void CPU::rst(const u8 mode)
 {
-	mem[SP] = PC + 1;
+	push(PC + 1);
 	PC = mode;
 }
 
@@ -652,32 +667,26 @@ void CPU::dma()
 	{
 		mem[OAM + i] = mem[dmaStart + i];
 	}
-	//std::cout << "DMA start: " << toHex(dmaStart) << std::endl;
 }
 
 void CPU::interrupt(const char to)
 {
-	SP--;
-	mem[SP] = (PC) & 0xFF;
-	SP--;
-	mem[SP] = (((PC) >> 8));
+	push(PC);
 	PC = to;
-	IME = false; // turn off interrupts
-	mem[IE] = 0x0; // reset IE
+	IME = false; 
+	mem[IF] = 0x0;
 }
 
 void CPU::handleInterrupts()
 {
+	const byte intEnable = mem[IE];
+	const byte intFlag = mem[IF];
 	if (IME) // are interrupts enabled?
 	{
-		switch (mem[IE])
+		if ((intEnable & 0x1) && (intFlag & 0x1)) // vblank
 		{
-			case 0x1: // vblank
-			{
-				const int vblank = 0x40;
-				interrupt(vblank);
-				break;
-			}
+			const int vblank = 0x40;
+			interrupt(vblank);
 		}
 	}
 }
@@ -714,10 +723,6 @@ void CPU::emulateCycle()
 	unsigned char opcode = mem[PC]; // get next opcode
 	R++; // I think this is what R does
 	std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
-	if (mem[OAM] != 0)
-	{
-		system("pause");
-	}
 	// emulate the opcode (compiles to a jump table)
 	switch (opcode)
 	{
@@ -740,7 +745,7 @@ void CPU::emulateCycle()
 		}
 		case 0x03: // inc BC
 		{
-			const short bc = BC();
+			const reg16 bc = BC();
 			BC(bc + 1);
 			PC++;
 			break;
@@ -789,7 +794,7 @@ void CPU::emulateCycle()
 		}
 		case 0x09: // add hl, bc
 		{
-			const short hl = HL();
+			const reg16 hl = HL();
 			HL(BC() + hl);
 			updateCarry(HL());
 			updateN(ADD);
@@ -805,7 +810,7 @@ void CPU::emulateCycle()
 		}
 		case 0x0B: // dec BC
 		{
-			const short bc = BC();
+			const reg16 bc = BC();
 			BC(bc - 1);
 			PC++;
 			break;
@@ -849,6 +854,7 @@ void CPU::emulateCycle()
 		}
 		case 0x10: // STOP
 		{
+			stop();
 			PC++;
 			break;
 		}
@@ -866,7 +872,7 @@ void CPU::emulateCycle()
 		}
 		case 0x13: // inc de
 		{
-			const short de = DE();
+			const reg16 de = DE();
 			DE(de + 1);
 			PC++;
 			break;
@@ -1135,9 +1141,9 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		case 0x34: // inc (hl) ^^^
+		case 0x34: // inc (hl) 
 		{
-			mem[HL()]++;
+			mem[(addr16)HL()]++;
 			updateOverflow(HL());
 			updateN(ADD);
 			updateZero(HL());
@@ -1146,9 +1152,9 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		case 0x35: // dec (hl) ^^^
+		case 0x35: // dec (hl)
 		{
-			mem[HL()]--;
+			mem[(addr16)HL()]--;
 			updateOverflow(HL());
 			updateN(SUB);
 			updateZero(HL());
@@ -1554,7 +1560,7 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		case 0x76: // halt ^^^ TODO:Implement
+		case 0x76: // halt
 		{
 			halt();
 			PC++;
@@ -2327,7 +2333,7 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		case 0xBF: // cp a ^^^ = &&& try to optimize this
+		case 0xBF: // cp a 
 		{
 			cmp(A);
 			PC++;
@@ -2347,7 +2353,7 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		case 0xC2: // jp nz, ** ^^^ check get16
+		case 0xC2: // jp nz, ** 
 		{
 			jp(!zero(), get16(), 3);
 			break;
@@ -2357,7 +2363,7 @@ void CPU::emulateCycle()
 			jp(true, get16(), 3);
 			break;
 		}
-		case 0xC4: // call nz, ** ^^^
+		case 0xC4: // call nz, ** 
 		{
 			call(!zero());
 			break;
@@ -2499,7 +2505,6 @@ void CPU::emulateCycle()
 		{
 			ret(true);
 			IME = true;
-			//PC++; //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 			break;
 		}
 		case 0xDA: // jp c, **
@@ -2543,7 +2548,7 @@ void CPU::emulateCycle()
 		}
 		case 0xE0: //ld (0xFF00 + n), a
 		{
-			mem[0xFF00 + mem[PC + 1]] = A;
+			mem[0xFF00 + (ubyte)mem[PC + 1]] = A;
 			if ((byte)mem[PC + 1] == 0x46)
 			{
 				dma();
@@ -2560,9 +2565,9 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		case 0xE2: // ld (0xFF00 + C), a
+		case 0xE2: // ld (C), a
 		{
-			mem[0xFF00 + C] = A;
+			mem[(addr16)C] = A;
 			PC++;
 			break;
 		}
@@ -2625,7 +2630,7 @@ void CPU::emulateCycle()
 		}
 		case 0xEB: // ex de, hl ~!GB
 		{
-			const short de = DE();
+			const reg16 de = DE();
 			DE(HL()); // swap de = hl
 			HL(de); // hl = de
 			PC++;
@@ -2673,13 +2678,13 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		case 0xF2: // ld a, (0xFF00 + c)
+		case 0xF2: // ld a, (C)
 		{
-			A = mem[0xFF00 + C];
+			A = mem[(reg16)C];
 			PC++;
 			break;
 		}
-		case 0xF3: // di ^^^
+		case 0xF3: // di
 		{
 			IME = false;
 			PC++;
@@ -2735,7 +2740,7 @@ void CPU::emulateCycle()
 			PC += 3;
 			break;
 		}
-		case 0xFB: // ei ^^^
+		case 0xFB: // ei
 		{
 			IME = true;
 			PC++;
