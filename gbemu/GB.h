@@ -11,8 +11,8 @@
 
 #define MODIFIER 1
 
-#define WIDTH 160 * MODIFIER
-#define HEIGHT 144 * MODIFIER
+#define WIDTH 256 * MODIFIER
+#define HEIGHT 256 * MODIFIER
 
 #define BLACK 0x00
 #define DARK_GREY 0x55
@@ -40,7 +40,6 @@ private:
 	void drawPixel(const char color, const unsigned x, const unsigned y);
 	void drawBG(const byte* mem);
 	void drawSprites(const byte* mem);
-	inline void clear();
 
 	bool running = true;
 
@@ -54,6 +53,11 @@ private:
 	SDL_Surface* screenBuffer = nullptr; // full 32x32 virtual gameboy screen
 	SDL_Rect srcSurfaceRect;
 	SDL_Rect pixel;
+
+	unsigned int framesSinceLastVBlank = 0;
+	const int framesBetweenVBlank = 30;
 };
+
+void clear(SDL_Surface*);
 
 #endif

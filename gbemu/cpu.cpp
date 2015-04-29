@@ -478,16 +478,25 @@ void CPU::decodeExtendedInstruction(char opcode)
 			PC += 2;
 			break;
 		}
+		case 0xFE: // set 7, (hl)
+		{
+			const reg16 hl = HL();
+			HL(hl | 0x80);
+			PC += 2;
+			break;
+		}
 		default:
 		{
-			PC += 2;
-			std::cout << "Unimplemented instruction: " << toHex(opcode) << std::endl;
+			std::cout << "Unimplemented CB instruction: " << toHex(opcode) << std::endl;
+			std::cout << "At: " << toHex(PC + 1) << std::endl;
 			system("pause");
+			PC += 2;
+			break;
 		}
 	}
 }
 
-void CPU::swapNibble(reg val)
+void CPU::swapNibble(reg& val)
 {
 	val = ((val & 0x0F) << 4 | (val & 0xF0) >> 4);
 }
@@ -718,12 +727,24 @@ void CPU::test()
 	std::cout << "HL: " << toHex(HL()) << std::endl;
 }
 
+void printMem(CPU* cpu, int start, int end)
+{
+	const byte* mem = cpu->dumpMem();
+	for (int i = start; i < end; i++)
+	{
+		std::cout << toHex((byte)mem[i]) << "\t";
+	}
+	std::cout << "\n" << std::endl;
+}
+
 void CPU::emulateCycle()
 {
 	handleInterrupts();
 	unsigned char opcode = mem[PC]; // get next opcode
 	R++; // I think this is what R does
-	std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
+	//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
+	//printMem(this, CHR_MAP, CHR_MAP + 20);
+	//std::cout << toHex(mem[SCY]) << std::endl;
 	// emulate the opcode (compiles to a jump table)
 	switch (opcode)
 	{
@@ -2737,7 +2758,7 @@ void CPU::emulateCycle()
 		}
 		case 0xFA: // ld a, (**)
 		{
-			A = get16();
+			A = mem[get16()];
 			PC += 3;
 			break;
 		}
@@ -2769,19 +2790,30 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		default: // just in case the definition of a char changes
+		default: // just in case the definition of a char changes 
 		{
 			std::cout << "You should never ever see this" << std::endl;
+			std::cout << "But just in case here is the opcode : " << toHex(opcode) << std::endl;
+			std::cin.ignore(); // make the user see what they did
 			PC++;
 			break;
 		}
 	}
 }
 
-const std::string toHex(const int val)
+template<typename T>
+const std::string toHex(const T val)
 {
 	std::stringstream stream;
-	stream << std::hex << (int)val;
+	stream << std::hex << val;
+	std::string result(stream.str());
+	return "0x" + result;
+}
+
+const std::string toHex(const char val)
+{
+	std::stringstream stream;
+	stream << std::hex << (u16)val; // cast to an unsigned short so it isnt treated as a character
 	std::string result(stream.str());
 	return "0x" + result;
 }

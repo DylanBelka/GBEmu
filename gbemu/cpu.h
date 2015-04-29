@@ -158,13 +158,15 @@ private:
 	inline const unsigned short get16(const addr16 where);
 
 	void decodeExtendedInstruction(byte opcode);
-	void swapNibble(reg reg);
+	void swapNibble(reg& reg);
 	inline void rlc(reg& reg);
 	inline void rrc(reg& reg);
 	inline void rl(reg& reg);
 	inline void rr(reg& reg);
 	inline void sla(reg& reg);
 	inline void bit(reg reg, unsigned char bit);
+
+	inline void set(reg& reg, byte bit);
 
 	void halt();
 	void stop();
@@ -174,6 +176,7 @@ private:
 	void handleInterrupts();
 };
 
-const std::string toHex(int);
+template<typename T> const std::string toHex(T);
+const std::string toHex(const char);
 
 #endif

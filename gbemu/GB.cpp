@@ -31,7 +31,8 @@ GB::~GB()
 bool GB::init(const std::string& romName)
 {
 	return cpu.loadROM(romName);
-	clear();
+	clear(screenSurface);
+	clear(screenBuffer);
 }
 
 void GB::run()
@@ -64,10 +65,10 @@ void GB::drawPixel(const char color, const unsigned x, const unsigned y)
 	SDL_FillRect(screenBuffer, &pixel, SDL_MapRGB(screenBuffer->format, color, color, color));
 }
 
-void GB::clear()
+void clear(SDL_Surface* surf)
 {
 	// clear the screen to white
-	SDL_FillRect(screenBuffer, NULL, SDL_MapRGB(screenBuffer->format, 0xFF, 0xFF, 0xFF));
+	SDL_FillRect(surf, NULL, SDL_MapRGB(surf->format, 0xFF, 0xFF, 0xFF));
 }
 
 // get the binary strings of both bytes
@@ -215,7 +216,8 @@ void GB::drawSprites(const byte* mem)
 
 void GB::draw()
 {
-	clear();
+	clear(screenSurface);
+	clear(screenBuffer);
 	const byte lcdc = cpu.getByte(LCDC);
 	if (lcdc & 0x80) // LCD is enabled, do drawing
 	{
@@ -229,7 +231,7 @@ void GB::draw()
 		// draw sprites
 		if (lcdc & 0x2) // draw sprites?
 		{
-			drawSprites(mem); 
+			//drawSprites(mem); 
 		}
 		// copy the screen buffer to the screensurface from scroll positions (x, y) to display screen
 		srcSurfaceRect.x = mem[SCX];
@@ -237,6 +239,7 @@ void GB::draw()
 		SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
 		SDL_UpdateWindowSurface(window);
 
+		// vblank every framesBetweenVBlank (30)
 		if (framesSinceLastVBlank >= framesBetweenVBlank)
 		{
 			framesSinceLastVBlank = 0;
