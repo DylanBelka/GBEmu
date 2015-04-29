@@ -422,7 +422,9 @@ void CPU::decodeExtendedInstruction(char opcode)
 		}
 		case 0x20: // sla b
 		{
-
+			sla(A);
+			PC += 2;
+			break;
 		}
 		case 0x37: // swap a
 		{
@@ -492,6 +494,7 @@ void CPU::decodeExtendedInstruction(char opcode)
 			system("pause");
 			PC += 2;
 			break;
+
 		}
 	}
 }
@@ -2790,10 +2793,10 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		default: // just in case the definition of a char changes 
+		default: // if the definition of a char changes 
 		{
 			std::cout << "You should never ever see this" << std::endl;
-			std::cout << "But just in case here is the opcode : " << toHex(opcode) << std::endl;
+			std::cout << "But here is the opcode : " << toHex(opcode) << std::endl;
 			std::cin.ignore(); // make the user see what they did
 			PC++;
 			break;
