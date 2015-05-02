@@ -164,9 +164,12 @@ private:
 	inline void rl(reg& reg);
 	inline void rr(reg& reg);
 	inline void sla(reg& reg);
-	inline void bit(reg reg, unsigned char bit);
+	inline void sra(reg& reg);
+	inline void srl(reg& reg);
 
-	inline void set(reg& reg, byte bit);
+	inline void bit(reg reg, ubyte bit);
+	inline void res(reg& reg, ubyte bit);
+	inline void set(reg& reg, ubyte bit);
 
 	void halt();
 	void stop();
@@ -178,5 +181,25 @@ private:
 
 template<typename T> const std::string toHex(T);
 const std::string toHex(const char);
+
+enum Bits
+{
+	b0 = 0x1,
+	bit0 = 0x1,
+	b1 = 0x2,
+	bit1 = 0x2,
+	b2 = 0x4,
+	bit2 = 0x4,
+	b3 = 0x8,
+	bit3 = 0x8,
+	b4 = 0x10,
+	bit4 = 0x10,
+	b5 = 0x20,
+	bit5 = 0x20,
+	b6 = 0x40,
+	bit6 = 0x40,
+	b7 = 0x80,
+	bit7 = 0x80
+};
 
 #endif
