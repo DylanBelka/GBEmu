@@ -19,10 +19,6 @@
 #define LIGHT_GREY 0xAA
 #define WHITE 0xFF
 
-/*
-Fix so that rendering does not happen every cycle
-*/
-
 class GB
 {
 public:

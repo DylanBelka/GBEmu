@@ -231,7 +231,7 @@ void GB::draw()
 		// draw sprites
 		if (lcdc & 0x2) // draw sprites?
 		{
-			//drawSprites(mem); 
+			drawSprites(mem); 
 		}
 		// copy the screen buffer to the screensurface from scroll positions (x, y) to display screen
 		srcSurfaceRect.x = mem[SCX];
