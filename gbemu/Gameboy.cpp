@@ -28,6 +28,8 @@ cpu()
 	}
 	srcSurfaceRect.w = SCR_BUFFER_WIDTH;
 	srcSurfaceRect.h = SCR_BUFFER_HEIGHT;
+	srcSurfaceRect.x = 0; 
+	srcSurfaceRect.y = 0;
 	pixel.h = 1;
 	pixel.w = 1;
 }
@@ -312,43 +314,62 @@ bool Gameboy::handleEvents()
 		if (e.type == SDL_KEYDOWN)
 		{
 			SDL_Keycode key = e.key.keysym.sym;
+			const byte keyPort = cpu.getByte(JOYPAD); // get the current key group
 			if (key == SDLK_ESCAPE)
 			{
 				running = false;
 			}
-			if (key == SDLK_UP) // up
+			else if (keyPort & 0x10) // group P14
 			{
+				if (key == SDLK_UP) // up
+				{
+					cpu.setByte(JOYPAD, keyPort | b2);
+					return true;
+				}
+				if (key == SDLK_DOWN) // down
+				{
+					cpu.setByte(JOYPAD, keyPort | b1);
+					return true;
+				}
+				if (key == SDLK_LEFT) // left
+				{
+					cpu.setByte(JOYPAD, keyPort | b1);
+					return true;
+				}
+				if (key == SDLK_RIGHT) // right
+				{
+					cpu.setByte(JOYPAD, keyPort | b0);
+					return true;
+				}
 
 			}
-			if (key == SDLK_DOWN) // down
+			else if (keyPort & 0x20) // group P15
 			{
-
+				if (key == SDLK_a) // a
+				{
+					cpu.setByte(JOYPAD, keyPort | b0);
+					return true;
+				}
+				if (key == SDLK_s) // b
+				{
+					cpu.setByte(JOYPAD, keyPort | b1);
+					return true;
+				}
+				if (key == SDLK_x) // start
+				{
+					cpu.setByte(JOYPAD, keyPort | b1);
+					return true;
+				}
+				if (key == SDLK_z) // select
+				{
+					cpu.setByte(JOYPAD, keyPort | b2);
+					return true;
+				}
 			}
-			if (key == SDLK_LEFT) // left
+			else
 			{
-
+				cpu.setByte(JOYPAD, 0x0);
 			}
-			if (key == SDLK_RIGHT) // right
-			{
-
-			}
-			if (key == SDLK_a) // a
-			{
-
-			}
-			if (key == SDLK_s) // b
-			{
-
-			}
-			if (key == SDLK_x) // start
-			{
-
-			}
-			if (key == SDLK_z) // select
-			{
-
-			}
-			return true; /// ^^^ change this to only return true on Gameboy key presses
 		}
 	}
 	return false;

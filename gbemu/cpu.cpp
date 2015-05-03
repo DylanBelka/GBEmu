@@ -1871,6 +1871,7 @@ void CPU::emulateCycle()
 	//file << "DE: " << toHex(DE()) << "\n";
 	//file << "HL: " << toHex(HL()) << "\n";
 	//file << "\n";
+	//std::cout << toHex(mem[JOYPAD]) << std::endl;
 
 	/// emulate the opcode (compiles to a jump table)
 	switch (opcode)
@@ -3958,7 +3959,7 @@ int CPU::loadROM(const std::string& fileName)
 		fileStr = new char[size]; // get rom size
 		std::cout << "Seek size: " << size << std::endl;
 		file.seekg(0, std::ios::beg);
-		file.read(fileStr, size); // load the rom file into the std::string file
+		file.read(fileStr, size); // load the rom file into the file
 		file.close();
 	}
 	else
