@@ -1553,11 +1553,11 @@ void CPU::decodeExtendedInstruction(char opcode)
 		{
 			std::cout << "Unimplemented CB instruction: " << toHex(opcode) << std::endl;
 			std::cout << "At: " << toHex(PC + 1) << std::endl;
-			system("pause");
+			//system("pause");
 			break;
 		}
-		PC += 2; // all 0xCB instructions are 2 bytes long
 	}
+	PC += 2; // all 0xCB instructions are 2 bytes long
 }
 
 void CPU::swapNibble(reg& val)
@@ -1851,7 +1851,12 @@ void CPU::emulateCycle()
 	unsigned char opcode = mem[PC]; // get next opcode
 	R++; // I think this is what R does
 	//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
-	//printMem(this, 0x8100 - 1, 0x8105);
+	//if (opcode == 0xCB)
+	//{
+	//	std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
+	//	std::cout << toHex((int)mem[PC + 1]) << std::endl;
+	//}
+	//printMem(this, 0x8000, 0x8010);
 
 	//file << "PC: " << toHex(PC) << "\n";
 	//file << "opcode: " << toHex((byte)opcode) << "\n";
