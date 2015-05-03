@@ -2051,7 +2051,7 @@ void CPU::emulateCycle()
 		}
 		case 0x19: // add hl, de
 		{
-			const short hl = HL();
+			const reg16 hl = HL();
 			HL(hl + DE());
 			updateCarry(HL());
 			updateN(ADD);
@@ -2067,7 +2067,7 @@ void CPU::emulateCycle()
 		}
 		case 0x1B: // dec de
 		{
-			const short de = DE();
+			const reg16 de = DE();
 			DE(de - 1);
 			PC++;
 			break;
@@ -2123,14 +2123,14 @@ void CPU::emulateCycle()
 		case 0x22: // ldi (hl), a   or   ld (hl+), a
 		{
 			mem[(addr16)HL()] = A;
-			const short hl = HL();
+			const reg16 hl = HL();
 			HL(hl + 1);
 			PC++;
 			break;
 		}
 		case 0x23: // inc hl
 		{
-			const short hl = HL();
+			const reg16 hl = HL();
 			HL(hl + 1);
 			PC++;
 			break;
@@ -2189,7 +2189,7 @@ void CPU::emulateCycle()
 		}
 		case 0x29: // add hl, hl
 		{
-			const short hl = HL();
+			const reg16 hl = HL();
 			HL(hl + hl);
 			updateCarry(HL());
 			updateN(ADD);
@@ -2200,14 +2200,14 @@ void CPU::emulateCycle()
 		case 0x2A: // ldi a, (hl) 
 		{
 			A = mem[(addr16)HL()];
-			const short hl = HL();
+			const reg16 hl = HL();
 			HL(hl + 1);
 			PC++;
 			break;
 		}
 		case 0x2B: // dec hl
 		{
-			const short hl = HL();
+			const reg16 hl = HL();
 			HL(hl - 1);
 			PC++;
 			break;
@@ -2260,7 +2260,7 @@ void CPU::emulateCycle()
 		case 0x32: // ldd (hl), a
 		{
 			mem[(addr16)HL()] = A;
-			const short hl = HL();
+			const reg16 hl = HL();
 			HL(hl - 1);
 			PC++;
 			break;
@@ -2312,10 +2312,10 @@ void CPU::emulateCycle()
 			jr(carry(), mem[PC + 1], 2);
 			break;
 		}
-		case 0x39: // add hl, sp
+		case 0x39: // add hl, sp ^^^ is it hl + hl or hl + sp?
 		{
-			const short hl = HL();
-			HL(hl + hl);
+			const reg16 hl = HL();
+			HL(hl + SP);
 			updateCarry(HL());
 			updateN(ADD);
 			updateHC(HL());
@@ -2327,7 +2327,7 @@ void CPU::emulateCycle()
 		case 0x3A: // ldd a, (hl)
 		{
 			A = mem[HL()];
-			const short hl = HL();
+			const reg16 hl = HL();
 			HL(hl - 1);
 			PC++;
 			break;
@@ -2409,7 +2409,7 @@ void CPU::emulateCycle()
 		}
 		case 0x46: // ld b, (hl)
 		{
-			B = mem[HL()];
+			B = mem[(addr16)HL()];
 			PC++;
 			break;
 		}
@@ -2456,7 +2456,7 @@ void CPU::emulateCycle()
 		}
 		case 0x4E: // ld c, (hl)
 		{
-			C = mem[HL()];
+			C = mem[(addr16)HL()];
 			PC++;
 			break;
 		}
@@ -2503,7 +2503,7 @@ void CPU::emulateCycle()
 		}
 		case 0x56: // ld d, (hl)
 		{
-			D = mem[HL()];
+			D = mem[(addr16)HL()];
 			PC++;
 			break;
 		}
@@ -2550,7 +2550,7 @@ void CPU::emulateCycle()
 		}
 		case 0x5E: // ld e, (hl)
 		{
-			E = mem[HL()];
+			E = mem[(addr16)HL()];
 			PC++;
 			break;
 		}

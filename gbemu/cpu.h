@@ -98,18 +98,17 @@ private:
 	inline void DE(s16 val) { D = ((val >> 8) & 0xFF); E = (byte)val; }
 	inline void HL(s16 val) { H = ((val >> 8) & 0xFF); L = (byte)val; }
 
-	byte I;		// interrupt page address register
-	//short IX, IY;	// 16 bit index registers ~!GB
+	byte I;					// interrupt page address register
 	unsigned short PC;		// program counter register
-	byte R;		// memory refresh register
+	byte R;					// memory refresh register
 	unsigned short SP;		// stack pointer
 
-	byte* mem; // cpu memory (0xFFFF in size)
+	byte* mem;				// cpu memory (0xFFFF in size)
 
-	bool IME = true; // interrupt master enable
+	bool IME = true;		// interrupt master enable
 
-	bool halted = false; // HALT(ed)?
-	bool stopped = false; // STOP(ed)?
+	bool halted = false;	// HALT(ed)?
+	bool stopped = false;	// STOP(ed)?
 
 // Flag helper functions
 private:
