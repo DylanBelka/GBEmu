@@ -27,7 +27,7 @@ void CPU::reset()
 	DE(0xD8);
 	HL(0x14D);
 	SP = 0xFFFE;
-	R = 0;
+	R = 0x0;
 	PC = 0x100;
 	// set memory registers to their known starting values
 	mem[TIMA] = 0x00;
@@ -68,7 +68,7 @@ void CPU::reset()
 
 void CPU::updateCarry(reg16 reg)
 {
-	F |= (reg > 0xFF || reg < 0x00) ? 0x1 : F;
+	F |= (reg > 127 || reg < -128) ? 0x1 : F;
 }
 
 void CPU::resetCarry()
@@ -1565,7 +1565,7 @@ void CPU::swapNibble(reg& val)
 	val = ((val & 0x0F) << 4 | (val & 0xF0) >> 4);
 }
 
-void CPU::cmp(const char val)
+void CPU::cmp(const byte val)
 {
 	updateCarry(A - val);
 	updateN(SUB);
@@ -1763,10 +1763,10 @@ inline void CPU::rst(const u8 mode)
 // Else it increases PC by [opsize]
 inline void CPU::jr(bool cond, s8 to, u8 opsize)
 {
-	PC += (cond) ? to + opsize : opsize; // the + 2 is to jump past the initial instruction
+	PC += (cond) ? to + opsize : opsize; // + opsize is to jump over the opsize 
 }
 
-void CPU::jp(bool cond, s16 to, u8 opsize)
+void CPU::jp(bool cond, addr16 to, u8 opsize)
 {
 	if (cond)
 	{
@@ -1851,7 +1851,21 @@ void CPU::emulateCycle()
 	unsigned char opcode = mem[PC]; // get next opcode
 	R++; // I think this is what R does
 	//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
-	printMem(this, 0x9900 - 1, 0x9905);
+	//printMem(this, 0x8100 - 1, 0x8105);
+
+	//file << "PC: " << toHex(PC) << "\n";
+	//file << "opcode: " << toHex((byte)opcode) << "\n";
+	//file << "A: " << toHex((byte)A) << "\n";
+	//file << "B: " << toHex((byte)B) << "\n";
+	//file << "C: " << toHex((byte)C) << "\n";
+	//file << "D: " << toHex((byte)D) << "\n";
+	//file << "E: " << toHex((byte)E) << "\n";
+	//file << "F: " << toHex((byte)F) << "\n";
+	//file << "AF: " << toHex(AF()) << "\n";
+	//file << "BC: " << toHex(BC()) << "\n";
+	//file << "DE: " << toHex(DE()) << "\n";
+	//file << "HL: " << toHex(HL()) << "\n";
+	//file << "\n";
 
 	/// emulate the opcode (compiles to a jump table)
 	switch (opcode)
@@ -2077,6 +2091,7 @@ void CPU::emulateCycle()
 			E++;
 			updateCarry(E);
 			updateN(ADD);
+			updateZero(E);
 			updateOverflow(E);
 			updateHC(E);
 			updateSign(E);
@@ -2088,6 +2103,7 @@ void CPU::emulateCycle()
 			E--;
 			updateCarry(E);
 			updateN(SUB);
+			updateZero(E);
 			updateOverflow(E);
 			updateHC(E);
 			updateSign(E);
