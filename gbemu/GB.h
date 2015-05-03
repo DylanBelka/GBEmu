@@ -30,7 +30,7 @@ public:
 
 private:
 	void draw();
-	void handleEvents();
+	bool handleEvents(); // returns true if a key was pressed
 	void drawSlice(const byte b1, const byte b2, unsigned& x, unsigned& y);
 
 	void drawPixel(const char color, const unsigned x, const unsigned y);

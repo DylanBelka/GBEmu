@@ -260,7 +260,7 @@ void GB::draw()
 	}
 }
 
-void GB::handleEvents()
+bool GB::handleEvents()
 {
 	SDL_Event e;
 	while (SDL_PollEvent(&e))
@@ -279,8 +279,10 @@ void GB::handleEvents()
 			{
 				std::cout << e.key.keysym.sym << std::endl;
 			}
+			return true; /// change this to only return true on Gameboy key presses
 		}
 	}
+	return false;
 }
 
 void GB::halt()
@@ -296,5 +298,5 @@ void GB::halt()
 
 void GB::stop()
 {
-	
+	while (!handleEvents()) { draw(); }
 }
