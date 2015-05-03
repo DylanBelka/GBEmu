@@ -8,26 +8,28 @@ cpu()
 		std::cout << "SDL Error: " << SDL_GetError() << std::endl;
 		exit(-2);
 	}
-	window = SDL_CreateWindow("gbemu", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, NULL);
+	window = SDL_CreateWindow("gbemu", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, NULL);
 	if (window == nullptr)
 	{
 		std::cout << "SDL_Window could not be created. Error: " << SDL_GetError() << std::endl;
+		return;
 	}
 	screenSurface = SDL_GetWindowSurface(window);
 	if (screenSurface == nullptr)
 	{
 		std::cout << "SDL_Surface <screenSurface> could not be created. Error: " << SDL_GetError() << std::endl;
+		return;
 	}
 	SDL_PixelFormat* fmt = screenSurface->format;
-	screenBuffer = SDL_CreateRGBSurface(NULL, 256 * MODIFIER, 256 * MODIFIER, fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
+	screenBuffer = SDL_CreateRGBSurface(NULL, SCR_BUFFER_WIDTH, SCR_BUFFER_HEIGHT, fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
 	if (screenBuffer == nullptr)
 	{
 		std::cout << "SDL_Surface <screenBuffer> could not be created. Error: " << SDL_GetError() << std::endl;
 	}
-	srcSurfaceRect.h = HEIGHT * MODIFIER;
-	srcSurfaceRect.w = WIDTH * MODIFIER;
-	pixel.h = 1 * MODIFIER;
-	pixel.w = 1 * MODIFIER;
+	srcSurfaceRect.w = SCR_BUFFER_WIDTH;
+	srcSurfaceRect.h = SCR_BUFFER_HEIGHT;
+	pixel.h = 1;
+	pixel.w = 1;
 }
 
 Gameboy::~Gameboy()
@@ -65,12 +67,12 @@ void Gameboy::run()
 	}
 }
 
-void Gameboy::drawPixel(const char color, const unsigned x, const unsigned y)
+void Gameboy::drawPixel(SDL_Surface* dest, const char color, const unsigned x, const unsigned y)
 {
 	pixel.x = x;
 	pixel.y = y;
 	// draw the pixel to the screenBuffer
-	SDL_FillRect(screenBuffer, &pixel, SDL_MapRGB(screenBuffer->format, color, color, color));
+	SDL_FillRect(dest, &pixel, SDL_MapRGB(dest->format, color, color, color));
 }
 
 void clear(SDL_Surface* surf)
@@ -79,8 +81,7 @@ void clear(SDL_Surface* surf)
 	SDL_FillRect(surf, NULL, SDL_MapRGB(surf->format, 0xFF, 0xFF, 0xFF));
 }
 
-// get the binary strings of both bytes
-void Gameboy::drawSlice(const byte b1, const byte b2, unsigned& x, unsigned& y)
+void Gameboy::drawBGSlice(const byte b1, const byte b2, unsigned& x, unsigned& y)
 {
 	// the bits of the string are compared to create the color of each pixel
 	// 1. A bit that is 0 in both bytes will be a WHITE pixel
@@ -92,21 +93,56 @@ void Gameboy::drawSlice(const byte b1, const byte b2, unsigned& x, unsigned& y)
 	const char* bin2 = binLut[(ubyte)b2];
 	for (int i = 0; i < 8; i++)
 	{
-		unsigned char color = DARK_GREY;
 		if (bin1[i] == '1' && bin2[i] == '1')
 		{
-			color = BLACK;
+			drawPixel(screenBuffer, BLACK, x, y); // draw the pixel to the screenBuffer 
 		}
 		else if (bin1[i] == '0' && bin2[i] == '0')
 		{
-			color = WHITE;
+			drawPixel(screenBuffer, WHITE, x, y); // draw the pixel to the screenBuffer 
 		}
 		else if (bin1[i] == '1' && bin2[i] == '0')
 		{
-			color = LIGHT_GREY;
+			drawPixel(screenBuffer, LIGHT_GREY, x, y); // draw the pixel to the screenBuffer 
 		}
-		// else color = dark grey by default
-		drawPixel(color, x, y); // draw the pixel to the screenBuffer 
+		else
+		{
+			drawPixel(screenBuffer, DARK_GREY, x, y); // draw the pixel to the screenBuffer 
+		}
+		x++;
+	}
+	x -= 8;
+	y++;
+}
+
+void Gameboy::drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigned& y)
+{
+	// the bits of the string are compared to create the color of each pixel
+	// 1. A bit that is 0 in both bytes will be a WHITE pixel
+	// 2. A bit that is 1 in the first byte and 0 in the second will be a GREY pixel
+	// 3. A bit that is 0 in the first byte and 1 in the second will be a DARK GREY pixel
+	// 4. A bit that is 1 in both bytes will be a BLACK pixel
+	// https://slashbinbash.wordpress.com/2013/02/07/gameboy-tile-mapping-between-image-and-memory/
+	const char* bin1 = binLut[(ubyte)b1];
+	const char* bin2 = binLut[(ubyte)b2];
+	for (int i = 0; i < 8; i++)
+	{
+		if (bin1[i] == '1' && bin2[i] == '1')
+		{
+			drawPixel(screenSurface, BLACK, x, y); // draw the pixel to the screenBuffer 
+		}
+		else if (bin1[i] == '0' && bin2[i] == '0')
+		{
+			// dont draw white
+		}
+		else if (bin1[i] == '1' && bin2[i] == '0')
+		{
+			drawPixel(screenSurface, LIGHT_GREY, x, y); // draw the pixel to the screenBuffer 
+		}
+		else
+		{
+			drawPixel(screenSurface, DARK_GREY, x, y); // draw the pixel to the screenBuffer 
+		}
 		x++;
 	}
 	x -= 8;
@@ -137,23 +173,21 @@ void Gameboy::drawBG(const char* mem)
 			// draw the slice pixel by pixel
 			for (int j = chrLocStart; j < chrLocStart + 0x10; j += 2) // note the += 2, 2 bytes per slice
 			{
-				drawSlice(mem[j], mem[j + 1], x, y); // draw the pixel of the slice
+				drawBGSlice(mem[j], mem[j + 1], x, y); // draw the pixel of the slice
 			}
 			x += 8;
 			y -= 8;
-			if (x == WIDTH) // "hblank" (kind of) - at the end of the horiziontal screen, 
-			{				// move the x back to 0 and move y down 8 (y -= 8 after each slice so y += 16 === y += 8)
-				y += 16;
+			if (x == SCR_BUFFER_WIDTH) // "hblank" (kind of) - at the end of the horiziontal screen, 
+			{						// move the x back to 0 and move y down 8 (y -= 8 after each slice so y += 16 === y += 8)
+				y += 8;
 				x = 0;
 			}
 		}
 	}
-	else // bg1
+	else // bg1 ^^^ fix this
 	{
-		// bg1 ^^^ make sure to fix this when done with bg0
 		for (int i = BG_MAP_1; i < BG_MAP_1_END; i++)
 		{
-			// draw the 8x8 tile
 			// draw the 8x8 tile
 			addr16 chrLocStart;
 			if (lcdc & 0x10) // unsigned characters
@@ -164,15 +198,16 @@ void Gameboy::drawBG(const char* mem)
 			{
 				chrLocStart = (ubyte)mem[i] * 0x10 + CHR_MAP_SIGNED; // get the location of the first tile slice in memory
 			}
+
 			for (int i = chrLocStart; i < chrLocStart + 0x10; i += 2) // note the += 2
 			{
-				drawSlice(mem[i], mem[i + 1], x, y); // draw the slice
+				drawBGSlice(mem[i], mem[i + 1], x, y); // draw the slice
 			}
 			x += 8;
 			y -= 8;
-			if (x == WIDTH)
+			if (x == SCR_BUFFER_WIDTH)
 			{
-				y += 16;
+				y += 8;
 				x = 0;
 			}
 		}
@@ -194,13 +229,13 @@ void Gameboy::drawSprites(const byte* mem)
 			addr16 chrLocStartUp = (ubyte)mem[i + 2] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 			for (int j = chrLocStartUp; j < chrLocStartUp + 0x10; j += 2)
 			{
-				drawSlice(mem[j], mem[j + 1], x, y);
+				drawSpriteSlice(mem[j], mem[j + 1], x, y);
 			}
 			// draw the lower 8x8 tile
 			addr16 chrLocStartLow = chrLocStartUp + 0x10;
 			for (int j = chrLocStartLow; j < chrLocStartLow + 0x10; j += 2)
 			{
-				drawSlice(mem[j], mem[j + 1], x, y);
+				drawSpriteSlice(mem[j], mem[j + 1], x, y);
 			}
 		}
 
@@ -215,7 +250,7 @@ void Gameboy::drawSprites(const byte* mem)
 			addr16 chrLocStart = (ubyte)mem[i + 2] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 			for (int j = chrLocStart; j < chrLocStart + 0x10; j += 2)
 			{
-				drawSlice(mem[j], mem[j + 1], x, y);
+				drawSpriteSlice(mem[j], mem[j + 1], x, y);
 			}
 		}
 	}
@@ -236,15 +271,16 @@ void Gameboy::draw()
 		{
 			drawBG(mem);
 		}
+		// copy the screen buffer to the screensurface from scroll positions (SCX, SCYs)
+		srcSurfaceRect.x = mem[SCX];
+		srcSurfaceRect.y = mem[SCY];
+		SDL_BlitSurface(screenBuffer, NULL, screenSurface, &srcSurfaceRect);
 		// draw sprites
 		if (lcdc & 0x2) // draw sprites?
 		{
 			drawSprites(mem); 
 		}
-		// copy the screen buffer to the screensurface from scroll positions (SCX, SCYs) to display screen
-		srcSurfaceRect.x = mem[SCX];
-		srcSurfaceRect.y = mem[SCY];
-		SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
+		// display
 		SDL_UpdateWindowSurface(window);
 
 		// vblank every framesBetweenVBlank (30)
@@ -275,13 +311,42 @@ bool Gameboy::handleEvents()
 		}
 		if (e.type == SDL_KEYDOWN)
 		{
-			if (e.key.keysym.sym == SDLK_ESCAPE)
+			SDL_Keycode key = e.key.keysym.sym;
+			if (key == SDLK_ESCAPE)
 			{
 				running = false;
 			}
-			if (e.key.keysym.sym == SDLK_1)
+			if (key == SDLK_UP) // up
 			{
-				std::cout << e.key.keysym.sym << std::endl;
+
+			}
+			if (key == SDLK_DOWN) // down
+			{
+
+			}
+			if (key == SDLK_LEFT) // left
+			{
+
+			}
+			if (key == SDLK_RIGHT) // right
+			{
+
+			}
+			if (key == SDLK_a) // a
+			{
+
+			}
+			if (key == SDLK_s) // b
+			{
+
+			}
+			if (key == SDLK_x) // start
+			{
+
+			}
+			if (key == SDLK_z) // select
+			{
+
 			}
 			return true; /// ^^^ change this to only return true on Gameboy key presses
 		}
