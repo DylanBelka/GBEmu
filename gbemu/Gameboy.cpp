@@ -11,11 +11,19 @@ cpu()
 	window = SDL_CreateWindow("gbemu", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, NULL);
 	if (window == nullptr)
 	{
-		std::cout << "SDL window could not be created. Error: " << SDL_GetError() << std::endl;
+		std::cout << "SDL_Window could not be created. Error: " << SDL_GetError() << std::endl;
 	}
 	screenSurface = SDL_GetWindowSurface(window);
+	if (screenSurface == nullptr)
+	{
+		std::cout << "SDL_Surface <screenSurface> could not be created. Error: " << SDL_GetError() << std::endl;
+	}
 	SDL_PixelFormat* fmt = screenSurface->format;
 	screenBuffer = SDL_CreateRGBSurface(NULL, 256 * MODIFIER, 256 * MODIFIER, fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
+	if (screenBuffer == nullptr)
+	{
+		std::cout << "SDL_Surface <screenBuffer> could not be created. Error: " << SDL_GetError() << std::endl;
+	}
 	srcSurfaceRect.h = HEIGHT * MODIFIER;
 	srcSurfaceRect.w = WIDTH * MODIFIER;
 	pixel.h = 1 * MODIFIER;
@@ -97,7 +105,7 @@ void Gameboy::drawSlice(const byte b1, const byte b2, unsigned& x, unsigned& y)
 		{
 			color = LIGHT_GREY;
 		}
-		//// else color = dark grey
+		// else color = dark grey by default
 		drawPixel(color, x, y); // draw the pixel to the screenBuffer 
 		x++;
 	}
@@ -233,7 +241,7 @@ void Gameboy::draw()
 		{
 			drawSprites(mem); 
 		}
-		// copy the screen buffer to the screensurface from scroll positions (x, y) to display screen
+		// copy the screen buffer to the screensurface from scroll positions (SCX, SCYs) to display screen
 		srcSurfaceRect.x = mem[SCX];
 		srcSurfaceRect.y = mem[SCY];
 		SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
@@ -246,11 +254,7 @@ void Gameboy::draw()
 			cpu.setByte(IF, 0x1); // set v-blank interrupt
 		}
 		framesSinceLastVBlank++;
-		//// emulate through the v-blank interrupt (vblank interrupt starts at 0x40 and ends at 0x48)
-		//for (int i = 0x40; i < 0x48; i++)
-		//{
-		//	cpu.emulateCycle();
-		//}
+
 		// emulate through v-blank: many games wait for a specific value of LY during v-blank before continuing execution
 		for (int i = 0x90; i < 0x99; i++)
 		{
@@ -279,7 +283,7 @@ bool Gameboy::handleEvents()
 			{
 				std::cout << e.key.keysym.sym << std::endl;
 			}
-			return true; /// change this to only return true on Gameboy key presses
+			return true; /// ^^^ change this to only return true on Gameboy key presses
 		}
 	}
 	return false;
