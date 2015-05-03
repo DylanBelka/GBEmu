@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <iomanip>
 
 #include "memdefs.h"
 
@@ -27,9 +28,9 @@ Resources:
 typedef unsigned short addr16; // 16-bit address
 typedef unsigned char addr8; // 8-bit address
 
-typedef signed char reg; // register
 typedef signed short reg16; // 16-bit register
-
+typedef signed char reg; // register
+ 
 typedef unsigned char u8;
 typedef signed char s8;
 typedef char byte; // 8-bit for when sign is unspecified

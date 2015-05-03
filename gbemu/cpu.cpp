@@ -1838,7 +1838,7 @@ void CPU::test()
 void printMem(CPU* cpu, int start, int end)
 {
 	const byte* mem = cpu->dumpMem();
-	for (int i = start; i < end; i++)
+	for (int i = start; i <= end; i++)
 	{
 		std::cout << toHex((byte)mem[i]) << "\t";
 	}
@@ -1851,9 +1851,9 @@ void CPU::emulateCycle()
 	unsigned char opcode = mem[PC]; // get next opcode
 	R++; // I think this is what R does
 	//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
-	//printMem(this, CHR_MAP, CHR_MAP + 20);
-	//std::cout << toHex(mem[SCY]) << std::endl;
-	// emulate the opcode (compiles to a jump table)
+	printMem(this, 0x9900 - 1, 0x9905);
+
+	/// emulate the opcode (compiles to a jump table)
 	switch (opcode)
 	{
 		case 0x00: // NOP
