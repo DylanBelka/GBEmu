@@ -179,27 +179,19 @@ private:
 	void handleInterrupts();
 };
 
-template<typename T> const std::string toHex(T);
-const std::string toHex(const char);
-
 enum Bits
 {
 	b0 = 0x1,
-	bit0 = 0x1,
 	b1 = 0x2,
-	bit1 = 0x2,
 	b2 = 0x4,
-	bit2 = 0x4,
 	b3 = 0x8,
-	bit3 = 0x8,
 	b4 = 0x10,
-	bit4 = 0x10,
 	b5 = 0x20,
-	bit5 = 0x20,
 	b6 = 0x40,
-	bit6 = 0x40,
 	b7 = 0x80,
-	bit7 = 0x80
 };
+
+template<typename T> const std::string toHex(T);
+const std::string toHex(const char);
 
 #endif

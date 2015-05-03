@@ -754,7 +754,7 @@ void CPU::decodeExtendedInstruction(char opcode)
 		}
 		case 0x67: // bit 4, a
 		{
-			bit(A, bit4);
+			bit(A, b4);
 			break;
 		}
 		case 0x68: // bit 5, b
@@ -1295,6 +1295,258 @@ void CPU::decodeExtendedInstruction(char opcode)
 		case 0xCF: // set 1, a
 		{
 			set(A, b1);
+			break;
+		}
+		case 0xD0: // set 2, b
+		{
+			set(B, b2);
+			break;
+		}
+		case 0xD1: // set 2, c
+		{
+			set(C, b2);
+			break;
+		}
+		case 0xD2: // set 2, d
+		{
+			set(D, b2);
+			break;
+		}
+		case 0xD3: // set 2, e
+		{
+			set(E, b2);
+			break;
+		}
+		case 0xD4: // set 2, h
+		{
+			set(H, b2);
+			break;
+		}
+		case 0xD5: // set 2, l
+		{
+			set(L, b2);
+			break;
+		}
+		case 0xD6: // set 2, (hl)
+		{
+			byte val = mem[(addr16)HL()];
+			val |= b2;
+			mem[(addr16)HL()] = val;
+			break;
+		}
+		case 0xD7: // set 2, a
+		{
+			set(A, b2);
+			break;
+		}
+		case 0xD8: // set 3, b
+		{
+			set(B, b3);
+			break;
+		}
+		case 0xD9: // set 3, c
+		{
+			set(C, b3);
+			break;
+		}
+		case 0xDA: // set 3, d
+		{
+			set(D, b3);
+			break;
+		}
+		case 0xDB: // set 3, e
+		{
+			set(E, b3);
+			break;
+		}
+		case 0xDC: // set 3, h
+		{
+			set(H, b3);
+			break;
+		}
+		case 0xDD: // set 3, l
+		{
+			set(L, b3);
+			break;
+		}
+		case 0xDE: // set 3, (hl)
+		{
+			byte val = mem[(addr16)HL()];
+			val |= b3;
+			mem[(addr16)HL()] = val;
+			break;
+		}
+		case 0xDF: // set 3, a
+		{
+			set(A, b3);
+			break;
+		}
+		case 0xE0: // set 4, b
+		{
+			set(B, b4);
+			break;
+		}
+		case 0xE1: // set 4, c
+		{
+			set(C, b4);
+			break;
+		}
+		case 0xE2: // set 4, d
+		{
+			set(D, b4);
+			break;
+		}
+		case 0xE3: // set 4, e
+		{
+			set(E, b4);
+			break;
+		}
+		case 0xE4: // set 4, h
+		{
+			set(H, b4);
+			break;
+		}
+		case 0xE5: // set 4, l
+		{
+			set(L, b4);
+			break;
+		}
+		case 0xE6: // set 4, (hl)
+		{
+			byte val = mem[(addr16)HL()];
+			val |= b4;
+			mem[(addr16)HL()] = val;
+			break;
+		}
+		case 0xE7: // set 4, a
+		{
+			set(A, b4);
+			break;
+		}
+		case 0xE8: // set 5, b
+		{
+			set(B, b5);
+			break;
+		}
+		case 0xE9: // set 5, c
+		{
+			set(C, b5);
+			break;
+		}
+		case 0xEA: // set 5, d
+		{
+			set(D, b5);
+			break;
+		}
+		case 0xEB: // set 5, e
+		{
+			set(E, b5);
+			break;
+		}
+		case 0xEC: // set 5, h
+		{
+			set(H, b5);
+			break;
+		}
+		case 0xED: // set 5, l
+		{
+			set(L, b5);
+			break;
+		}
+		case 0xEE: // set 5, (hl)
+		{
+			byte val = mem[(addr16)HL()];
+			val |= b5;
+			mem[(addr16)HL()] = val;
+			break;
+		}
+		case 0xEF: // set 5, a
+		{
+			set(A, b5);
+			break;
+		}
+		case 0xF0: // set 6, b
+		{
+			set(B, b6);
+			break;
+		}
+		case 0xF1: // set 6, c
+		{
+			set(C, b6);
+			break;
+		}
+		case 0xF2: // set 6, d
+		{
+			set(D, b6);
+			break;
+		}
+		case 0xF3: // set 6, e
+		{
+			set(E, b6);
+			break;
+		}
+		case 0xF4: // set 6, h
+		{
+			set(H, b6);
+			break;
+		}
+		case 0xF5: // set 6, l
+		{
+			set(L, b6);
+			break;
+		}
+		case 0xF6: // set 6, (hl)
+		{
+			byte val = mem[(addr16)HL()];
+			val |= b6;
+			mem[(addr16)HL()] = val;
+			break;
+		}
+		case 0xF7: // set 6, a
+		{
+			set(A, b6);
+			break;
+		}
+		case 0xF8: // set 7, b
+		{
+			set(B, b7);
+			break;
+		}
+		case 0xF9: // set 7, c
+		{
+			set(C, b7);
+			break;
+		}
+		case 0xFA: // set 7, d
+		{
+			set(D, b7);
+			break;
+		}
+		case 0xFB: // set 7, e
+		{
+			set(E, b7);
+			break;
+		}
+		case 0xFC: // set 7, h
+		{
+			set(H, b7);
+			break;
+		}
+		case 0xFD: // set 7, l
+		{
+			set(L, b7);
+			break;
+		}
+		case 0xFE: // set 7, (hl)
+		{
+			byte val = mem[(addr16)HL()];
+			val |= b7;
+			mem[(addr16)HL()] = val;
+			break;
+		}
+		case 0xFF: // set 7, a
+		{
+			set(A, b7);
 			break;
 		}
 		default:
