@@ -1,5 +1,5 @@
-#ifndef GB_GB_H
-#define GB_GB_H
+#ifndef GB_Gameboy_H
+#define GB_Gameboy_H
 
 #include <SDL.h>
 #include <iostream>
@@ -19,13 +19,16 @@
 #define LIGHT_GREY 0xAA
 #define WHITE 0xFF
 
-class GB
+class Gameboy
 {
 public:
-	GB();
-	~GB();
+	Gameboy();
+	~Gameboy();
 
+	/// Load the ROM into the CPU's memory and clear both screens
 	bool init(const std::string& romName);
+
+	/// Main program loop
 	void run();
 
 private:

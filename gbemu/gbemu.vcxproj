@@ -13,13 +13,13 @@
   <ItemGroup>
     <ClCompile Include="binLut.cpp" />
     <ClCompile Include="cpu.cpp" />
-    <ClCompile Include="GB.cpp" />
+    <ClCompile Include="Gameboy.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="binLut.h" />
     <ClInclude Include="cpu.h" />
-    <ClInclude Include="GB.h" />
+    <ClInclude Include="Gameboy.h" />
     <ClInclude Include="memdefs.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

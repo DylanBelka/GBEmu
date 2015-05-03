@@ -1,6 +1,6 @@
-#include "GB.h"
+#include "Gameboy.h"
 
-GB::GB() :
+Gameboy::Gameboy() :
 cpu()
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
@@ -22,20 +22,20 @@ cpu()
 	pixel.w = 1 * MODIFIER;
 }
 
-GB::~GB()
+Gameboy::~Gameboy()
 {
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 }
 
-bool GB::init(const std::string& romName)
+bool Gameboy::init(const std::string& romName)
 {
 	return cpu.loadROM(romName);
 	clear(screenSurface);
 	clear(screenBuffer);
 }
 
-void GB::run()
+void Gameboy::run()
 {
 	while (running)
 	{
@@ -57,7 +57,7 @@ void GB::run()
 	}
 }
 
-void GB::drawPixel(const char color, const unsigned x, const unsigned y)
+void Gameboy::drawPixel(const char color, const unsigned x, const unsigned y)
 {
 	pixel.x = x;
 	pixel.y = y;
@@ -72,7 +72,7 @@ void clear(SDL_Surface* surf)
 }
 
 // get the binary strings of both bytes
-void GB::drawSlice(const byte b1, const byte b2, unsigned& x, unsigned& y)
+void Gameboy::drawSlice(const byte b1, const byte b2, unsigned& x, unsigned& y)
 {
 	// the bits of the string are compared to create the color of each pixel
 	// 1. A bit that is 0 in both bytes will be a WHITE pixel
@@ -105,7 +105,7 @@ void GB::drawSlice(const byte b1, const byte b2, unsigned& x, unsigned& y)
 	y++;
 }
 
-void GB::drawBG(const char* mem)
+void Gameboy::drawBG(const char* mem)
 {
 	unsigned x = 0;
 	unsigned y = 0;
@@ -171,7 +171,7 @@ void GB::drawBG(const char* mem)
 	}
 }
 
-void GB::drawSprites(const byte* mem)
+void Gameboy::drawSprites(const byte* mem)
 {
 	const byte lcdc = cpu.getByte(LCDC);
 	// sprite size: 1 = 8x16, 0 = 8x8
@@ -179,7 +179,7 @@ void GB::drawSprites(const byte* mem)
 	{
 		for (int i = OAM; i < OAM_END; i += 4)
 		{
-			unsigned y = mem[i] - 16; // sprite are offset on the GB hardware by (-8, -16) so a sprite at (0, 0) is offscreen and actually at (-8, -16)
+			unsigned y = mem[i] - 16; // sprite are offset on the Gameboy hardware by (-8, -16) so a sprite at (0, 0) is offscreen and actually at (-8, -16)
 			unsigned x = mem[i + 1] - 8; // emulate that offset here
 			// sprites are always unsigned
 			// draw the upper 8x8 tile
@@ -214,7 +214,7 @@ void GB::drawSprites(const byte* mem)
 
 }
 
-void GB::draw()
+void Gameboy::draw()
 {
 	clear(screenSurface);
 	clear(screenBuffer);
@@ -260,7 +260,7 @@ void GB::draw()
 	}
 }
 
-bool GB::handleEvents()
+bool Gameboy::handleEvents()
 {
 	SDL_Event e;
 	while (SDL_PollEvent(&e))
@@ -285,7 +285,7 @@ bool GB::handleEvents()
 	return false;
 }
 
-void GB::halt()
+void Gameboy::halt()
 {
 	while (!cpu.getByte(IE)) // wait for interrupt
 	{
@@ -296,7 +296,7 @@ void GB::halt()
 	cpu.stopHalt();
 }
 
-void GB::stop()
+void Gameboy::stop()
 {
 	while (!handleEvents()) { draw(); }
 }

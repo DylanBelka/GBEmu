@@ -1,7 +1,7 @@
 #include <iostream>
 #include <SDL.h>
 
-#include "GB.h"
+#include "Gameboy.h"
 #include "cpu.h"
 
 //#define DEBUG_CPU
@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 	cpu.test();
 	std::cin.ignore();
 #endif
-	GB gb;
+	Gameboy gb;
 	if (argc == 2)
 	{
 		int gbLoadStatus = gb.init(argv[1]);

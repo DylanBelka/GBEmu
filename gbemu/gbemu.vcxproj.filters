@@ -21,10 +21,10 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GB.cpp">
+    <ClCompile Include="binLut.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="binLut.cpp">
+    <ClCompile Include="Gameboy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -32,13 +32,13 @@
     <ClInclude Include="cpu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GB.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="memdefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="binLut.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameboy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
