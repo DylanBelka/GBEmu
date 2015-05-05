@@ -53,12 +53,8 @@ void Gameboy::run()
 	{
 		draw();
 		handleEvents();
-		//int ticks = SDL_GetTicks();
-		//while ((int)SDL_GetTicks() - ticks < 30)
-		//std::cout << toHex(cpu.getByte(JOYPAD)) << std::endl;
 		while (cpu.clockCycles < vblankclk)
 		{
-			//std::cout << cpu.clockCycles << std::endl;
 			handleEvents();
 			cpu.emulateCycle();
 		}
@@ -87,8 +83,6 @@ void clear(SDL_Surface* surf)
 	// clear the screen to white
 	SDL_FillRect(surf, NULL, SDL_MapRGB(surf->format, 0xFF, 0xFF, 0xFF));
 }
-
-bool test = false;
 
 void Gameboy::drawBGSlice(const byte b1, const byte b2, unsigned& x, unsigned& y)
 {
@@ -126,7 +120,6 @@ void Gameboy::drawBGSlice(const byte b1, const byte b2, unsigned& x, unsigned& y
 
 void Gameboy::drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigned& y)
 {
-	// the bits of the string are compared to create the color of each pixel
 	// 1. A bit that is 0 in both bytes will be a WHITE pixel
 	// 2. A bit that is 1 in the first byte and 0 in the second will be a GREY pixel
 	// 3. A bit that is 0 in the first byte and 1 in the second will be a DARK GREY pixel
@@ -142,7 +135,7 @@ void Gameboy::drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigne
 		}
 		else if (!currBit0 && !currBit1) // bit1 (off) and bit2 (off)
 		{
-
+			// b0 and b1 == 0 is clear for sprites
 		}
 		else if (currBit0 && !currBit1) // bit1 (on) and bit2 (off)
 		{
@@ -287,12 +280,12 @@ void Gameboy::draw()
 		if (srcSurfaceRect.x >= SCR_BUFFER_WIDTH - WINDOW_WIDTH) // if the scroll reaches the end of the background
 		{
 			int mod = srcSurfaceRect.x / (SCR_BUFFER_WIDTH - WINDOW_WIDTH); // get the multiplication modifier (when SCX >= 192 the * 2 adjusts down)
-			srcSurfaceRect.x =  srcSurfaceRect.x - (SCR_BUFFER_WIDTH - WINDOW_WIDTH) * mod; // scroll it back (x - 96) 96 is when the window reaches the end of the buffer
+			srcSurfaceRect.x =  srcSurfaceRect.x - (SCR_BUFFER_WIDTH - WINDOW_WIDTH) * mod; // scroll it back (x - 96) 96 is when the window reaches the end of the buffer horizontally
 		}
 		if (srcSurfaceRect.y >= SCR_BUFFER_HEIGHT - WINDOW_HEIGHT)
 		{
 			int mod = srcSurfaceRect.y / (SCR_BUFFER_HEIGHT - WINDOW_HEIGHT); // get the multiplication modifier (when SCX >= 192 the * 2 adjusts down)
-			srcSurfaceRect.y = srcSurfaceRect.y - (SCR_BUFFER_HEIGHT - WINDOW_HEIGHT) * mod; // scroll it back (x - 96) 96 is when the window reaches the end of the buffer
+			srcSurfaceRect.y = srcSurfaceRect.y - (SCR_BUFFER_HEIGHT - WINDOW_HEIGHT) * mod; // scroll it back (y - 112) 112 is when the window reaches the end of the buffer vertically
 		}
 		// copy the screen buffer (the background) to the actual screen
 		SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
@@ -379,10 +372,6 @@ bool Gameboy::handleEvents()
 			{
 				cpu.setByte(JOYPAD, jpStat & b2);
 				return true;
-			}
-			if (key == SDLK_1)
-			{
-				test = true;
 			}
 		}
 		else
