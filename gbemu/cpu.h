@@ -63,6 +63,8 @@ public:
 	void stopHalt() { halted = false; }
 	void stopStop() { stopped = false; }
 
+	unsigned short clockCycles = 0;
+
 private:
 	void reset();
 
@@ -104,7 +106,7 @@ private:
 	byte R;					// memory refresh register
 	unsigned short SP;		// stack pointer
 
-	byte* mem;				// cpu memory (0xFFFF in size)
+	byte* mem;				// cpu memory (0x10000 bytes in size)
 
 	bool IME = true;		// interrupt master enable
 

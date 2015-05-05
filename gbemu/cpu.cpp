@@ -3,6 +3,26 @@
 // ^^^ = check this
 // &&& = redundant opcode - 'optimized' ex: ld a, a
 
+unsigned int clockTimes[256] = 
+{
+	4, 10, 7, 6, 4, 4, 7, 4, 4, 11, 7, 6, 4, 4, 7, 4,
+	4, 10, 7, 6, 4, 4, 7, 4, 12, 11, 7, 6, 4, 4, 7, 4,
+	7, 10, 16, 6, 4, 4, 7, 4, 7, 11, 16, 6, 4, 4, 7, 4,
+	7, 10, 13, 6, 11, 11, 10, 4, 7, 11, 13, 6, 4, 4, 7, 4,
+	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
+	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
+	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
+	7, 7, 7, 7, 7, 7, 4, 7, 4, 4, 4, 4, 4, 4, 7, 4,
+	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
+	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
+	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
+	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
+	5, 10, 10, 10, 10, 11, 7, 11, 5, 10, 10, 8, 10, 17, 7, 11,
+	5, 10, 10, 11, 10, 11, 7, 11, 5, 4, 10, 11, 10, 4, 7, 11,
+	5, 10, 10, 19, 10, 11, 7, 11, 5, 4, 10, 4, 10, 4, 7, 11,
+	5, 10, 10, 4, 10, 11, 7, 11, 5, 6, 10, 4, 10, 4, 7, 11,
+};
+
 CPU::CPU()
 {
 	mem = new byte[MEM_SIZE];
@@ -1553,7 +1573,6 @@ void CPU::decodeExtendedInstruction(char opcode)
 		{
 			std::cout << "Unimplemented CB instruction: " << toHex(opcode) << std::endl;
 			std::cout << "At: " << toHex(PC + 1) << std::endl;
-			//system("pause");
 			break;
 		}
 	}
@@ -1851,28 +1870,15 @@ void CPU::emulateCycle()
 	unsigned char opcode = mem[PC]; // get next opcode
 	R++; // I think this is what R does
 	//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
-	//if (opcode == 0xCB)
-	//{
-	//	std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
-	//	std::cout << toHex((int)mem[PC + 1]) << std::endl;
-	//}
-	//printMem(this, 0x8000, 0x8010);
+	clockCycles += clockTimes[opcode];
+	//std::cout << clockCycles << std::endl;
+	if (mem[OAM] != 0)
+	{
+		//printMem(this, OAM, OAM + 4);
+	}
+	/// FIX UPDATE SIGN
 
-	//file << "PC: " << toHex(PC) << "\n";
-	//file << "opcode: " << toHex((byte)opcode) << "\n";
-	//file << "A: " << toHex((byte)A) << "\n";
-	//file << "B: " << toHex((byte)B) << "\n";
-	//file << "C: " << toHex((byte)C) << "\n";
-	//file << "D: " << toHex((byte)D) << "\n";
-	//file << "E: " << toHex((byte)E) << "\n";
-	//file << "F: " << toHex((byte)F) << "\n";
-	//file << "AF: " << toHex(AF()) << "\n";
-	//file << "BC: " << toHex(BC()) << "\n";
-	//file << "DE: " << toHex(DE()) << "\n";
-	//file << "HL: " << toHex(HL()) << "\n";
-	//file << "\n";
-	//std::cout << toHex(mem[JOYPAD]) << std::endl;
-
+	//mem[JOYPAD] = 0;
 	/// emulate the opcode (compiles to a jump table)
 	switch (opcode)
 	{
@@ -2081,7 +2087,7 @@ void CPU::emulateCycle()
 		}
 		case 0x1A: // ld a, (de)
 		{
-			A = mem[DE()];
+			A = mem[(addr16)DE()];
 			PC++;
 			break;
 		}
@@ -2095,7 +2101,6 @@ void CPU::emulateCycle()
 		case 0x1C: // inc e
 		{
 			E++;
-			updateCarry(E);
 			updateN(ADD);
 			updateZero(E);
 			updateOverflow(E);
@@ -2107,7 +2112,6 @@ void CPU::emulateCycle()
 		case 0x1D: // dec e
 		{
 			E--;
-			updateCarry(E);
 			updateN(SUB);
 			updateZero(E);
 			updateOverflow(E);
@@ -2164,7 +2168,6 @@ void CPU::emulateCycle()
 			updateOverflow(H);
 			updateHC(H);
 			updateZero(H);
-			updateZero(H);
 			updateSign(H);
 			PC++;
 			break;
@@ -2175,7 +2178,6 @@ void CPU::emulateCycle()
 			updateN(SUB);
 			updateOverflow(H);
 			updateHC(H);
-			updateZero(H);
 			updateZero(H);
 			updateSign(H);
 			PC++;
@@ -2296,28 +2298,30 @@ void CPU::emulateCycle()
 		case 0x34: // inc (hl) 
 		{
 			mem[(addr16)HL()]++;
-			updateOverflow(HL());
+			const s16 val = mem[(addr16)HL()];
+			updateOverflow(val);
 			updateN(ADD);
-			updateZero(HL());
-			updateHC(HL());
-			updateSign(HL());
+			updateZero(val);
+			updateHC(val);
+			updateSign(val);
 			PC++;
 			break;
 		}
 		case 0x35: // dec (hl)
 		{
 			mem[(addr16)HL()]--;
-			updateOverflow(HL());
+			const s16 val = mem[(addr16)HL()];
+			updateOverflow(val);
 			updateN(SUB);
-			updateZero(HL());
-			updateHC(HL());
-			updateSign(HL());
+			updateZero(val);
+			updateHC(val);
+			updateSign(val);
 			PC++;
 			break;
 		}
 		case 0x36: // ld (hl), *
 		{
-			mem[HL()] = mem[PC + 1];
+			mem[(addr16)HL()] = mem[PC + 1];
 			PC += 2;
 			break;
 		}
@@ -2857,7 +2861,7 @@ void CPU::emulateCycle()
 		}
 		case 0x87: // add a, a
 		{
-			A += A;
+			A <<= 1;
 			updateCarry(A);
 			updateN(ADD);
 			updateOverflow(A);
@@ -3701,9 +3705,13 @@ void CPU::emulateCycle()
 		case 0xE0: //ld (0xFF00 + n), a
 		{
 			mem[0xFF00 + (ubyte)mem[PC + 1]] = A;
-			if ((byte)mem[PC + 1] == 0x46)
+			if ((byte)mem[PC + 1] == 0x46) // dma
 			{
 				dma();
+			}
+			else if ((byte)mem[PC + 1] == 0x00) // read input
+			{
+				
 			}
 			PC += 2;
 			break;
@@ -3771,7 +3779,7 @@ void CPU::emulateCycle()
 		}
 		case 0xE9: // jp (hl)
 		{
-			jp(true, (addr16)HL(), 1);
+			jp(true, mem[(addr16)HL()], 1);
 			break;
 		}
 		case 0xEA: // ld (**), a
@@ -3782,9 +3790,9 @@ void CPU::emulateCycle()
 		}
 		case 0xEB: // ex de, hl ~!GB
 		{
-			const reg16 de = DE();
-			DE(HL()); // swap de = hl
-			HL(de); // hl = de
+			//const reg16 de = DE();
+			//DE(HL()); // swap de = hl
+			//HL(de); // hl = de
 			PC++;
 			break;
 		}
