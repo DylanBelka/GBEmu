@@ -82,11 +82,8 @@ private:
 	unsigned char F;		// flag register
 
 	// decode flag register bits
-	inline bool sign() { return F & 0x80; }
 	inline bool zero() { return F & 0x40; }
 	inline bool half_carry() { return F & 0x10; }
-	inline bool parity() { return F & 0x4; }
-	inline bool overflow() { return F & 0x4; }
 	inline bool N() { return F & 0x2; } // add or subtract
 	inline bool carry() { return F & 0x1; }
 
@@ -115,10 +112,6 @@ private:
 
 // Flag helper functions
 private:
-	inline void updateSign(reg16 reg);
-	inline void resetSign();
-	inline void setSign();
-
 	inline void updateZero(reg16 reg);
 	inline void resetZero();
 	inline void setZero();
@@ -126,14 +119,6 @@ private:
 	inline void updateHC(reg16 reg);
 	inline void resetHC();
 	inline void setHC();
-
-	inline void updateParity(reg16 reg);
-	inline void resetParity();
-	inline void setParity();
-
-	inline void updateOverflow(reg16 reg);
-	inline void resetOverflow();
-	inline void setOverflow();
 
 	inline void updateN(bool add);
 	inline void resetN();
