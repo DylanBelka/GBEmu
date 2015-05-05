@@ -88,6 +88,8 @@ void clear(SDL_Surface* surf)
 	SDL_FillRect(surf, NULL, SDL_MapRGB(surf->format, 0xFF, 0xFF, 0xFF));
 }
 
+bool test = false;
+
 void Gameboy::drawBGSlice(const byte b1, const byte b2, unsigned& x, unsigned& y)
 {
 	// the bits of the string are compared to create the color of each pixel
@@ -96,23 +98,23 @@ void Gameboy::drawBGSlice(const byte b1, const byte b2, unsigned& x, unsigned& y
 	// 3. A bit that is 0 in the first byte and 1 in the second will be a DARK GREY pixel
 	// 4. A bit that is 1 in both bytes will be a BLACK pixel
 	// https://slashbinbash.wordpress.com/2013/02/07/gameboy-tile-mapping-between-image-and-memory/
-	const char* bin1 = binLut[(ubyte)b1];
-	const char* bin2 = binLut[(ubyte)b2];
-	for (int i = 0; i < 8; i++)
+	for (int i = 0x80; i >= 1; i >>= 1)
 	{
-		if (bin1[i] == '1' && bin2[i] == '1')
+		int currBit0 = b1 & i; // get the value of the current bit
+		int currBit1 = b2 & i;
+		if (currBit0 && currBit1) // bit1 (on) and bit2 (on)
 		{
 			drawPixel(screenBuffer, BLACK, x, y); // draw the pixel to the screenBuffer 
 		}
-		else if (bin1[i] == '0' && bin2[i] == '0')
+		else if (!currBit0 && !currBit1) // bit1 (off) and bit2 (off)
 		{
 			drawPixel(screenBuffer, WHITE, x, y); // draw the pixel to the screenBuffer 
 		}
-		else if (bin1[i] == '1' && bin2[i] == '0')
+		else if (currBit0 && !currBit1) // bit1 (on) and bit2 (off)
 		{
 			drawPixel(screenBuffer, LIGHT_GREY, x, y); // draw the pixel to the screenBuffer 
 		}
-		else
+		else // bit1 (off) bit2 (on)
 		{
 			drawPixel(screenBuffer, DARK_GREY, x, y); // draw the pixel to the screenBuffer 
 		}
@@ -130,23 +132,23 @@ void Gameboy::drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigne
 	// 3. A bit that is 0 in the first byte and 1 in the second will be a DARK GREY pixel
 	// 4. A bit that is 1 in both bytes will be a BLACK pixel
 	// https://slashbinbash.wordpress.com/2013/02/07/gameboy-tile-mapping-between-image-and-memory/
-	const char* bin1 = binLut[(ubyte)b1];
-	const char* bin2 = binLut[(ubyte)b2];
-	for (int i = 0; i < 8; i++)
+	for (int i = 0x80; i >= 1; i >>= 1)
 	{
-		if (bin1[i] == '1' && bin2[i] == '1')
+		int currBit0 = b1 & i; // get the value of the current bit
+		int currBit1 = b2 & i;
+		if (currBit0 && currBit1) // bit1 (on) and bit2 (on)
 		{
 			drawPixel(screenSurface, BLACK, x, y); // draw the pixel to the screenBuffer 
 		}
-		else if (bin1[i] == '0' && bin2[i] == '0')
+		else if (!currBit0 && !currBit1) // bit1 (off) and bit2 (off)
 		{
-			// white is clear for sprites
+
 		}
-		else if (bin1[i] == '1' && bin2[i] == '0')
+		else if (currBit0 && !currBit1) // bit1 (on) and bit2 (off)
 		{
 			drawPixel(screenSurface, LIGHT_GREY, x, y); // draw the pixel to the screenBuffer 
 		}
-		else
+		else // bit1 (off) bit2 (on)
 		{
 			drawPixel(screenSurface, DARK_GREY, x, y); // draw the pixel to the screenBuffer 
 		}
@@ -294,7 +296,8 @@ void Gameboy::draw()
 		}
 		// copy the screen buffer (the background) to the actual screen
 		SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
-		// draw sprites
+
+		// draw sprites on top of background
 		if (lcdc & 0x2) // draw sprites?
 		{
 			drawSprites(mem);
@@ -376,6 +379,10 @@ bool Gameboy::handleEvents()
 			{
 				cpu.setByte(JOYPAD, jpStat & b2);
 				return true;
+			}
+			if (key == SDLK_1)
+			{
+				test = true;
 			}
 		}
 		else

@@ -7,7 +7,6 @@
 
 #include "cpu.h"
 #include "memdefs.h"
-#include "binLut.h"
 
 #define WINDOW_WIDTH 160
 #define WINDOW_HEIGHT 144

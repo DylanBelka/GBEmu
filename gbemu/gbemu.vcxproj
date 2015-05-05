@@ -11,13 +11,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="binLut.cpp" />
     <ClCompile Include="cpu.cpp" />
     <ClCompile Include="Gameboy.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="binLut.h" />
     <ClInclude Include="cpu.h" />
     <ClInclude Include="Gameboy.h" />
     <ClInclude Include="memdefs.h" />

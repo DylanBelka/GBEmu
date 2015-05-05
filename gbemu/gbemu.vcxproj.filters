@@ -21,9 +21,6 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="binLut.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Gameboy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -33,9 +30,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="memdefs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="binLut.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Gameboy.h">
