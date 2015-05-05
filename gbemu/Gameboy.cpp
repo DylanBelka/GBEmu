@@ -308,11 +308,17 @@ void Gameboy::draw()
 		framesSinceLastVBlank++;
 
 		// emulate through v-blank: many games wait for a specific value of LY during v-blank before continuing execution
-		for (int i = 0x90; i < 0x99; i++)
-		{
-			cpu.setByte(LY, i);
-			cpu.emulateCycle();
-		}
+		//for (int i = 0x90; i < 0x99; i++)
+		//{
+		//	cpu.setByte(LY, i);
+		//	cpu.emulateCycle();
+		//	cpu.emulateCycle();
+		//	cpu.emulateCycle();
+		//	cpu.emulateCycle();
+		//	cpu.emulateCycle();
+		//	cpu.emulateCycle();
+		//	cpu.emulateCycle();
+		//}
 	}
 }
 

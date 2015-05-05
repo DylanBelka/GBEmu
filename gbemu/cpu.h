@@ -94,7 +94,7 @@ private:
 	inline reg16 HL() { return ((H << 8) | (L & 0xFF)); }
 
 	inline void AF(s16 val) { A = ((val >> 0x8) & 0xFF); F = val & 0xFF; } // For Hb: shift the value up and mask off lower bits
-	inline void BC(s16 val) { B = ((val >> 0x8) & 0xFF); C = val & 0xFF; } // For Lb: cast to char which automatically masks upper bits
+	inline void BC(s16 val) { B = ((val >> 0x8) & 0xFF); C = val & 0xFF; } // For Lb: mask upper bits
 	inline void DE(s16 val) { D = ((val >> 0x8) & 0xFF); E = val & 0xFF; }
 	inline void HL(s16 val) { H = ((val >> 0x8) & 0xFF); L = val & 0xFF; }
 

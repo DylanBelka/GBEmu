@@ -1734,8 +1734,7 @@ void CPU::interrupt(const char to)
 {
 	push(PC); // push the program counter onto the stack
 	PC = to; // jump to the interrupt location
-	// disable interrupts
-	IME = false;
+	IME = false; // disable interrupts
 	mem[IF] = 0x0;
 }
 
@@ -1756,8 +1755,6 @@ void CPU::handleInterrupts()
 void CPU::test()
 {
 	loadROM("test.bin");
-
-	//mem[LY] = 0x91;
 	PC = 0x0;
 	for (int i = 0; i < 0x10; i++)
 	{
@@ -1791,1903 +1788,1910 @@ void CPU::emulateCycle()
 	handleInterrupts();
 	unsigned char opcode = mem[PC]; // get next opcode
 	R++; // I think this is what R does
+	//if (mem[0x9800] != 0)
+	//{
+	//	
+	//	printMem(this, CHR_MAP, CHR_MAP + 4);
+	//}
+	mem[LY]++;
+	if (PC != 0x2ed)
+	{
+		//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
+	}
+	else
+	{
+		system("pause");
+	}
 	//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
 	clockCycles += clockTimes[opcode];
-	//std::cout << clockCycles << std::endl;
-	if (mem[OAM] != 0)
-	{
-		//printMem(this, OAM, OAM + 4);
-	}
-	/// FIX UPDATE SIGN
 
-	//mem[JOYPAD] = 0;
 	/// emulate the opcode (compiles to a jump table)
 	switch (opcode)
 	{
-	case 0x00: // NOP
-	{
-		PC++;
-		break;
-	}
-	case 0x01: // ld BC, **
-	{
-		BC((addr16)get16());
-		PC += 3;
-		break;
-	}
-	case 0x02: // ld (BC), a
-	{
-		mem[(addr16)BC()] = A;
-		PC++;
-		break;
-	}
-	case 0x03: // inc BC
-	{
-		const reg16 bc = BC();
-		BC(bc + 1);
-		PC++;
-		break;
-	}
-	case 0x04: // inc b
-	{
-		B++;
-		updateN(ADD);
-		updateHC(B);
-		updateZero(B);
-		PC++;
-		break;
-	}
-	case 0x05: // dec b
-	{
-		B--;
-		updateN(SUB);
-		updateHC(B);
-		updateZero(B);
-		PC++;
-		break;
-	}
-	case 0x06: // ld b, *
-	{
-		B = mem[PC + 1];
-		PC += 2;
-		break;
-	}
-	case 0x07: // rlca
-	{
-		A <<= 1;
-		updateCarry(A);
-		resetN();
-		resetHC();
-		PC++;
-		break;
-	}
-	case 0x08: // ex af, af' (~!GB)
-	{
-		PC++;
-		break;
-	}
-	case 0x09: // add hl, bc
-	{
-		const reg16 hl = HL();
-		HL(BC() + hl);
-		updateCarry(HL());
-		updateN(ADD);
-		updateHC(HL());
-		PC++;
-		break;
-	}
-	case 0x0A: // ld a, (BC)
-	{
-		A = mem[(addr16)BC()];
-		PC++;
-		break;
-	}
-	case 0x0B: // dec BC
-	{
-		const reg16 bc = BC();
-		BC(bc - 1);
-		PC++;
-		break;
-	}
-	case 0x0C: // inc C
-	{
-		C++;
-		updateN(ADD);
-		updateHC(C);
-		updateZero(C);
-		PC++;
-		break;
-	}
-	case 0x0D: // dec C
-	{
-		C--;
-		updateN(SUB);
-		updateHC(C);
-		updateZero(C);
-		PC++;
-		break;
-	}
-	case 0x0E: // ld c, *
-	{
-		C = mem[PC + 1];
-		PC += 2;
-		break;
-	}
-	case 0x0F: // rrca
-	{
-		A >>= 1;
-		updateCarry(A);
-		resetN();
-		resetHC();
-		PC++;
-		break;
-	}
-	case 0x10: // STOP
-	{
-		stop();
-		PC++;
-		break;
-	}
-	case 0x11: // ld de, **
-	{
-		DE(load16());
-		PC += 3;
-		break;
-	}
-	case 0x12: // ld (de), a
-	{
-		mem[(addr16)DE()] = A;
-		PC++;
-		break;
-	}
-	case 0x13: // inc de
-	{
-		const reg16 de = DE();
-		DE(de + 1);
-		PC++;
-		break;
-	}
-	case 0x14: // inc d
-	{
-		D++;
-		updateN(ADD);
-		updateHC(D);
-		updateZero(D);
-		PC++;
-		break;
-	}
-	case 0x15: // dec d
-	{
-		D--;
-		updateN(SUB);
-		updateHC(D);
-		updateZero(D);
-		PC++;
-		break;
-	}
-	case 0x16: // ld d, *
-	{
-		D = mem[PC + 1];
-		PC += 2;
-		break;
-	}
-	case 0x17: // rla
-	{
-		A <<= 1;
-		updateCarry(A);
-		resetN();
-		resetHC();
-		PC++;
-		break;
-	}
-	case 0x18: // jr *
-	{
-		jr(true, mem[PC + 1], 2);
-		break;
-	}
-	case 0x19: // add hl, de
-	{
-		const reg16 hl = HL();
-		HL(hl + DE());
-		updateCarry(HL());
-		updateN(ADD);
-		updateHC(HL());
-		PC++;
-		break;
-	}
-	case 0x1A: // ld a, (de)
-	{
-		A = mem[(addr16)DE()];
-		PC++;
-		break;
-	}
-	case 0x1B: // dec de
-	{
-		const reg16 de = DE();
-		DE(de - 1);
-		PC++;
-		break;
-	}
-	case 0x1C: // inc e
-	{
-		E++;
-		updateN(ADD);
-		updateZero(E);
-		updateHC(E);
-		PC++;
-		break;
-	}
-	case 0x1D: // dec e
-	{
-		E--;
-		updateN(SUB);
-		updateZero(E);
-		updateHC(E);
-		PC++;
-		break;
-	}
-	case 0x1E: // ld e, *
-	{
-		E = mem[PC + 1];
-		PC += 2;
-		break;
-	}
-	case 0x1F: // rra
-	{
-		A >>= 1;
-		updateCarry(A);
-		resetN();
-		resetHC();
-		PC++;
-		break;
-	}
-	case 0x20: // jr nz, *
-	{
-		jr(!zero(), mem[PC + 1], 2);
-		break;
-	}
-	case 0x21: // ld hl, **
-	{
-		HL(get16());
-		PC += 3;
-		break;
-	}
-	case 0x22: // ldi (hl), a   or   ld (hl+), a
-	{
-		mem[(addr16)HL()] = A;
-		const reg16 hl = HL();
-		HL(hl + 1);
-		PC++;
-		break;
-	}
-	case 0x23: // inc hl
-	{
-		const reg16 hl = HL();
-		HL(hl + 1);
-		PC++;
-		break;
-	}
-	case 0x24: // inc h
-	{
-		H++;
-		updateN(ADD);
-		updateHC(H);
-		updateZero(H);
-		PC++;
-		break;
-	}
-	case 0x25: // dec h
-	{
-		H--;
-		updateN(SUB);
-		updateHC(H);
-		updateZero(H);
-		PC++;
-		break;
-	}
-	case 0x26: // ld h, *
-	{
-		H = mem[PC + 1];
-		PC += 2;
-		break;
-	}
-	case 0x27: // daa ^^^Probably doesnt work ^^^^
-	{
-		short uiResult = 0;
-		while (A > 0)
+		case 0x00: // NOP
 		{
-			uiResult <<= 4;
-			uiResult |= A % 10;
-			A /= 10;
+			PC++;
+			break;
 		}
-		updateCarry(A);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x28: // jr z, *
-	{
-		jr(zero(), mem[PC + 1], 2);
-		break;
-	}
-	case 0x29: // add hl, hl
-	{
-		const reg16 hl = HL();
-		HL(hl + hl);
-		updateCarry(HL());
-		updateN(ADD);
-		updateHC(HL());
-		PC++;
-		break;
-	}
-	case 0x2A: // ldi a, (hl) 
-	{
-		A = mem[(addr16)HL()];
-		const reg16 hl = HL();
-		HL(hl + 1);
-		PC++;
-		break;
-	}
-	case 0x2B: // dec hl
-	{
-		const reg16 hl = HL();
-		HL(hl - 1);
-		PC++;
-		break;
-	}
-	case 0x2C: // inc l
-	{
-		L++;
-		updateHC(L);
-		updateN(ADD);
-		updateZero(L);
-		PC++;
-		break;
-	}
-	case 0x2D: // dec l
-	{
-		L--;
-		updateHC(L);
-		updateN(SUB);
-		updateZero(L);
-		PC++;
-		break;
-	}
-	case 0x2E: // ld l, *
-	{
-		L = mem[PC + 1];
-		PC += 2;
-		break;
-	}
-	case 0x2f: // cpl ^^^
-	{
-		A = ~A;
-		PC++;
-		break;
-	}
-	case 0x30: // jr nc, *
-	{
-		jr(!carry(), mem[PC + 1], 2);
-		break;
-	}
-	case 0x31: // ld sp, **
-	{
-		SP = get16();
-		PC += 3;
-		break;
-	}
-	case 0x32: // ldd (hl), a
-	{
-		mem[(addr16)HL()] = A;
-		const reg16 hl = HL();
-		HL(hl - 1);
-		PC++;
-		break;
-	}
-	case 0x33: // inc sp
-	{
-		SP++;
-		PC++;
-		break;
-	}
-	case 0x34: // inc (hl) 
-	{
-		mem[(addr16)HL()]++;
-		const s16 val = mem[(addr16)HL()];
-		updateN(ADD);
-		updateZero(val);
-		updateHC(val);
-		PC++;
-		break;
-	}
-	case 0x35: // dec (hl)
-	{
-		mem[(addr16)HL()]--;
-		const s16 val = mem[(addr16)HL()];
-		updateN(SUB);
-		updateZero(val);
-		updateHC(val);
-		PC++;
-		break;
-	}
-	case 0x36: // ld (hl), *
-	{
-		mem[(addr16)HL()] = mem[PC + 1];
-		PC += 2;
-		break;
-	}
-	case 0x37: // scf
-	{
-		setCarry();
-		resetN();
-		resetHC();
-		PC++;
-		break;
-	}
-	case 0x38: // jr c, *
-	{
-		jr(carry(), mem[PC + 1], 2);
-		break;
-	}
-	case 0x39: // add hl, sp ^^^ is it hl + hl or hl + sp?
-	{
-		const reg16 hl = HL();
-		HL(hl + SP);
-		updateCarry(HL());
-		updateN(ADD);
-		updateHC(HL());
-		updateZero(HL());
-		PC++;
-		break;
-	}
-	case 0x3A: // ldd a, (hl)
-	{
-		A = mem[HL()];
-		const reg16 hl = HL();
-		HL(hl - 1);
-		PC++;
-		break;
-	}
-	case 0x3B: // dec sp
-	{
-		SP--;
-		PC++;
-		break;
-	}
-	case 0x3C: // inc a
-	{
-		A++;
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x3D: // dec a
-	{
-		A--;
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x3E: // ld a, *
-	{
-		A = mem[PC + 1];
-		PC += 2;
-		break;
-	}
-	case 0x3F: // ccf
-	{
-		F ^= 0x1;
-		PC++;
-		break;
-	}
-	case 0x40: // ld b, b
-	{
-		PC++;
-		break;
-	}
-	case 0x41: // ld b, c
-	{
-		B = C;
-		PC++;
-		break;
-	}
-	case 0x42: // ld b, d
-	{
-		B = D;
-		PC++;
-		break;
-	}
-	case 0x43: // ld b, e
-	{
-		B = E;
-		PC++;
-		break;
-	}
-	case 0x44: // ld b, h
-	{
-		B = H;
-		PC++;
-		break;
-	}
-	case 0x45: // ld b, l
-	{
-		B = L;
-		PC++;
-		break;
-	}
-	case 0x46: // ld b, (hl)
-	{
-		B = mem[(addr16)HL()];
-		PC++;
-		break;
-	}
-	case 0x47: // ld b, a
-	{
-		B = A;
-		PC++;
-		break;
-	}
-	case 0x48: // ld c, b
-	{
-		C = B;
-		PC++;
-		break;
-	}
-	case 0x49: // ld c, c
-	{
-		PC++;
-		break;
-	}
-	case 0x4A: // ld c, d
-	{
-		C = D;
-		PC++;
-		break;
-	}
-	case 0x4B: // ld c, e
-	{
-		C = E;
-		PC++;
-		break;
-	}
-	case 0x4C: // ld c, h
-	{
-		C = H;
-		PC++;
-		break;
-	}
-	case 0x4D: // ld c, l
-	{
-		C = L;
-		PC++;
-		break;
-	}
-	case 0x4E: // ld c, (hl)
-	{
-		C = mem[(addr16)HL()];
-		PC++;
-		break;
-	}
-	case 0x4F: // ld c, a
-	{
-		C = A;
-		PC++;
-		break;
-	}
-	case 0x50: // ld d, b
-	{
-		D = B;
-		PC++;
-		break;
-	}
-	case 0x51: // ld d, c
-	{
-		D = C;
-		PC++;
-		break;
-	}
-	case 0x52: // ld d, d
-	{
-		PC++;
-		break;
-	}
-	case 0x53: // ld d, e
-	{
-		D = E;
-		PC++;
-		break;
-	}
-	case 0x54: // ld d, h
-	{
-		D = H;
-		PC++;
-		break;
-	}
-	case 0x55: // ld d, l
-	{
-		D = L;
-		PC++;
-		break;
-	}
-	case 0x56: // ld d, (hl)
-	{
-		D = mem[(addr16)HL()];
-		PC++;
-		break;
-	}
-	case 0x57: // ld d, a
-	{
-		D = A;
-		PC++;
-		break;
-	}
-	case 0x58: // ld e, b
-	{
-		E = B;
-		PC++;
-		break;
-	}
-	case 0x59: // ld e, c
-	{
-		E = C;
-		PC++;
-		break;
-	}
-	case 0x5A: // ld e, d
-	{
-		E = D;
-		PC++;
-		break;
-	}
-	case 0x5B: // ld e, e
-	{
-		PC++;
-		break;
-	}
-	case 0x5C: // ld e, h
-	{
-		E = H;
-		PC++;
-		break;
-	}
-	case 0x5D: // ld e, l
-	{
-		E = L;
-		PC++;
-		break;
-	}
-	case 0x5E: // ld e, (hl)
-	{
-		E = mem[(addr16)HL()];
-		PC++;
-		break;
-	}
-	case 0x5F: // ld e, a
-	{
-		E = A;
-		PC++;
-		break;
-	}
-	case 0x60: // ld h, b
-	{
-		H = B;
-		PC++;
-		break;
-	}
-	case 0x61: // ld h, c
-	{
-		H = C;
-		PC++;
-		break;
-	}
-	case 0x62: // ld h, d
-	{
-		H = D;
-		PC++;
-		break;
-	}
-	case 0x63: // ld h, e
-	{
-		H = E;
-		PC++;
-		break;
-	}
-	case 0x64: // ld h, h &&&
-	{
-		PC++;
-		break;
-	}
-	case 0x65: // ld h, l
-	{
-		H = L;
-		PC++;
-		break;
-	}
-	case 0x66: // ld h, (hl)
-	{
-		H = mem[(addr16)HL()];
-		PC++;
-		break;
-	}
-	case 0x67: // ld h, a
-	{
-		H = A;
-		PC++;
-		break;
-	}
-	case 0x68: // ld l, b
-	{
-		L = B;
-		PC++;
-		break;
-	}
-	case 0x69: // ld l, c
-	{
-		L = C;
-		PC++;
-		break;
-	}
-	case 0x6A: // ld l, d
-	{
-		L = D;
-		PC++;
-		break;
-	}
-	case 0x6B: // ld l, e
-	{
-		L = E;
-		PC++;
-		break;
-	}
-	case 0x6C: // ld l, h
-	{
-		L = H;
-		PC++;
-		break;
-	}
-	case 0x6D: // ld l, l &&&
-	{
-		PC++;
-		break;
-	}
-	case 0x6E: // ld l, (hl)
-	{
-		L = mem[(addr16)HL()];
-		PC++;
-		break;
-	}
-	case 0x6F: // ld l, a
-	{
-		L = A;
-		PC++;
-		break;
-	}
-	case 0x70: // ld (hl), b
-	{
-		mem[(addr16)HL()] = B;
-		PC++;
-		break;
-	}
-	case 0x71: // ld (hl), c
-	{
-		mem[(addr16)HL()] = C;
-		PC++;
-		break;
-	}
-	case 0x72: // ld (hl), d
-	{
-		mem[(addr16)HL()] = D;
-		PC++;
-		break;
-	}
-	case 0x73: // ld (hl), e
-	{
-		mem[(addr16)HL()] = E;
-		PC++;
-		break;
-	}
-	case 0x74: // ld (hl), h
-	{
-		mem[(addr16)HL()] = H;
-		PC++;
-		break;
-	}
-	case 0x75: // ld (hl), l
-	{
-		mem[(addr16)HL()] = L;
-		PC++;
-		break;
-	}
-	case 0x76: // halt
-	{
-		halt();
-		PC++;
-		break;
-	}
-	case 0x77: // ld (hl), a
-	{
-		mem[(addr16)HL()] = A;
-		PC++;
-		break;
-	}
-	case 0x78: // ld a, b
-	{
-		A = B;
-		PC++;
-		break;
-	}
-	case 0x79: // ld a, c
-	{
-		A = C;
-		PC++;
-		break;
-	}
-	case 0x7A: // ld a, d
-	{
-		A = D;
-		PC++;
-		break;
-	}
-	case 0x7B: // ld a, e
-	{
-		A = E;
-		PC++;
-		break;
-	}
-	case 0x7C: // ld a, h
-	{
-		A = H;
-		PC++;
-		break;
-	}
-	case 0x7D: // ld a, l
-	{
-		A = L;
-		PC++;
-		break;
-	}
-	case 0x7E: // ld a, (hl)
-	{
-		A = mem[(addr16)HL()];
-		PC++;
-		break;
-	}
-	case 0x7F: // ld a, a &&&
-	{
-		PC++;
-		break;
-	}
-	case 0x80: // add a, b
-	{
-		A += B;
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x81: // add a, c
-	{
-		A += C;
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x82: // add a,d 
-	{
-		A += D;
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x83: // add a, e
-	{
-		A += E;
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x84: // add a, h
-	{
-		A += H;
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x85: // add a, l
-	{
-		A += L;
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x86: // add a, (hl)
-	{
-		A += mem[(addr16)HL()];
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x87: // add a, a
-	{
-		A <<= 1;
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x88: // adc a, b ^^^ check all adcs
-	{
-		A += B + carry();
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x89: // adc a, c
-	{
-		A += B + carry();
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x8A: // adc a, d
-	{
-		A += D + carry();
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x8B: // adc a, e
-	{
-		A += E + carry();
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x8C: // adc a, h
-	{
-		A += H + carry();
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x8D: // adc a, l
-	{
-		A += L + carry();
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x8E: // adc a, (hl)
-	{
-		A += mem[(addr16)HL()] + carry();
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x8F: // adc a, a
-	{
-		A += A + carry();
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x90: // sub b
-	{
-		A -= B;
-		updateCarry(A);
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x91: // sub c
-	{
-		A -= C;
-		updateCarry(A);
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x92: // sub d
-	{
-		A -= D;
-		updateCarry(A);
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x93: // sub e
-	{
-		A -= E;
-		updateCarry(A);
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x94: // sub h
-	{
-		A -= H;
-		updateCarry(A);
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x95: // sub l
-	{
-		A -= L;
-		updateCarry(A);
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x96: // sub (hl)
-	{
-		A -= mem[(addr16)HL()];
-		updateCarry(A);
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x97: // sub a 
-	{
-		A -= A;
-		updateCarry(A);
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x98: // sbc a, b ^^^ (B - carry() or B + carry())
-	{
-		A -= B - carry();
-		updateCarry(A);
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x99: // sbc a, c
-	{
-		A -= C - carry();
-		updateCarry(A);
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x9A: // sbc a, d
-	{
-		A -= D - carry();
-		updateCarry(A);
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x9B: // sbc a, e
-	{
-		A -= E - carry();
-		updateCarry(A);
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x9C: // sbc a, h
-	{
-		A -= H - carry();
-		updateCarry(A);
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x9D: // sbc a, l
-	{
-		A -= L - carry();
-		updateCarry(A);
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x9E: // sbc a, (hl)
-	{
-		A -= mem[(addr16)HL()] - carry();
-		updateCarry(A);
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0x9F: // sbc a, a
-	{
-		A -= A - carry();
-		updateCarry(A);
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xA0: // and b
-	{
-		A &= B;
-		resetCarry();
-		resetN();
-		setHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xA1: // and c
-	{
-		A &= C;
-		resetCarry();
-		resetN();
-		setHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xA2: // and d
-	{
-		A &= D;
-		resetCarry();
-		resetN();
-		setHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xA3: // and e
-	{
-		A &= E;
-		resetCarry();
-		resetN();
-		setHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xA4: // and h
-	{
-		A &= H;
-		resetCarry();
-		resetN();
-		setHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xA5: // and l
-	{
-		A &= L;
-		resetCarry();
-		resetN();
-		setHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xA6: // and (hl)
-	{
-		A &= mem[(addr16)HL()];
-		resetCarry();
-		resetN();
-		setHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xA7: // and a &&&
-	{
-		// A &= A;
-		resetCarry();
-		resetN();
-		setHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xA8: // xor b
-	{
-		A ^= B;
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xA9: // xor c
-	{
-		A ^= C;
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xAA: // xor d
-	{
-		A ^= D;
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xAB: // xor e
-	{
-		A ^= E;
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xAC: // xor h
-	{
-		A ^= H;
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xAD: // xor l
-	{
-		A ^= L;
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xAE: // xor (hl)
-	{
-		A ^= mem[(addr16)HL()];
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xAF: // xor a &&& A = 0
-	{
-		A = 0;
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xB0: // or b
-	{
-		A |= B;
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xB1: // or c
-	{
-		A |= C;
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xB2: // or d
-	{
-		A |= D;
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xB3: // or e
-	{
-		A |= E;
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xB4: // or h
-	{
-		A |= H;
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xB5: // or l
-	{
-		A |= L;
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xB6: // or (hl)
-	{
-		A |= mem[(addr16)HL()];
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xB7: // or a &&&
-	{
-		// A |= A;
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC++;
-		break;
-	}
-	case 0xB8: // cp b
-	{
-		cmp(B);
-		PC++;
-		break;
-	}
-	case 0xB9: // cp c
-	{
-		cmp(C);
-		PC++;
-		break;
-	}
-	case 0xBA: // cp d
-	{
-		cmp(D);
-		PC++;
-		break;
-	}
-	case 0xBB: // cp e
-	{
-		cmp(E);
-		PC++;
-		break;
-	}
-	case 0xBC: // cp h
-	{
-		cmp(H);
-		PC++;
-		break;
-	}
-	case 0xBD: // cp l
-	{
-		cmp(L);
-		PC++;
-		break;
-	}
-	case 0xBE: // cp (hl)
-	{
-		cmp(mem[(addr16)HL()]);
-		PC++;
-		break;
-	}
-	case 0xBF: // cp a 
-	{
-		cmp(A);
-		PC++;
-		break;
-	}
-	case 0xC0: // ret nz
-	{
-		ret(!carry());
-		break;
-	}
-	case 0xC1: // pop bc
-	{
-		C = mem[SP];
-		SP++;
-		B = mem[SP];
-		SP++;
-		PC++;
-		break;
-	}
-	case 0xC2: // jp nz, ** 
-	{
-		jp(!zero(), get16(), 3);
-		break;
-	}
-	case 0xC3: // jp **
-	{
-		jp(true, get16(), 3);
-		break;
-	}
-	case 0xC4: // call nz, ** 
-	{
-		call(!zero());
-		break;
-	}
-	case 0xC5: // push bc
-	{
-		SP--;
-		mem[SP] = B;
-		SP--;
-		mem[SP] = C;
-		PC++;
-		break;
-	}
-	case 0xC6: // add a, *
-	{
-		A += mem[PC + 1];
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC += 2;
-		break;
-	}
-	case 0xC7: // rst 0x00
-	{
-		rst(0x00);
-		break;
-	}
-	case 0xC8: // ret z
-	{
-		ret(zero());
-		break;
-	}
-	case 0xC9: // ret
-	{
-		ret(true);
-		break;
-	}
-	case 0xCA: // jp z, **
-	{
-		jp(zero(), get16(), 3);
-		break;
-	}
-	case 0xCB: // EXTENDED INSTRUCTIONS
-	{
-		decodeExtendedInstruction(mem[PC + 1]);
-		break;
-	}
-	case 0xCC: // call z, **
-	{
-		call(zero());
-		break;
-	}
-	case 0xCD: // call **
-	{
-		call(true);
-		break;
-	}
-	case 0xCE: // adc a, *
-	{
-		A += mem[PC + 1] + carry();
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC += 2;
-		break;
-	}
-	case 0xCF: // rst 0x08
-	{
-		rst(0x08);
-		break;
-	}
-	case 0xD0: // ret nc
-	{
-		ret(!carry());
-		break;
-	}
-	case 0xD1: // pop de
-	{
-		E = mem[SP];
-		SP++;
-		D = mem[SP];
-		SP++;
-		PC++;
-		break;
-	}
-	case 0xD2: // jp nc, **
-	{
-		jp(!carry(), get16(), 3);
-		break;
-	}
-	case 0xD3: // NOP
-	{
-		PC++;
-		break;
-	}
-	case 0xD4: // call nc, **
-	{
-		call(!carry());
-		break;
-	}
-	case 0xD5: // push de
-	{
-		SP--;
-		mem[SP] = D;
-		SP--;
-		mem[SP] = E;
-		PC++;
-		break;
-	}
-	case 0xD6: // sub *
-	{
-		A -= mem[PC + 1];
-		updateCarry(A);
-		updateN(SUB);
-		updateHC(A);
-		updateZero(A);
-		PC += 2;
-		break;
-	}
-	case 0xD7: // rst 0x10
-	{
-		rst(0x10);
-		break;
-	}
-	case 0xD8: // ret c
-	{
-		ret(carry());
-		break;
-	}
-	case 0xD9: // reti 
-	{
-		ret(true);
-		IME = true;
-		break;
-	}
-	case 0xDA: // jp c, **
-	{
-		jp(carry(), get16(), 3);
-		break;
-
-	}
-	case 0xDB: // in a, (*) ~!GB
-	{
-		//A = ports[mem[PC + 1]];
-		PC += 2;
-		break;
-	}
-	case 0xDC: // call c, **
-	{
-		call(carry());
-		break;
-	}
-	case 0xDD: // IX INSTRUCTIONS ~!GB
-	{
-		PC += 2;
-		break;
-	}
-	case 0xDE: // sbc a, *
-	{
-		A -= mem[PC + 1] - carry();
-		updateCarry(A);
-		updateN(ADD);
-		updateHC(A);
-		updateZero(A);
-		PC += 2;
-		break;
-	}
-	case 0xDF: // rst 0x18
-	{
-		rst(0x18);
-		break;
-	}
-	case 0xE0: //ld (0xFF00 + n), a
-	{
-		mem[0xFF00 + (ubyte)mem[PC + 1]] = A;
-		if ((byte)mem[PC + 1] == 0x46) // dma
+		case 0x01: // ld BC, **
 		{
-			dma();
+			BC((addr16)get16());
+			PC += 3;
+			break;
 		}
-		else if ((byte)mem[PC + 1] == 0x00) // read input
+		case 0x02: // ld (BC), a
 		{
+			mem[(addr16)BC()] = A;
+			PC++;
+			break;
+		}
+		case 0x03: // inc BC
+		{
+			const reg16 bc = BC();
+			BC(bc + 1);
+			PC++;
+			break;
+		}
+		case 0x04: // inc b
+		{
+			B++;
+			updateN(ADD);
+			updateHC(B);
+			updateZero(B);
+			PC++;
+			break;
+		}
+		case 0x05: // dec b
+		{
+			B--;
+			updateN(SUB);
+			updateHC(B);
+			updateZero(B);
+			PC++;
+			break;
+		}
+		case 0x06: // ld b, *
+		{
+			B = mem[PC + 1];
+			PC += 2;
+			break;
+		}
+		case 0x07: // rlca
+		{
+			A <<= 1;
+			updateCarry(A);
+			resetN();
+			resetHC();
+			PC++;
+			break;
+		}
+		case 0x08: // ex af, af' (~!GB)
+		{
+			PC++;
+			break;
+		}
+		case 0x09: // add hl, bc
+		{
+			const reg16 hl = HL();
+			HL(BC() + hl);
+			updateCarry(HL());
+			updateN(ADD);
+			updateHC(HL());
+			PC++;
+			break;
+		}
+		case 0x0A: // ld a, (BC)
+		{
+			A = mem[(addr16)BC()];
+			PC++;
+			break;
+		}
+		case 0x0B: // dec BC
+		{
+			const reg16 bc = BC();
+			BC(bc - 1);
+			PC++;
+			break;
+		}
+		case 0x0C: // inc C
+		{
+			C++;
+			updateN(ADD);
+			updateHC(C);
+			updateZero(C);
+			PC++;
+			break;
+		}
+		case 0x0D: // dec C
+		{
+			C--;
+			updateN(SUB);
+			updateHC(C);
+			updateZero(C);
+			PC++;
+			break;
+		}
+		case 0x0E: // ld c, *
+		{
+			C = mem[PC + 1];
+			PC += 2;
+			break;
+		}
+		case 0x0F: // rrca
+		{
+			A >>= 1;
+			updateCarry(A);
+			resetN();
+			resetHC();
+			PC++;
+			break;
+		}
+		case 0x10: // STOP
+		{
+			stop();
+			PC++;
+			break;
+		}
+		case 0x11: // ld de, **
+		{
+			DE(load16());
+			PC += 3;
+			break;
+		}
+		case 0x12: // ld (de), a
+		{
+			mem[(addr16)DE()] = A;
+			PC++;
+			break;
+		}
+		case 0x13: // inc de
+		{
+			const reg16 de = DE();
+			DE(de + 1);
+			PC++;
+			break;
+		}
+		case 0x14: // inc d
+		{
+			D++;
+			updateN(ADD);
+			updateHC(D);
+			updateZero(D);
+			PC++;
+			break;
+		}
+		case 0x15: // dec d
+		{
+			D--;
+			updateN(SUB);
+			updateHC(D);
+			updateZero(D);
+			PC++;
+			break;
+		}
+		case 0x16: // ld d, *
+		{
+			D = mem[PC + 1];
+			PC += 2;
+			break;
+		}
+		case 0x17: // rla
+		{
+			A <<= 1;
+			updateCarry(A);
+			resetN();
+			resetHC();
+			PC++;
+			break;
+		}
+		case 0x18: // jr *
+		{
+			jr(true, mem[PC + 1], 2);
+			break;
+		}
+		case 0x19: // add hl, de
+		{
+			const reg16 hl = HL();
+			HL(hl + DE());
+			updateCarry(HL());
+			updateN(ADD);
+			updateHC(HL());
+			PC++;
+			break;
+		}
+		case 0x1A: // ld a, (de)
+		{
+			A = mem[(addr16)DE()];
+			PC++;
+			break;
+		}
+		case 0x1B: // dec de
+		{
+			const reg16 de = DE();
+			DE(de - 1);
+			PC++;
+			break;
+		}
+		case 0x1C: // inc e
+		{
+			E++;
+			updateN(ADD);
+			updateZero(E);
+			updateHC(E);
+			PC++;
+			break;
+		}
+		case 0x1D: // dec e
+		{
+			E--;
+			updateN(SUB);
+			updateZero(E);
+			updateHC(E);
+			PC++;
+			break;
+		}
+		case 0x1E: // ld e, *
+		{
+			E = mem[PC + 1];
+			PC += 2;
+			break;
+		}
+		case 0x1F: // rra
+		{
+			A >>= 1;
+			updateCarry(A);
+			resetN();
+			resetHC();
+			PC++;
+			break;
+		}
+		case 0x20: // jr nz, *
+		{
+			jr(!zero(), mem[PC + 1], 2);
+			break;
+		}
+		case 0x21: // ld hl, **
+		{
+			HL(get16());
+			PC += 3;
+			break;
+		}
+		case 0x22: // ldi (hl), a   or   ld (hl+), a
+		{
+			mem[(addr16)HL()] = A;
+			const reg16 hl = HL();
+			HL(hl + 1);
+			PC++;
+			break;
+		}
+		case 0x23: // inc hl
+		{
+			const reg16 hl = HL();
+			HL(hl + 1);
+			PC++;
+			break;
+		}
+		case 0x24: // inc h
+		{
+			H++;
+			updateN(ADD);
+			updateHC(H);
+			updateZero(H);
+			PC++;
+			break;
+		}
+		case 0x25: // dec h
+		{
+			H--;
+			updateN(SUB);
+			updateHC(H);
+			updateZero(H);
+			PC++;
+			break;
+		}
+		case 0x26: // ld h, *
+		{
+			H = mem[PC + 1];
+			PC += 2;
+			break;
+		}
+		case 0x27: // daa ^^^Probably doesnt work ^^^^
+		{
+			short uiResult = 0;
+			while (A > 0)
+			{
+				uiResult <<= 4;
+				uiResult |= A % 10;
+				A /= 10;
+			}
+			updateCarry(A);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x28: // jr z, *
+		{
+			jr(zero(), mem[PC + 1], 2);
+			break;
+		}
+		case 0x29: // add hl, hl
+		{
+			const reg16 hl = HL();
+			HL(hl + hl);
+			updateCarry(HL());
+			updateN(ADD);
+			updateHC(HL());
+			PC++;
+			break;
+		}
+		case 0x2A: // ldi a, (hl) 
+		{
+			A = mem[(addr16)HL()];
+			const reg16 hl = HL();
+			HL(hl + 1);
+			PC++;
+			break;
+		}
+		case 0x2B: // dec hl
+		{
+			const reg16 hl = HL();
+			HL(hl - 1);
+			PC++;
+			break;
+		}
+		case 0x2C: // inc l
+		{
+			L++;
+			updateHC(L);
+			updateN(ADD);
+			updateZero(L);
+			PC++;
+			break;
+		}
+		case 0x2D: // dec l
+		{
+			L--;
+			updateHC(L);
+			updateN(SUB);
+			updateZero(L);
+			PC++;
+			break;
+		}
+		case 0x2E: // ld l, *
+		{
+			L = mem[PC + 1];
+			PC += 2;
+			break;
+		}
+		case 0x2f: // cpl ^^^
+		{
+			A = ~A;
+			PC++;
+			break;
+		}
+		case 0x30: // jr nc, *
+		{
+			jr(!carry(), mem[PC + 1], 2);
+			break;
+		}
+		case 0x31: // ld sp, **
+		{
+			SP = get16();
+			PC += 3;
+			break;
+		}
+		case 0x32: // ldd (hl), a
+		{
+			mem[(addr16)HL()] = A;
+			const reg16 hl = HL();
+			HL(hl - 1);
+			PC++;
+			break;
+		}
+		case 0x33: // inc sp
+		{
+			SP++;
+			PC++;
+			break;
+		}
+		case 0x34: // inc (hl) 
+		{
+			mem[(addr16)HL()]++;
+			const s16 val = mem[(addr16)HL()];
+			updateN(ADD);
+			updateZero(val);
+			updateHC(val);
+			PC++;
+			break;
+		}
+		case 0x35: // dec (hl)
+		{
+			mem[(addr16)HL()]--;
+			const s16 val = mem[(addr16)HL()];
+			updateN(SUB);
+			updateZero(val);
+			updateHC(val);
+			PC++;
+			break;
+		}
+		case 0x36: // ld (hl), *
+		{
+			mem[(addr16)HL()] = mem[PC + 1];
+			PC += 2;
+			break;
+		}
+		case 0x37: // scf
+		{
+			setCarry();
+			resetN();
+			resetHC();
+			PC++;
+			break;
+		}
+		case 0x38: // jr c, *
+		{
+			jr(carry(), mem[PC + 1], 2);
+			break;
+		}
+		case 0x39: // add hl, sp ^^^ is it hl + hl or hl + sp?
+		{
+			const reg16 hl = HL();
+			HL(hl + SP);
+			updateCarry(HL());
+			updateN(ADD);
+			updateHC(HL());
+			updateZero(HL());
+			PC++;
+			break;
+		}
+		case 0x3A: // ldd a, (hl)
+		{
+			A = mem[HL()];
+			const reg16 hl = HL();
+			HL(hl - 1);
+			PC++;
+			break;
+		}
+		case 0x3B: // dec sp
+		{
+			SP--;
+			PC++;
+			break;
+		}
+		case 0x3C: // inc a
+		{
+			A++;
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x3D: // dec a
+		{
+			A--;
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x3E: // ld a, *
+		{
+			A = mem[PC + 1];
+			PC += 2;
+			break;
+		}
+		case 0x3F: // ccf
+		{
+			F ^= 0x1;
+			PC++;
+			break;
+		}
+		case 0x40: // ld b, b
+		{
+			PC++;
+			break;
+		}
+		case 0x41: // ld b, c
+		{
+			B = C;
+			PC++;
+			break;
+		}
+		case 0x42: // ld b, d
+		{
+			B = D;
+			PC++;
+			break;
+		}
+		case 0x43: // ld b, e
+		{
+			B = E;
+			PC++;
+			break;
+		}
+		case 0x44: // ld b, h
+		{
+			B = H;
+			PC++;
+			break;
+		}
+		case 0x45: // ld b, l
+		{
+			B = L;
+			PC++;
+			break;
+		}
+		case 0x46: // ld b, (hl)
+		{
+			B = mem[(addr16)HL()];
+			PC++;
+			break;
+		}
+		case 0x47: // ld b, a
+		{
+			B = A;
+			PC++;
+			break;
+		}
+		case 0x48: // ld c, b
+		{
+			C = B;
+			PC++;
+			break;
+		}
+		case 0x49: // ld c, c
+		{
+			PC++;
+			break;
+		}
+		case 0x4A: // ld c, d
+		{
+			C = D;
+			PC++;
+			break;
+		}
+		case 0x4B: // ld c, e
+		{
+			C = E;
+			PC++;
+			break;
+		}
+		case 0x4C: // ld c, h
+		{
+			C = H;
+			PC++;
+			break;
+		}
+		case 0x4D: // ld c, l
+		{
+			C = L;
+			PC++;
+			break;
+		}
+		case 0x4E: // ld c, (hl)
+		{
+			C = mem[(addr16)HL()];
+			PC++;
+			break;
+		}
+		case 0x4F: // ld c, a
+		{
+			C = A;
+			PC++;
+			break;
+		}
+		case 0x50: // ld d, b
+		{
+			D = B;
+			PC++;
+			break;
+		}
+		case 0x51: // ld d, c
+		{
+			D = C;
+			PC++;
+			break;
+		}
+		case 0x52: // ld d, d
+		{
+			PC++;
+			break;
+		}
+		case 0x53: // ld d, e
+		{
+			D = E;
+			PC++;
+			break;
+		}
+		case 0x54: // ld d, h
+		{
+			D = H;
+			PC++;
+			break;
+		}
+		case 0x55: // ld d, l
+		{
+			D = L;
+			PC++;
+			break;
+		}
+		case 0x56: // ld d, (hl)
+		{
+			D = mem[(addr16)HL()];
+			PC++;
+			break;
+		}
+		case 0x57: // ld d, a
+		{
+			D = A;
+			PC++;
+			break;
+		}
+		case 0x58: // ld e, b
+		{
+			E = B;
+			PC++;
+			break;
+		}
+		case 0x59: // ld e, c
+		{
+			E = C;
+			PC++;
+			break;
+		}
+		case 0x5A: // ld e, d
+		{
+			E = D;
+			PC++;
+			break;
+		}
+		case 0x5B: // ld e, e
+		{
+			PC++;
+			break;
+		}
+		case 0x5C: // ld e, h
+		{
+			E = H;
+			PC++;
+			break;
+		}
+		case 0x5D: // ld e, l
+		{
+			E = L;
+			PC++;
+			break;
+		}
+		case 0x5E: // ld e, (hl)
+		{
+			E = mem[(addr16)HL()];
+			PC++;
+			break;
+		}
+		case 0x5F: // ld e, a
+		{
+			E = A;
+			PC++;
+			break;
+		}
+		case 0x60: // ld h, b
+		{
+			H = B;
+			PC++;
+			break;
+		}
+		case 0x61: // ld h, c
+		{
+			H = C;
+			PC++;
+			break;
+		}
+		case 0x62: // ld h, d
+		{
+			H = D;
+			PC++;
+			break;
+		}
+		case 0x63: // ld h, e
+		{
+			H = E;
+			PC++;
+			break;
+		}
+		case 0x64: // ld h, h &&&
+		{
+			PC++;
+			break;
+		}
+		case 0x65: // ld h, l
+		{
+			H = L;
+			PC++;
+			break;
+		}
+		case 0x66: // ld h, (hl)
+		{
+			H = mem[(addr16)HL()];
+			PC++;
+			break;
+		}
+		case 0x67: // ld h, a
+		{
+			H = A;
+			PC++;
+			break;
+		}
+		case 0x68: // ld l, b
+		{
+			L = B;
+			PC++;
+			break;
+		}
+		case 0x69: // ld l, c
+		{
+			L = C;
+			PC++;
+			break;
+		}
+		case 0x6A: // ld l, d
+		{
+			L = D;
+			PC++;
+			break;
+		}
+		case 0x6B: // ld l, e
+		{
+			L = E;
+			PC++;
+			break;
+		}
+		case 0x6C: // ld l, h
+		{
+			L = H;
+			PC++;
+			break;
+		}
+		case 0x6D: // ld l, l &&&
+		{
+			PC++;
+			break;
+		}
+		case 0x6E: // ld l, (hl)
+		{
+			L = mem[(addr16)HL()];
+			PC++;
+			break;
+		}
+		case 0x6F: // ld l, a
+		{
+			L = A;
+			PC++;
+			break;
+		}
+		case 0x70: // ld (hl), b
+		{
+			mem[(addr16)HL()] = B;
+			PC++;
+			break;
+		}
+		case 0x71: // ld (hl), c
+		{
+			mem[(addr16)HL()] = C;
+			PC++;
+			break;
+		}
+		case 0x72: // ld (hl), d
+		{
+			mem[(addr16)HL()] = D;
+			PC++;
+			break;
+		}
+		case 0x73: // ld (hl), e
+		{
+			mem[(addr16)HL()] = E;
+			PC++;
+			break;
+		}
+		case 0x74: // ld (hl), h
+		{
+			mem[(addr16)HL()] = H;
+			PC++;
+			break;
+		}
+		case 0x75: // ld (hl), l
+		{
+			mem[(addr16)HL()] = L;
+			PC++;
+			break;
+		}
+		case 0x76: // halt
+		{
+			halt();
+			PC++;
+			break;
+		}
+		case 0x77: // ld (hl), a
+		{
+			mem[(addr16)HL()] = A;
+			PC++;
+			break;
+		}
+		case 0x78: // ld a, b
+		{
+			A = B;
+			PC++;
+			break;
+		}
+		case 0x79: // ld a, c
+		{
+			A = C;
+			PC++;
+			break;
+		}
+		case 0x7A: // ld a, d
+		{
+			A = D;
+			PC++;
+			break;
+		}
+		case 0x7B: // ld a, e
+		{
+			A = E;
+			PC++;
+			break;
+		}
+		case 0x7C: // ld a, h
+		{
+			A = H;
+			PC++;
+			break;
+		}
+		case 0x7D: // ld a, l
+		{
+			A = L;
+			PC++;
+			break;
+		}
+		case 0x7E: // ld a, (hl)
+		{
+			A = mem[(addr16)HL()];
+			PC++;
+			break;
+		}
+		case 0x7F: // ld a, a &&&
+		{
+			PC++;
+			break;
+		}
+		case 0x80: // add a, b
+		{
+			A += B;
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x81: // add a, c
+		{
+			A += C;
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x82: // add a,d 
+		{
+			A += D;
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x83: // add a, e
+		{
+			A += E;
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x84: // add a, h
+		{
+			A += H;
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x85: // add a, l
+		{
+			A += L;
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x86: // add a, (hl)
+		{
+			A += mem[(addr16)HL()];
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x87: // add a, a
+		{
+			A <<= 1;
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x88: // adc a, b ^^^ check all adcs
+		{
+			A += B + carry();
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x89: // adc a, c
+		{
+			A += B + carry();
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x8A: // adc a, d
+		{
+			A += D + carry();
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x8B: // adc a, e
+		{
+			A += E + carry();
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x8C: // adc a, h
+		{
+			A += H + carry();
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x8D: // adc a, l
+		{
+			A += L + carry();
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x8E: // adc a, (hl)
+		{
+			A += mem[(addr16)HL()] + carry();
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x8F: // adc a, a
+		{
+			A += A + carry();
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x90: // sub b
+		{
+			A -= B;
+			updateCarry(A);
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x91: // sub c
+		{
+			A -= C;
+			updateCarry(A);
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x92: // sub d
+		{
+			A -= D;
+			updateCarry(A);
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x93: // sub e
+		{
+			A -= E;
+			updateCarry(A);
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x94: // sub h
+		{
+			A -= H;
+			updateCarry(A);
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x95: // sub l
+		{
+			A -= L;
+			updateCarry(A);
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x96: // sub (hl)
+		{
+			A -= mem[(addr16)HL()];
+			updateCarry(A);
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x97: // sub a 
+		{
+			A -= A;
+			updateCarry(A);
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x98: // sbc a, b ^^^ (B - carry() or B + carry())
+		{
+			A -= B - carry();
+			updateCarry(A);
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x99: // sbc a, c
+		{
+			A -= C - carry();
+			updateCarry(A);
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x9A: // sbc a, d
+		{
+			A -= D - carry();
+			updateCarry(A);
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x9B: // sbc a, e
+		{
+			A -= E - carry();
+			updateCarry(A);
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x9C: // sbc a, h
+		{
+			A -= H - carry();
+			updateCarry(A);
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x9D: // sbc a, l
+		{
+			A -= L - carry();
+			updateCarry(A);
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x9E: // sbc a, (hl)
+		{
+			A -= mem[(addr16)HL()] - carry();
+			updateCarry(A);
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0x9F: // sbc a, a
+		{
+			A -= A - carry();
+			updateCarry(A);
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xA0: // and b
+		{
+			A &= B;
+			resetCarry();
+			resetN();
+			setHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xA1: // and c
+		{
+			A &= C;
+			resetCarry();
+			resetN();
+			setHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xA2: // and d
+		{
+			A &= D;
+			resetCarry();
+			resetN();
+			setHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xA3: // and e
+		{
+			A &= E;
+			resetCarry();
+			resetN();
+			setHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xA4: // and h
+		{
+			A &= H;
+			resetCarry();
+			resetN();
+			setHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xA5: // and l
+		{
+			A &= L;
+			resetCarry();
+			resetN();
+			setHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xA6: // and (hl)
+		{
+			A &= mem[(addr16)HL()];
+			resetCarry();
+			resetN();
+			setHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xA7: // and a &&&
+		{
+			A &= A;
+			resetCarry();
+			resetN();
+			setHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xA8: // xor b
+		{
+			A ^= B;
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xA9: // xor c
+		{
+			A ^= C;
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xAA: // xor d
+		{
+			A ^= D;
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xAB: // xor e
+		{
+			A ^= E;
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xAC: // xor h
+		{
+			A ^= H;
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xAD: // xor l
+		{
+			A ^= L;
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xAE: // xor (hl)
+		{
+			A ^= mem[(addr16)HL()];
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xAF: // xor a &&& A = 0
+		{
+			A = 0;
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xB0: // or b
+		{
+			A |= B;
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xB1: // or c
+		{
+			A |= C;
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xB2: // or d
+		{
+			A |= D;
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xB3: // or e
+		{
+			A |= E;
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xB4: // or h
+		{
+			A |= H;
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xB5: // or l
+		{
+			A |= L;
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xB6: // or (hl)
+		{
+			A |= mem[(addr16)HL()];
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xB7: // or a &&&
+		{
+			// A |= A;
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC++;
+			break;
+		}
+		case 0xB8: // cp b
+		{
+			cmp(B);
+			PC++;
+			break;
+		}
+		case 0xB9: // cp c
+		{
+			cmp(C);
+			PC++;
+			break;
+		}
+		case 0xBA: // cp d
+		{
+			cmp(D);
+			PC++;
+			break;
+		}
+		case 0xBB: // cp e
+		{
+			cmp(E);
+			PC++;
+			break;
+		}
+		case 0xBC: // cp h
+		{
+			cmp(H);
+			PC++;
+			break;
+		}
+		case 0xBD: // cp l
+		{
+			cmp(L);
+			PC++;
+			break;
+		}
+		case 0xBE: // cp (hl)
+		{
+			cmp(mem[(addr16)HL()]);
+			PC++;
+			break;
+		}
+		case 0xBF: // cp a 
+		{
+			cmp(A);
+			PC++;
+			break;
+		}
+		case 0xC0: // ret nz
+		{
+			ret(!carry());
+			break;
+		}
+		case 0xC1: // pop bc
+		{
+			C = mem[SP];
+			SP++;
+			B = mem[SP];
+			SP++;
+			PC++;
+			break;
+		}
+		case 0xC2: // jp nz, ** 
+		{
+			jp(!zero(), get16(), 3);
+			break;
+		}
+		case 0xC3: // jp **
+		{
+			jp(true, get16(), 3);
+			break;
+		}
+		case 0xC4: // call nz, ** 
+		{
+			call(!zero());
+			break;
+		}
+		case 0xC5: // push bc
+		{
+			SP--;
+			mem[SP] = B;
+			SP--;
+			mem[SP] = C;
+			PC++;
+			break;
+		}
+		case 0xC6: // add a, *
+		{
+			A += mem[PC + 1];
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC += 2;
+			break;
+		}
+		case 0xC7: // rst 0x00
+		{
+			rst(0x00);
+			break;
+		}
+		case 0xC8: // ret z
+		{
+			ret(zero());
+			break;
+		}
+		case 0xC9: // ret
+		{
+			ret(true);
+			break;
+		}
+		case 0xCA: // jp z, **
+		{
+			jp(zero(), get16(), 3);
+			break;
+		}
+		case 0xCB: // EXTENDED INSTRUCTIONS
+		{
+			decodeExtendedInstruction(mem[PC + 1]);
+			break;
+		}
+		case 0xCC: // call z, **
+		{
+			call(zero());
+			break;
+		}
+		case 0xCD: // call **
+		{
+			call(true);
+			break;
+		}
+		case 0xCE: // adc a, *
+		{
+			A += mem[PC + 1] + carry();
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC += 2;
+			break;
+		}
+		case 0xCF: // rst 0x08
+		{
+			rst(0x08);
+			break;
+		}
+		case 0xD0: // ret nc
+		{
+			ret(!carry());
+			break;
+		}
+		case 0xD1: // pop de
+		{
+			E = mem[SP];
+			SP++;
+			D = mem[SP];
+			SP++;
+			PC++;
+			break;
+		}
+		case 0xD2: // jp nc, **
+		{
+			jp(!carry(), get16(), 3);
+			break;
+		}
+		case 0xD3: // NOP
+		{
+			PC++;
+			break;
+		}
+		case 0xD4: // call nc, **
+		{
+			call(!carry());
+			break;
+		}
+		case 0xD5: // push de
+		{
+			SP--;
+			mem[SP] = D;
+			SP--;
+			mem[SP] = E;
+			PC++;
+			break;
+		}
+		case 0xD6: // sub *
+		{
+			A -= mem[PC + 1];
+			updateCarry(A);
+			updateN(SUB);
+			updateHC(A);
+			updateZero(A);
+			PC += 2;
+			break;
+		}
+		case 0xD7: // rst 0x10
+		{
+			rst(0x10);
+			break;
+		}
+		case 0xD8: // ret c
+		{
+			ret(carry());
+			break;
+		}
+		case 0xD9: // reti
+		{
+			ret(true);
+			IME = true;
+			break;
+		}
+		case 0xDA: // jp c, **
+		{
+			jp(carry(), get16(), 3);
+			break;
 
 		}
-		PC += 2;
-		break;
-	}
-	case 0xE1: // pop hl
-	{
-		L = mem[SP];
-		SP++;
-		H = mem[SP];
-		SP++;
-		PC++;
-		break;
-	}
-	case 0xE2: // ld (C), a
-	{
-		mem[(addr16)C] = A;
-		PC++;
-		break;
-	}
-	case 0xE3: // NOP
-	{
-		PC++;
-		break;
-	}
-	case 0xE4: // call po, **
-	{
-		PC++;
-		break;
-	}
-	case 0xE5: // push hl
-	{
-		SP--;
-		mem[SP] = H;
-		SP--;
-		mem[SP] = L;
-		PC++;
-		break;
-	}
-	case 0xE6: // and *
-	{
-		A &= mem[PC + 1];
-		resetCarry();
-		resetN();
-		setHC();
-		updateZero(A);
-		PC += 2;
-		break;
-	}
-	case 0xE7: // rst 0x20
-	{
-		rst(0x20);
-		break;
-	}
-	case 0xE8: // add sp, *
-	{
-		SP += mem[PC + 1];
-		PC += 2;
-		resetZero();
-		resetN();
-		updateHC(PC);
-		updateCarry(PC);
-		break;
-	}
-	case 0xE9: // jp (hl)
-	{
-		jp(true, mem[(addr16)HL()], 1);
-		break;
-	}
-	case 0xEA: // ld (**), a
-	{
-		mem[get16()] = A;
-		PC += 3;
-		break;
-	}
-	case 0xEB: // ~!GB
-	{
-		break;
-	}
-	case 0xEC: // ~!GB
-	{
-		break;
-	}
-	case 0xED: // EXTENDED INSTRUCTIONS ~!GB
-	{
-		break;
-	}
-	case 0xEE: // xor *
-	{
-		A ^= mem[PC + 1];
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC += 2;
-		break;
-	}
-	case 0xEF: // rst 0x28
-	{
-		rst(0x28);
-		break;
-	}
-	case 0xF0: //ld a, (0xFF00 + n) or ldh, (*)
-	{
-		A = mem[(addr16)(0xFF00 + mem[PC + 1])];
-		PC += 2;
-		break;
-	}
-	case 0xF1: // pop af
-	{
-		F = mem[SP];
-		SP++;
-		A = mem[SP];
-		SP++;
-		PC++;
-		break;
-	}
-	case 0xF2: // ld a, (C)
-	{
-		A = mem[(reg16)C];
-		PC++;
-		break;
-	}
-	case 0xF3: // di
-	{
-		IME = false;
-		PC++;
-		break;
-	}
-	case 0xF4: // ~!GB
-	{
-		break;
-	}
-	case 0xF5: // push af
-	{
-		SP--;
-		A = mem[SP];
-		SP--;
-		F = mem[SP];
-		PC++;
-		break;
-	}
-	case 0xF6: // or *
-	{
-		A |= mem[PC + 1];
-		resetCarry();
-		resetN();
-		resetHC();
-		updateZero(A);
-		PC += 2;
-		break;
-	}
-	case 0xF7: // rst 0x30
-	{
-		rst(0x30);
-		break;
-	}
-	case 0xF8: // ld hl, sp + *
-	{
-		HL(SP + mem[PC + 1]);
-		PC += 2;
-		break;
-	}
-	case 0xF9: // ld sp, hl
-	{
-		SP = ((L >> 8) & 0xFF);
-		SP |= (char)HL();
-		PC++;
-		break;
-	}
-	case 0xFA: // ld a, (**)
-	{
-		A = mem[get16()];
-		PC += 3;
-		break;
-	}
-	case 0xFB: // ei
-	{
-		IME = true;
-		PC++;
-		break;
-	}
-	case 0xFC: // ~!GB
-	{
-		break;
-	}
-	case 0xFD: // ~!GB
-	{
-		break;
-	}
-	case 0xFE: // cp *
-	{
-		cmp((addr16)mem[PC + 1]);
-		PC += 2;
-		break;
-	}
-	case 0xFF: // rst 0x38
-	{
-		rst(0x38);
-		PC++;
-		break;
-	}
-	default: // if the definition of a char changes 
-	{
-		std::cout << "You should never ever see this" << std::endl;
-		std::cout << "But here is the opcode : " << toHex(opcode) << std::endl;
-		std::cin.ignore(); // make the user see what they have done did
-		PC++;
-		break;
-	}
+		case 0xDB: // in a, (*) ~!GB
+		{
+			//A = ports[mem[PC + 1]];
+			PC += 2;
+			break;
+		}
+		case 0xDC: // call c, **
+		{
+			call(carry());
+			break;
+		}
+		case 0xDD: // IX INSTRUCTIONS ~!GB
+		{
+			PC += 2;
+			break;
+		}
+		case 0xDE: // sbc a, *
+		{
+			A -= mem[PC + 1] - carry();
+			updateCarry(A);
+			updateN(ADD);
+			updateHC(A);
+			updateZero(A);
+			PC += 2;
+			break;
+		}
+		case 0xDF: // rst 0x18
+		{
+			rst(0x18);
+			break;
+		}
+		case 0xE0: //ld (0xFF00 + n), a
+		{
+			mem[0xFF00 + (ubyte)mem[PC + 1]] = A;
+			if ((byte)mem[PC + 1] == 0x46) // dma
+			{
+				dma();
+			}
+			else if ((byte)mem[PC + 1] == 0x00) // read input
+			{
+
+			}
+			PC += 2;
+			break;
+		}
+		case 0xE1: // pop hl
+		{
+			L = mem[SP];
+			SP++;
+			H = mem[SP];
+			SP++;
+			PC++;
+			break;
+		}
+		case 0xE2: // ld (C), a
+		{
+			mem[(addr16)C] = A;
+			PC++;
+			break;
+		}
+		case 0xE3: // NOP
+		{
+			PC++;
+			break;
+		}
+		case 0xE4: // call po, **
+		{
+			PC++;
+			break;
+		}
+		case 0xE5: // push hl
+		{
+			SP--;
+			mem[SP] = H;
+			SP--;
+			mem[SP] = L;
+			PC++;
+			break;
+		}
+		case 0xE6: // and *
+		{
+			A &= mem[PC + 1];
+			resetCarry();
+			resetN();
+			setHC();
+			updateZero(A);
+			PC += 2;
+			break;
+		}
+		case 0xE7: // rst 0x20
+		{
+			rst(0x20);
+			break;
+		}
+		case 0xE8: // add sp, *
+		{
+			SP += mem[PC + 1];
+			PC += 2;
+			resetZero();
+			resetN();
+			updateHC(PC);
+			updateCarry(PC);
+			break;
+		}
+		case 0xE9: // jp (hl)
+		{
+			jp(true, mem[(addr16)HL()], 1);
+			break;
+		}
+		case 0xEA: // ld (**), a
+		{
+			mem[get16()] = A;
+			PC += 3;
+			break;
+		}
+		case 0xEB: // ~!GB
+		{
+			break;
+		}
+		case 0xEC: // ~!GB
+		{
+			break;
+		}
+		case 0xED: // EXTENDED INSTRUCTIONS ~!GB
+		{
+			break;
+		}
+		case 0xEE: // xor *
+		{
+			A ^= mem[PC + 1];
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC += 2;
+			break;
+		}
+		case 0xEF: // rst 0x28
+		{
+			rst(0x28);
+			break;
+		}
+		case 0xF0: //ld a, (0xFF00 + n) or ldh, (*)
+		{
+			A = mem[(addr16)(0xFF00 + mem[PC + 1])];
+			PC += 2;
+			break;
+		}
+		case 0xF1: // pop af
+		{
+			F = mem[SP];
+			SP++;
+			A = mem[SP];
+			SP++;
+			PC++;
+			break;
+		}
+		case 0xF2: // ld a, (C)
+		{
+			A = mem[(reg16)C];
+			PC++;
+			break;
+		}
+		case 0xF3: // di
+		{
+			IME = false;
+			PC++;
+			break;
+		}
+		case 0xF4: // ~!GB
+		{
+			break;
+		}
+		case 0xF5: // push af
+		{
+			SP--;
+			A = mem[SP];
+			SP--;
+			F = mem[SP];
+			PC++;
+			break;
+		}
+		case 0xF6: // or *
+		{
+			A |= mem[PC + 1];
+			resetCarry();
+			resetN();
+			resetHC();
+			updateZero(A);
+			PC += 2;
+			break;
+		}
+		case 0xF7: // rst 0x30
+		{
+			rst(0x30);
+			break;
+		}
+		case 0xF8: // ld hl, sp + *
+		{
+			HL(SP + mem[PC + 1]);
+			PC += 2;
+			break;
+		}
+		case 0xF9: // ld sp, hl
+		{
+			SP = ((L >> 8) & 0xFF);
+			SP |= (char)HL();
+			PC++;
+			break;
+		}
+		case 0xFA: // ld a, (**)
+		{
+			A = mem[get16()];
+			PC += 3;
+			break;
+		}
+		case 0xFB: // ei
+		{
+			IME = true;
+			PC++;
+			break;
+		}
+		case 0xFC: // ~!GB
+		{
+			break;
+		}
+		case 0xFD: // ~!GB
+		{
+			break;
+		}
+		case 0xFE: // cp *
+		{
+			cmp((addr16)mem[PC + 1]);
+			PC += 2;
+			break;
+		}
+		case 0xFF: // rst 0x38
+		{
+			rst(0x38);
+			PC++;
+			break;
+		}
+		default: // if the definition of a char changes 
+		{
+			std::cout << "You should never ever see this" << std::endl;
+			std::cout << "But here is the opcode : " << toHex(opcode) << std::endl;
+			std::cin.ignore(); // make the user see what they have done
+			PC++;
+			break;
+		}
 	}
 }
 
