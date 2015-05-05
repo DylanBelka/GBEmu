@@ -20,6 +20,8 @@
 #define LIGHT_GREY 0xAA
 #define WHITE 0xFF
 
+#define vblankclk 4560 // vblank length in clock ticks
+
 class Gameboy
 {
 public:
@@ -78,8 +80,8 @@ private:
 private:
 	CPU cpu;
 	SDL_Window* window = nullptr;
-	SDL_Surface* screenSurface = nullptr; // surface that is drawn to from the screenBuffer, controlled by the scroll registers (SCX, SCY)
-	SDL_Surface* screenBuffer = nullptr; // full 32x32 background
+	SDL_Surface* screenSurface = nullptr; // surface that is drawn to from the screenBuffer
+	SDL_Surface* screenBuffer = nullptr; // full 32x32 background, controlled by the scroll registers (SCX, SCY)
 	SDL_Rect srcSurfaceRect;
 	SDL_Rect pixel;
 

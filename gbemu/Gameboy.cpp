@@ -53,20 +53,25 @@ void Gameboy::run()
 	{
 		draw();
 		handleEvents();
-		int ticks = SDL_GetTicks();
-		while ((int)SDL_GetTicks() - ticks < 30)
+		//int ticks = SDL_GetTicks();
+		//while ((int)SDL_GetTicks() - ticks < 30)
+		//std::cout << toHex(cpu.getByte(JOYPAD)) << std::endl;
+		while (cpu.clockCycles < vblankclk)
 		{
+			//std::cout << cpu.clockCycles << std::endl;
+			handleEvents();
 			cpu.emulateCycle();
 		}
+		cpu.clockCycles = 0;
 		if (cpu.isHalted())
 		{
 			halt();
 		}
-		if (cpu.isStopped())
+		else if (cpu.isStopped())
 		{
 			stop();
 		}
-	}
+	} 
 }
 
 void Gameboy::drawPixel(SDL_Surface* dest, const char color, const unsigned x, const unsigned y)
@@ -135,7 +140,7 @@ void Gameboy::drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigne
 		}
 		else if (bin1[i] == '0' && bin2[i] == '0')
 		{
-			// dont draw white
+			// white is clear for sprites
 		}
 		else if (bin1[i] == '1' && bin2[i] == '0')
 		{
@@ -180,13 +185,13 @@ void Gameboy::drawBG(const char* mem)
 			x += 8;
 			y -= 8;
 			if (x == SCR_BUFFER_WIDTH) // "hblank" (kind of) - at the end of the horiziontal screen, 
-			{						// move the x back to 0 and move y down 8 (y -= 8 after each slice so y += 16 === y += 8)
+			{						// move the x back to 0 and move y down 8 
 				y += 8;
 				x = 0;
 			}
 		}
 	}
-	else // bg1 ^^^ fix this
+	else // bg1 
 	{
 		for (int i = BG_MAP_1; i < BG_MAP_1_END; i++)
 		{
@@ -200,7 +205,6 @@ void Gameboy::drawBG(const char* mem)
 			{
 				chrLocStart = (ubyte)mem[i] * 0x10 + CHR_MAP_SIGNED; // get the location of the first tile slice in memory
 			}
-
 			for (int i = chrLocStart; i < chrLocStart + 0x10; i += 2) // note the += 2
 			{
 				drawBGSlice(mem[i], mem[i + 1], x, y); // draw the slice
@@ -273,15 +277,29 @@ void Gameboy::draw()
 		{
 			drawBG(mem);
 		}
-		// copy the screen buffer to the screensurface from scroll positions (SCX, SCYs)
-		srcSurfaceRect.x = mem[SCX];
-		srcSurfaceRect.y = mem[SCY];
-		SDL_BlitSurface(screenBuffer, NULL, screenSurface, &srcSurfaceRect);
+		// get the scroll x and y positions
+		srcSurfaceRect.x = static_cast<ubyte>(cpu.getByte(SCX));
+		srcSurfaceRect.y = static_cast<ubyte>(cpu.getByte(SCY));
+
+		// emulate background wrapping
+		if (srcSurfaceRect.x >= SCR_BUFFER_WIDTH - WINDOW_WIDTH) // if the scroll reaches the end of the background
+		{
+			int mod = srcSurfaceRect.x / (SCR_BUFFER_WIDTH - WINDOW_WIDTH); // get the multiplication modifier (when SCX >= 192 the * 2 adjusts down)
+			srcSurfaceRect.x =  srcSurfaceRect.x - (SCR_BUFFER_WIDTH - WINDOW_WIDTH) * mod; // scroll it back (x - 96) 96 is when the window reaches the end of the buffer
+		}
+		if (srcSurfaceRect.y >= SCR_BUFFER_HEIGHT - WINDOW_HEIGHT)
+		{
+			int mod = srcSurfaceRect.y / (SCR_BUFFER_HEIGHT - WINDOW_HEIGHT); // get the multiplication modifier (when SCX >= 192 the * 2 adjusts down)
+			srcSurfaceRect.y = srcSurfaceRect.y - (SCR_BUFFER_HEIGHT - WINDOW_HEIGHT) * mod; // scroll it back (x - 96) 96 is when the window reaches the end of the buffer
+		}
+		// copy the screen buffer (the background) to the actual screen
+		SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
 		// draw sprites
 		if (lcdc & 0x2) // draw sprites?
 		{
-			drawSprites(mem); 
+			drawSprites(mem);
 		}
+
 		// display
 		SDL_UpdateWindowSurface(window);
 
@@ -314,62 +332,55 @@ bool Gameboy::handleEvents()
 		if (e.type == SDL_KEYDOWN)
 		{
 			SDL_Keycode key = e.key.keysym.sym;
-			const byte keyPort = cpu.getByte(JOYPAD); // get the current key group
+			const byte jpStat = cpu.getByte(JOYPAD); // get the current key group
 			if (key == SDLK_ESCAPE)
 			{
 				running = false;
 			}
-			else if (keyPort & 0x10) // group P14
+			if (key == SDLK_UP) // up
 			{
-				if (key == SDLK_UP) // up
-				{
-					cpu.setByte(JOYPAD, keyPort | b2);
-					return true;
-				}
-				if (key == SDLK_DOWN) // down
-				{
-					cpu.setByte(JOYPAD, keyPort | b1);
-					return true;
-				}
-				if (key == SDLK_LEFT) // left
-				{
-					cpu.setByte(JOYPAD, keyPort | b1);
-					return true;
-				}
-				if (key == SDLK_RIGHT) // right
-				{
-					cpu.setByte(JOYPAD, keyPort | b0);
-					return true;
-				}
-
+				cpu.setByte(JOYPAD, jpStat & b2);
+				return true;
 			}
-			else if (keyPort & 0x20) // group P15
+			if (key == SDLK_DOWN) // down
 			{
-				if (key == SDLK_a) // a
-				{
-					cpu.setByte(JOYPAD, keyPort | b0);
-					return true;
-				}
-				if (key == SDLK_s) // b
-				{
-					cpu.setByte(JOYPAD, keyPort | b1);
-					return true;
-				}
-				if (key == SDLK_x) // start
-				{
-					cpu.setByte(JOYPAD, keyPort | b1);
-					return true;
-				}
-				if (key == SDLK_z) // select
-				{
-					cpu.setByte(JOYPAD, keyPort | b2);
-					return true;
-				}
+				cpu.setByte(JOYPAD, jpStat & b1);
+				return true;
 			}
-			else
+			if (key == SDLK_LEFT) // left
 			{
-				cpu.setByte(JOYPAD, 0x0);
+				cpu.setByte(JOYPAD, jpStat & b1);
+				return true;
 			}
+			if (key == SDLK_RIGHT) // right
+			{
+				cpu.setByte(JOYPAD, jpStat & b0);
+				return true;
+			}
+			if (key == SDLK_a) // a
+			{
+				cpu.setByte(JOYPAD, jpStat & b0);
+				return true;
+			}
+			if (key == SDLK_s) // b
+			{
+				cpu.setByte(JOYPAD, jpStat & b1);
+				return true;
+			}
+			if (key == SDLK_x) // start
+			{
+				cpu.setByte(JOYPAD, jpStat & b1);
+				return true;
+			}
+			if (key == SDLK_z) // select
+			{
+				cpu.setByte(JOYPAD, jpStat & b2);
+				return true;
+			}
+		}
+		else
+		{
+			cpu.setByte(JOYPAD, JOYPAD | 0x0F);
 		}
 	}
 	return false;
