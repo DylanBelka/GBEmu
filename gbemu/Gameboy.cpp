@@ -14,24 +14,37 @@ cpu()
 		std::cout << "SDL_Window could not be created. Error: " << SDL_GetError() << std::endl;
 		return;
 	}
-	screenSurface = SDL_GetWindowSurface(window);
-	if (screenSurface == nullptr)
+	windowSurface = SDL_GetWindowSurface(window);
+	if (windowSurface == nullptr || windowSurface == NULL)
 	{
-		std::cout << "SDL_Surface <screenSurface> could not be created. Error: " << SDL_GetError() << std::endl;
+		std::cout << "SDL_Surface <windowSurface> could not be created. Error: " << SDL_GetError() << std::endl;
 		return;
 	}
-	SDL_PixelFormat* fmt = screenSurface->format;
-	screenBuffer = SDL_CreateRGBSurface(NULL, SCR_BUFFER_WIDTH, SCR_BUFFER_HEIGHT, fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
-	if (screenBuffer == nullptr)
+	SDL_PixelFormat* fmt = windowSurface->format;
+	backgroundSurface = SDL_CreateRGBSurface(NULL, SCR_BUFFER_WIDTH, SCR_BUFFER_HEIGHT, fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
+	if (backgroundSurface == nullptr || backgroundSurface == NULL)
 	{
-		std::cout << "SDL_Surface <screenBuffer> could not be created. Error: " << SDL_GetError() << std::endl;
+		std::cout << "SDL_Surface <backgroundSurface> could not be created. Error: " << SDL_GetError() << std::endl;
+		return;
 	}
+	fullScreenSurface = SDL_CreateRGBSurface(NULL, WINDOW_WIDTH, WINDOW_HEIGHT, fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
+	if (fullScreenSurface == nullptr || fullScreenSurface == NULL)
+	{
+		std::cout << "SDL_Surface <fullScreenSurface> could not be created. Error: " << SDL_GetError() << std::endl;
+		return;
+	}
+	// setup the surface copy rect to some constant values
 	srcSurfaceRect.w = SCR_BUFFER_WIDTH;
 	srcSurfaceRect.h = SCR_BUFFER_HEIGHT;
 	srcSurfaceRect.x = 0; 
 	srcSurfaceRect.y = 0;
+	// set up the pixel rect
 	pixel.h = 1;
 	pixel.w = 1;
+	// set up the scanline rect
+	scanLineRect.h = 1; // 1 pixel 
+	scanLineRect.w = WINDOW_WIDTH;
+	scanLineRect.x = 0;
 }
 
 Gameboy::~Gameboy()
@@ -43,31 +56,58 @@ Gameboy::~Gameboy()
 bool Gameboy::init(const std::string& romName)
 {
 	return cpu.loadROM(romName);
-	clear(screenSurface);
-	clear(screenBuffer);
+	clear(windowSurface);
+	clear(backgroundSurface);
+	clear(fullScreenSurface);
 }
 
 void Gameboy::run()
 {
+	const int hblankLen = 204; // length in clock cycles of a single hblank
+	const int vBlankLen = 4560; // length in clock cycles of a vblank
+
 	while (running)
 	{
-		draw();
-		handleEvents();
-		while (cpu.clockCycles < vblankclk)
+		renderFull();
+		while (scanline != 144) // while still drawing the scanlines
 		{
+			handleEvents();
+			drawScanline(); // draw the current scanline (hblank of course comes after this)
+			while (cpu.clockCycles < hblankLen) // emulate hblank
+			{
+				handleEvents();
+				cpu.emulateCycle(); // emulate the cycles through the hblank
+			}
+			cpu.clockCycles = 0; // reset number of clock cycles
+		}
+		// full rendering of screen has completed (all scanlines drawn) 
+		// |-> emulate vblank
+		while (cpu.clockCycles < vBlankLen) // emulate vblank
+		{
+			scanline++; // keep incrementing the LY because many games check that for in the range of the vblank
+			cpu.setByte(LY, scanline);
 			handleEvents();
 			cpu.emulateCycle();
 		}
-		cpu.clockCycles = 0;
-		if (cpu.isHalted())
-		{
-			halt();
-		}
-		else if (cpu.isStopped())
-		{
-			stop();
-		}
 	} 
+}
+
+void Gameboy::drawScanline()
+{
+	// blitsurface modifies the scanLineRect width and height so they need to be reset here
+	scanLineRect.h = 1; // 1 pixel 
+	scanLineRect.w = WINDOW_WIDTH;
+	scanLineRect.y = scanline; 
+	// copy the 1x160 px slice at coords(0, line)
+	SDL_BlitSurface(fullScreenSurface, &scanLineRect, windowSurface, &scanLineRect);
+
+	cpu.setByte(LY, scanline);
+	scanline++;
+	if (scanline >= 143)
+	{
+		// display
+		SDL_UpdateWindowSurface(window);
+	}
 }
 
 void Gameboy::drawPixel(SDL_Surface* dest, const char color, const unsigned x, const unsigned y)
@@ -80,7 +120,7 @@ void Gameboy::drawPixel(SDL_Surface* dest, const char color, const unsigned x, c
 
 void clear(SDL_Surface* surf)
 {
-	// clear the screen to white
+	// clear the surface to white
 	SDL_FillRect(surf, NULL, SDL_MapRGB(surf->format, 0xFF, 0xFF, 0xFF));
 }
 
@@ -98,19 +138,19 @@ void Gameboy::drawBGSlice(const byte b1, const byte b2, unsigned& x, unsigned& y
 		int currBit1 = b2 & i;
 		if (currBit0 && currBit1) // bit1 (on) and bit2 (on)
 		{
-			drawPixel(screenBuffer, BLACK, x, y); // draw the pixel to the screenBuffer 
+			drawPixel(backgroundSurface, BLACK, x, y); // draw the pixel to the screenBuffer 
 		}
 		else if (!currBit0 && !currBit1) // bit1 (off) and bit2 (off)
 		{
-			drawPixel(screenBuffer, WHITE, x, y); // draw the pixel to the screenBuffer 
+			drawPixel(backgroundSurface, WHITE, x, y); // draw the pixel to the screenBuffer 
 		}
 		else if (currBit0 && !currBit1) // bit1 (on) and bit2 (off)
 		{
-			drawPixel(screenBuffer, LIGHT_GREY, x, y); // draw the pixel to the screenBuffer 
+			drawPixel(backgroundSurface, LIGHT_GREY, x, y); // draw the pixel to the screenBuffer 
 		}
 		else // bit1 (off) bit2 (on)
 		{
-			drawPixel(screenBuffer, DARK_GREY, x, y); // draw the pixel to the screenBuffer 
+			drawPixel(backgroundSurface, DARK_GREY, x, y); // draw the pixel to the screenBuffer 
 		}
 		x++;
 	}
@@ -131,7 +171,7 @@ void Gameboy::drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigne
 		int currBit1 = b2 & i;
 		if (currBit0 && currBit1) // bit1 (on) and bit2 (on)
 		{
-			drawPixel(screenSurface, BLACK, x, y); // draw the pixel to the screenBuffer 
+			drawPixel(fullScreenSurface, BLACK, x, y); // draw the pixel to the screenBuffer 
 		}
 		else if (!currBit0 && !currBit1) // bit1 (off) and bit2 (off)
 		{
@@ -139,11 +179,11 @@ void Gameboy::drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigne
 		}
 		else if (currBit0 && !currBit1) // bit1 (on) and bit2 (off)
 		{
-			drawPixel(screenSurface, LIGHT_GREY, x, y); // draw the pixel to the screenBuffer 
+			drawPixel(fullScreenSurface, LIGHT_GREY, x, y); // draw the pixel to the screenBuffer 
 		}
 		else // bit1 (off) bit2 (on)
 		{
-			drawPixel(screenSurface, DARK_GREY, x, y); // draw the pixel to the screenBuffer 
+			drawPixel(fullScreenSurface, DARK_GREY, x, y); // draw the pixel to the screenBuffer 
 		}
 		x++;
 	}
@@ -258,11 +298,13 @@ void Gameboy::drawSprites(const byte* mem)
 
 }
 
-void Gameboy::draw()
+void Gameboy::renderFull()
 {
-	clear(screenSurface);
-	clear(screenBuffer);
-	const byte lcdc = cpu.getByte(LCDC);
+	// clear everything
+	clear(backgroundSurface);
+	clear(fullScreenSurface);
+
+	const byte lcdc = cpu.getByte(LCDC); // get the current state of the lcd status register
 	if (lcdc & 0x80) // LCD is enabled, do drawing
 	{
 		// get a dump of the cpu's memory (gfx data is stored in this memory)
@@ -288,16 +330,12 @@ void Gameboy::draw()
 			srcSurfaceRect.y = srcSurfaceRect.y - (SCR_BUFFER_HEIGHT - WINDOW_HEIGHT) * mod; // scroll it back (y - 112) 112 is when the window reaches the end of the buffer vertically
 		}
 		// copy the screen buffer (the background) to the actual screen
-		SDL_BlitSurface(screenBuffer, &srcSurfaceRect, screenSurface, NULL);
-
+		SDL_BlitSurface(backgroundSurface, &srcSurfaceRect, fullScreenSurface, NULL);
 		// draw sprites on top of background
 		if (lcdc & 0x2) // draw sprites?
 		{
 			drawSprites(mem);
 		}
-
-		// display
-		SDL_UpdateWindowSurface(window);
 
 		// vblank every framesBetweenVBlank (30)
 		if (framesSinceLastVBlank >= framesBetweenVBlank)
@@ -306,19 +344,6 @@ void Gameboy::draw()
 			cpu.setByte(IF, 0x1); // set v-blank interrupt
 		}
 		framesSinceLastVBlank++;
-
-		// emulate through v-blank: many games wait for a specific value of LY during v-blank before continuing execution
-		//for (int i = 0x90; i < 0x99; i++)
-		//{
-		//	cpu.setByte(LY, i);
-		//	cpu.emulateCycle();
-		//	cpu.emulateCycle();
-		//	cpu.emulateCycle();
-		//	cpu.emulateCycle();
-		//	cpu.emulateCycle();
-		//	cpu.emulateCycle();
-		//	cpu.emulateCycle();
-		//}
 	}
 }
 
@@ -393,7 +418,7 @@ void Gameboy::halt()
 	while (!cpu.getByte(IE)) // wait for interrupt
 	{
 		// run everything except for emulation of cpu cycles
-		draw();
+		renderFull(); // basically just render so the vblank interrupt can be set
 		handleEvents();
 	}
 	cpu.stopHalt();
@@ -401,5 +426,5 @@ void Gameboy::halt()
 
 void Gameboy::stop()
 {
-	while (!handleEvents()) { draw(); }
+	while (!handleEvents());
 }

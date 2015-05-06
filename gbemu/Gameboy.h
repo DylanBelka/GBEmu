@@ -19,8 +19,6 @@
 #define LIGHT_GREY 0xAA
 #define WHITE 0xFF
 
-#define vblankclk 4560 // vblank length in clock ticks
-
 class Gameboy
 {
 public:
@@ -35,7 +33,10 @@ public:
 
 private:
 	/// Draws the full screen to screenBuffer and then copies it to screensurface through the scroll registers
-	void draw();
+	void renderFull();
+
+	/// Draws a single scanline from the screenSurface to the screenFinal and increments the current scanline
+	void drawScanline();
 
 	/// Returns true if a key was pressed
 	bool handleEvents(); 
@@ -77,12 +78,18 @@ private:
 	void stop();
 
 private:
-	CPU cpu;
+	CPU cpu; // the emulated z80 cpu of the Gameboy
+	ubyte scanline = 0; // current scanline to draw
+
 	SDL_Window* window = nullptr;
-	SDL_Surface* screenSurface = nullptr; // surface that is drawn to from the screenBuffer
-	SDL_Surface* screenBuffer = nullptr; // full 32x32 background, controlled by the scroll registers (SCX, SCY)
-	SDL_Rect srcSurfaceRect;
-	SDL_Rect pixel;
+	SDL_Surface* fullScreenSurface = nullptr; /// Final image surface including scrolled background and sprites 
+	SDL_Surface* backgroundSurface = nullptr; /// Full 32x32 background, controlled by the scroll registers (SCX, SCY)
+	SDL_Surface* windowSurface = nullptr;  /// Surface that is actually rendered to the window
+
+	// these three are only here as an optimization so 3 new SDL_Rect objects arent made with very high frequency
+	SDL_Rect srcSurfaceRect; /// An SDL_Rect that represents the area and scroll coords of the window to be copied from the backgroundSurface to the fullscreenSurface
+	SDL_Rect pixel; /// A pixel for rendering
+	SDL_Rect scanLineRect; /// An SDL_Rect that represents the area and coords of the current scanline to copy from the fullscreenSurface to the windowSurface
 
 	/// Delay the v-blank from everyframe to every 30 frames
 	/// This is done because the original hardware does not v-blank every frame
