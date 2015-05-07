@@ -195,8 +195,8 @@ void Gameboy::drawBG(const char* mem)
 {
 	unsigned x = 0;
 	unsigned y = 0;
-	const byte lcdc = cpu.getByte(LCDC);
-	if (!(lcdc & 0x40)) // 0 = bg0, 1 = bg1
+	const int lcdc = mem[LCDC];
+	if (lcdc & 0x40 != 0x0) // 0 = bg0, 1 = bg1
 	{
 		// bg0, draw all of the 8x8 tiles
 		for (int i = BG_MAP_0; i < BG_MAP_0_END; i++)
@@ -204,9 +204,9 @@ void Gameboy::drawBG(const char* mem)
 			// draw the 8x8 tile
 			// first get the location in memory of the tile
 			addr16 chrLocStart;
-			if (lcdc & 0x10) // unsigned characters
+			if (lcdc & 0x10 != 0x0) // unsigned characters
 			{
-				chrLocStart = (ubyte)mem[i] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
+				chrLocStart = static_cast<unsigned>(mem[i] * 0x10) + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 			}
 			else // signed characters
 			{
@@ -232,7 +232,7 @@ void Gameboy::drawBG(const char* mem)
 		{
 			// draw the 8x8 tile
 			addr16 chrLocStart;
-			if (lcdc & 0x10) // unsigned characters
+			if (lcdc & 0x10 != 0x0) // unsigned characters
 			{
 				chrLocStart = (ubyte)mem[i] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 			}
@@ -259,7 +259,7 @@ void Gameboy::drawSprites(const byte* mem)
 {
 	const byte lcdc = cpu.getByte(LCDC);
 	// sprite size: 1 = 8x16, 0 = 8x8
-	if (lcdc & 0x4)  // 8x16 wxh ie 2 8x8 sprites stacked on top of each other
+	if (lcdc & 0x4 != 0x0)  // 8x16 wxh ie 2 8x8 sprites stacked on top of each other
 	{
 		for (int i = OAM; i < OAM_END; i += 4)
 		{
@@ -303,14 +303,13 @@ void Gameboy::renderFull()
 	// clear everything
 	clear(backgroundSurface);
 	clear(fullScreenSurface);
-
 	const byte lcdc = cpu.getByte(LCDC); // get the current state of the lcd status register
-	if (lcdc & 0x80) // LCD is enabled, do drawing
+	if (lcdc & 0x80 != 0x0) // LCD is enabled, do drawing
 	{
 		// get a dump of the cpu's memory (gfx data is stored in this memory)
 		const byte* mem = cpu.dumpMem();
 		// draw background first
-		if (lcdc & 0x1) // draw background?
+		if (lcdc & 0x1 != 0x0) // draw background?
 		{
 			drawBG(mem);
 		}
@@ -332,7 +331,7 @@ void Gameboy::renderFull()
 		// copy the screen buffer (the background) to the actual screen
 		SDL_BlitSurface(backgroundSurface, &srcSurfaceRect, fullScreenSurface, NULL);
 		// draw sprites on top of background
-		if (lcdc & 0x2) // draw sprites?
+		if (lcdc & 0x2 != 0x0) // draw sprites?
 		{
 			drawSprites(mem);
 		}

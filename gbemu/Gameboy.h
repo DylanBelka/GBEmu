@@ -100,4 +100,13 @@ private:
 /// Clears an SDL_Surface to white
 void clear(SDL_Surface*);
 
+template<typename T>
+const std::string toHex(const T val)
+{
+	std::stringstream stream;
+	stream << std::hex << val;
+	std::string result(stream.str());
+	return "0x" + result;
+}
+
 #endif
