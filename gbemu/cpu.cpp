@@ -1509,8 +1509,8 @@ void CPU::decodeExtendedInstruction(char opcode)
 	}
 	default:
 	{
-		std::cout << "Unimplemented CB instruction: " << toHex(opcode) << std::endl;
-		std::cout << "At: " << toHex(PC + 1) << std::endl;
+		//std::cout << "Unimplemented CB instruction: " << toHex(opcode) << std::endl;
+	//	std::cout << "At: " << toHex(PC + 1) << std::endl;
 		break;
 	}
 	}
@@ -1652,7 +1652,10 @@ void CPU::ret(bool cond)
 {
 	if (cond)
 	{
+		//std::cout << "Returning from: " << toHex(PC) << std::endl;
 		PC = pop(); // pop PC off the stack
+		//std::cout << "Returned to: " << toHex(PC) << std::endl;
+		//system("pause");
 	}
 	else
 	{
@@ -1667,8 +1670,10 @@ void CPU::call(bool cond)
 		SP--;
 		mem[SP] = (PC + 3) & 0xFF; // + 3 is for jumping past the 3 bytes for the opcode and dest
 		SP--;
-		mem[SP] = (((PC + 3) >> 8));
+		mem[SP] = (((PC + 3) >> 8) & 0xFF);
 		PC = get16();
+		//std::cout << "Calling: " << toHex(PC) << std::endl;
+		//system("pause");
 	}
 	else
 	{
@@ -1780,8 +1785,10 @@ void printMem(CPU* cpu, int start, int end)
 	{
 		std::cout << toHex((byte)mem[i]) << "\t";
 	}
-	std::cout << "\n" << std::endl;
+	std::cout << "\n\n";
 }
+
+bool x = true;
 
 void CPU::emulateCycle()
 {
@@ -1793,17 +1800,27 @@ void CPU::emulateCycle()
 	//	
 	//	printMem(this, CHR_MAP, CHR_MAP + 4);
 	//}
-	mem[LY]++;
-	if (PC != 0x2ed)
-	{
-		//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
-	}
-	else
-	{
-		system("pause");
-	}
+	//mem[LY]++;
+	//if (PC != 0x2ed)
+	//{
 	//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
+	//std::cout << (int)mem[LY] << std::endl;
+	//}
+	//else
+	//{
+	//	system("pause");
+	//}
+	////std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
 	clockCycles += clockTimes[opcode];
+	if (PC == 0x392)
+	{
+		//std::cout << toHex((int)mem[LCDC]) << std::endl;
+		//system("pause");
+	}
+		
+	//printMem(this, SP, SP + 4);
+	//std::cout << "SP: " << toHex(SP) << "\n";
+	//std::cout << toHex((int)mem[0xFFE1]) << "\n";
 
 	/// emulate the opcode (compiles to a jump table)
 	switch (opcode)
@@ -2421,6 +2438,8 @@ void CPU::emulateCycle()
 		case 0x56: // ld d, (hl)
 		{
 			D = mem[(addr16)HL()];
+			//std::cout << "D = " << toHex(int(D)) << std::endl;
+			//std::cout << "HL = " << toHex(HL()) << std::endl;
 			PC++;
 			break;
 		}
@@ -2738,7 +2757,8 @@ void CPU::emulateCycle()
 		}
 		case 0x87: // add a, a
 		{
-			A <<= 1;
+			//std::cout << "A = " << toHex((int)A) << std::endl;
+			A += A;
 			updateCarry(A);
 			updateN(ADD);
 			updateHC(A);
@@ -3281,9 +3301,9 @@ void CPU::emulateCycle()
 		}
 		case 0xC1: // pop bc
 		{
-			C = mem[SP];
-			SP++;
 			B = mem[SP];
+			SP++;
+			C = mem[SP];
 			SP++;
 			PC++;
 			break;
@@ -3306,9 +3326,9 @@ void CPU::emulateCycle()
 		case 0xC5: // push bc
 		{
 			SP--;
-			mem[SP] = B;
-			SP--;
 			mem[SP] = C;
+			SP--;
+			mem[SP] = B;
 			PC++;
 			break;
 		}
@@ -3379,9 +3399,9 @@ void CPU::emulateCycle()
 		}
 		case 0xD1: // pop de
 		{
-			E = mem[SP];
-			SP++;
 			D = mem[SP];
+			SP++;
+			E = mem[SP];
 			SP++;
 			PC++;
 			break;
@@ -3404,10 +3424,11 @@ void CPU::emulateCycle()
 		case 0xD5: // push de
 		{
 			SP--;
-			mem[SP] = D;
-			SP--;
 			mem[SP] = E;
+			SP--;
+			mem[SP] = D;
 			PC++;
+			//std::cout << "Pushed DE: " << toHex(DE()) << std::endl;
 			break;
 		}
 		case 0xD6: // sub *
@@ -3489,11 +3510,14 @@ void CPU::emulateCycle()
 		}
 		case 0xE1: // pop hl
 		{
-			L = mem[SP];
-			SP++;
 			H = mem[SP];
 			SP++;
+			L = mem[SP];
+			SP++;
 			PC++;
+			//std::cout << "HL popped to: " << toHex(HL()) << std::endl;
+			//std::cout << "H = " << toHex((int)H) << std::endl;
+			//std::cout << "L = " << toHex((int)L) << std::endl;
 			break;
 		}
 		case 0xE2: // ld (C), a
@@ -3515,9 +3539,9 @@ void CPU::emulateCycle()
 		case 0xE5: // push hl
 		{
 			SP--;
-			mem[SP] = H;
-			SP--;
 			mem[SP] = L;
+			SP--;
+			mem[SP] = H;
 			PC++;
 			break;
 		}
@@ -3548,7 +3572,9 @@ void CPU::emulateCycle()
 		}
 		case 0xE9: // jp (hl)
 		{
-			jp(true, mem[(addr16)HL()], 1);
+			PC = HL();
+			//std::cout << "Jumping to HL: " << toHex(HL()) << std::endl;
+			//system("pause");
 			break;
 		}
 		case 0xEA: // ld (**), a
@@ -3586,15 +3612,17 @@ void CPU::emulateCycle()
 		}
 		case 0xF0: //ld a, (0xFF00 + n) or ldh, (*)
 		{
-			A = mem[(addr16)(0xFF00 + mem[PC + 1])];
+			const ubyte low = mem[PC + 1];
+			const addr16 addr = 0xFF00 + low;
+			A = mem[addr];
 			PC += 2;
 			break;
 		}
 		case 0xF1: // pop af
 		{
-			F = mem[SP];
-			SP++;
 			A = mem[SP];
+			SP++;
+			F = mem[SP];
 			SP++;
 			PC++;
 			break;
@@ -3618,9 +3646,9 @@ void CPU::emulateCycle()
 		case 0xF5: // push af
 		{
 			SP--;
-			A = mem[SP];
+			mem[SP] = F;
 			SP--;
-			F = mem[SP];
+			mem[SP] = A;
 			PC++;
 			break;
 		}
