@@ -18,6 +18,7 @@
 *.dat
 *.txt
 *.sav
+*.sna
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
