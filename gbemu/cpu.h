@@ -8,7 +8,7 @@
 #include <iomanip>
 
 #include "memdefs.h"
-#include "keyboard.h"
+#include "input.h"
 
 /**
 Resources:

@@ -24,7 +24,7 @@
 // Game license code
 #define NEW_LICENSE_CODE 0x0144
 #define NEW_LICENSE_CODE_END 0x0145
-// IS it compatable with the Super Gameboy?
+// Is it compatable with the Super Gameboy?
 #define SGB_COMPAT 0x0146
 // Cartridge type
 #define CART_TYPE 0x0147

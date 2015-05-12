@@ -7,7 +7,7 @@
 
 #include "cpu.h"
 #include "memdefs.h"
-#include "keyboard.h"
+#include "input.h"
 
 #define WINDOW_WIDTH 160
 #define WINDOW_HEIGHT 144
@@ -27,6 +27,7 @@ public:
 	~Gameboy();
 
 	/// Load the ROM into the CPU's memory and clear both screens
+	/// @param romName is the name/ file path of the ROM - ".gb" required at the end
 	bool init(const std::string& romName);
 
 	/// Main program loop
@@ -39,33 +40,33 @@ private:
 	/// Draws a single scanline from the screenSurface to the screenFinal and increments the current scanline
 	void drawScanline();
 
-	/// Returns true if a key valid key on the Gameboy was pressed (this is used for breaking out of the STOP command)
+	/// @Returns true if a key valid key on the Gameboy was pressed (this is used for breaking out of the STOP command)
 	bool handleEvents(); 
 
 	/// Draws a single 8 pixel slice of a background
-	/// b1 is byte one of the slice
-	/// b2 is byte two of the slice
-	/// x is the starting x coordinate to draw to
-	/// y is the starting y coordinate to draw to
+	/// @param b1 is byte one of the slice
+	/// @param b2 is byte two of the slice
+	/// @param x is the starting x coordinate to draw to
+	/// @param y is the starting y coordinate to draw to
 	void drawBGSlice(const byte b1, const byte b2, unsigned& x, unsigned& y);
 
 	/// Draws a single 8 pixel slice of a sprite (only difference is color = (0x0, 0x0) is clear for sprites)
-	/// b1 is byte one of the slice
-	/// b2 is byte two of the slice
-	/// x is the starting x coordinate to draw to
-	/// y is the starting y coordinate to draw to
+	/// @param b1 is byte one of the slice
+	/// @param b2 is byte two of the slice
+	/// @param x is the starting x coordinate to draw to
+	/// @param y is the starting y coordinate to draw to
 	void drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigned& y);
 
 	/// Draws a single pixel of color <color> to the screenbuffer at (<x>, <y>)
 	void drawPixel(SDL_Surface* dest, const char r, const char g, const char b, const unsigned x, const unsigned y);
 
 	/// Draws all 32x32 tiles of the background
-	/// mem is a full copy of the cpu's memory
+	/// @param mem is a full copy of the cpu's memory
 	void drawBG(const byte* mem);
 
 	/// Draws all of the sprites defined in OAM
 	/// Does NOT restrict number of sprites per line
-	/// mem is a full copy of the cpu's memory
+	/// @param mem is a full copy of the cpu's memory
 	void drawSprites(const byte* mem);
 
 	/// True while the program is running

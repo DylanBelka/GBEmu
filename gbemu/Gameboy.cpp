@@ -337,6 +337,7 @@ void Gameboy::renderFull()
 		{
 			drawSprites(mem);
 		}
+		// reset the LY and current scanline
 		scanline = 0;
 		cpu.setByte(LY, scanline);
 	}
@@ -346,7 +347,6 @@ bool Gameboy::handleEvents()
 {
 	SDL_Event e;
 	bool validKeyPressed = false; // is a valid (Gameboy) key pressed?
-	const byte joypadState = cpu.getByte(JOYPAD);
 	while (SDL_PollEvent(&e))
 	{
 		if (e.type == SDL_QUIT)
@@ -455,5 +455,8 @@ void Gameboy::halt()
 
 void Gameboy::stop()
 {
-	while (!handleEvents());
+	while (!handleEvents())
+	{
+		std::cout << "Stopped" << std::endl; // for debugging 
+	}
 }

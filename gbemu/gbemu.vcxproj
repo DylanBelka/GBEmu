@@ -18,7 +18,7 @@
   <ItemGroup>
     <ClInclude Include="cpu.h" />
     <ClInclude Include="Gameboy.h" />
-    <ClInclude Include="keyboard.h" />
+    <ClInclude Include="input.h" />
     <ClInclude Include="memdefs.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

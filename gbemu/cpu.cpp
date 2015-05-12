@@ -1637,11 +1637,13 @@ void CPU::set(reg& reg, ubyte bit)
 void CPU::halt()
 {
 	halted = true;
+	std::cout << "Halted" << std::endl; // for debugging 
 }
 
 void CPU::stop()
 {
 	stopped = true;
+	std::cout << "Stopped" << std::endl; // for debugging 
 }
 
 bool interrupted = false;
@@ -3624,7 +3626,7 @@ void CPU::emulateCycle()
 			{
 				if (keyInfo.colID == b4)
 				{
-					A = keyInfo.keys[p14];
+					A = keyInfo.keys[p15];
 				}
 				else if (keyInfo.colID == b5)
 				{
