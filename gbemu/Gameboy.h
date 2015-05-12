@@ -7,6 +7,7 @@
 
 #include "cpu.h"
 #include "memdefs.h"
+#include "keyboard.h"
 
 #define WINDOW_WIDTH 160
 #define WINDOW_HEIGHT 144
@@ -14,10 +15,10 @@
 #define SCR_BUFFER_HEIGHT 256
 #define SCR_BUFFER_WIDTH 256
 
-#define BLACK 0x00
-#define DARK_GREY 0x55
-#define LIGHT_GREY 0xAA
-#define WHITE 0xFF
+#define BLACK 8, 24, 32
+#define DARK_GREY 52, 104, 86
+#define LIGHT_GREY 136, 192, 112
+#define WHITE 224, 248, 208
 
 class Gameboy
 {
@@ -38,7 +39,7 @@ private:
 	/// Draws a single scanline from the screenSurface to the screenFinal and increments the current scanline
 	void drawScanline();
 
-	/// Returns true if a key was pressed
+	/// Returns true if a key valid key on the Gameboy was pressed (this is used for breaking out of the STOP command)
 	bool handleEvents(); 
 
 	/// Draws a single 8 pixel slice of a background
@@ -55,9 +56,8 @@ private:
 	/// y is the starting y coordinate to draw to
 	void drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigned& y);
 
-
 	/// Draws a single pixel of color <color> to the screenbuffer at (<x>, <y>)
-	void drawPixel(SDL_Surface* dest, const char color, const unsigned x, const unsigned y);
+	void drawPixel(SDL_Surface* dest, const char r, const char g, const char b, const unsigned x, const unsigned y);
 
 	/// Draws all 32x32 tiles of the background
 	/// mem is a full copy of the cpu's memory
@@ -90,16 +90,12 @@ private:
 	SDL_Rect srcSurfaceRect; /// An SDL_Rect that represents the area and scroll coords of the window to be copied from the backgroundSurface to the fullscreenSurface
 	SDL_Rect pixel; /// A pixel for rendering
 	SDL_Rect scanLineRect; /// An SDL_Rect that represents the area and coords of the current scanline to copy from the fullscreenSurface to the windowSurface
-
-	/// Delay the v-blank from everyframe to every 30 frames
-	/// This is done because the original hardware does not v-blank every frame
-	unsigned int framesSinceLastVBlank = 0;
-	const int framesBetweenVBlank = 30;
 };
 
 /// Clears an SDL_Surface to white
 void clear(SDL_Surface*);
 
+/// TODO: remove this
 template<typename T>
 const std::string toHex(const T val)
 {
