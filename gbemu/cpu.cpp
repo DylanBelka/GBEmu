@@ -25,6 +25,7 @@ unsigned int clockTimes[256] =
 
 CPU::CPU()
 {
+	keyInfo = { { 0x0F, 0x0F }, 0x0 };
 	mem = new byte[MEM_SIZE];
 	reset();
 }
@@ -1530,11 +1531,6 @@ void CPU::cmp(const byte val)
 	updateZero(A - val);
 }
 
-const addr16 CPU::load16()
-{
-	return ((mem[PC + 2] << 8) | (mem[PC + 1] & 0xFF));
-}
-
 const addr16 CPU::get16()
 {
 	return ((mem[PC + 2] << 8) | (mem[PC + 1] & 0xFF));
@@ -1648,14 +1644,14 @@ void CPU::stop()
 	stopped = true;
 }
 
+bool interrupted = false;
+
 void CPU::ret(bool cond)
 {
 	if (cond)
 	{
-		//std::cout << "Returning from: " << toHex(PC) << std::endl;
 		PC = pop(); // pop PC off the stack
-		//std::cout << "Returned to: " << toHex(PC) << std::endl;
-		//system("pause");
+		clockCycles += 6;
 	}
 	else
 	{
@@ -1672,8 +1668,7 @@ void CPU::call(bool cond)
 		SP--;
 		mem[SP] = (((PC + 3) >> 8) & 0xFF);
 		PC = get16();
-		//std::cout << "Calling: " << toHex(PC) << std::endl;
-		//system("pause");
+		clockCycles += 7;
 	}
 	else
 	{
@@ -1686,7 +1681,7 @@ void CPU::push(reg16 val)
 	SP--;
 	mem[SP] = val & 0xFF;
 	SP--;
-	mem[SP] = val >> 8;
+	mem[SP] = val >> 0x8;
 }
 
 reg16 CPU::pop()
@@ -1709,7 +1704,15 @@ inline void CPU::rst(const u8 mode)
 // Else it increases PC by [opsize]
 inline void CPU::jr(bool cond, s8 to, u8 opsize)
 {
-	PC += (cond) ? to + opsize : opsize; // + opsize is to jump over the opsize 
+	if (cond)
+	{
+		PC += to + opsize; // + opsize is to jump over the opsize in bytes
+		clockCycles += 5; // 5 more cycles added (total of 12) for jump
+	}
+	else
+	{
+		PC += opsize;
+	}
 }
 
 void CPU::jp(bool cond, addr16 to, u8 opsize)
@@ -1739,6 +1742,7 @@ void CPU::interrupt(const char to)
 {
 	push(PC); // push the program counter onto the stack
 	PC = to; // jump to the interrupt location
+	interrupted = true;
 	IME = false; // disable interrupts
 	mem[IF] = 0x0;
 }
@@ -1788,39 +1792,34 @@ void printMem(CPU* cpu, int start, int end)
 	std::cout << "\n\n";
 }
 
-bool x = true;
+bool x = false;
+bool y = false;
 
 void CPU::emulateCycle()
 {
 	handleInterrupts();
 	unsigned char opcode = mem[PC]; // get next opcode
 	R++; // I think this is what R does
-	//if (mem[0x9800] != 0)
-	//{
-	//	
-	//	printMem(this, CHR_MAP, CHR_MAP + 4);
-	//}
-	//mem[LY]++;
-	//if (PC != 0x2ed)
-	//{
-	//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
-	//std::cout << (int)mem[LY] << std::endl;
-	//}
-	//else
-	//{
-	//	system("pause");
-	//}
-	////std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
 	clockCycles += clockTimes[opcode];
-	if (PC == 0x392)
+	if (PC == 0x2ef)
 	{
-		//std::cout << toHex((int)mem[LCDC]) << std::endl;
-		//system("pause");
+		x = true;
 	}
-		
-	//printMem(this, SP, SP + 4);
-	//std::cout << "SP: " << toHex(SP) << "\n";
-	//std::cout << toHex((int)mem[0xFFE1]) << "\n";
+	if (x && PC > 0x2F0)
+	{
+		//std::cout << "0xFF00 = " << toHex(mem[JOYPAD]) << std::endl;
+		//std::cout << "A: " << toHex((byte)A) << std::endl;
+		//std::cout << "B: " << toHex((byte)B) << std::endl;
+		//std::cout << "C: " << toHex((byte)C) << std::endl;
+		//std::cout << "D: " << toHex((byte)D) << std::endl;
+		//std::cout << "E: " << toHex((byte)E) << std::endl;
+		//std::cout << "F: " << toHex((byte)F) << std::endl;
+		//std::cout << "AF: " << toHex(AF()) << std::endl;
+		//std::cout << "BC: " << toHex(BC()) << std::endl;
+		//std::cout << "DE: " << toHex(DE()) << std::endl;
+		//std::cout << "HL: " << toHex(HL()) << std::endl;
+	}
+	//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
 
 	/// emulate the opcode (compiles to a jump table)
 	switch (opcode)
@@ -1884,7 +1883,8 @@ void CPU::emulateCycle()
 		}
 		case 0x08: // ex af, af' (~!GB)
 		{
-			PC++;
+			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
+			system("pause"); // this is for debugging onlybreak;
 			break;
 		}
 		case 0x09: // add hl, bc
@@ -1951,7 +1951,7 @@ void CPU::emulateCycle()
 		}
 		case 0x11: // ld de, **
 		{
-			DE(load16());
+			DE(get16());
 			PC += 3;
 			break;
 		}
@@ -2004,6 +2004,7 @@ void CPU::emulateCycle()
 		case 0x18: // jr *
 		{
 			jr(true, mem[PC + 1], 2);
+			clockCycles -= 5;
 			break;
 		}
 		case 0x19: // add hl, de
@@ -2181,7 +2182,7 @@ void CPU::emulateCycle()
 			PC += 2;
 			break;
 		}
-		case 0x2f: // cpl ^^^
+		case 0x2f: // cpl
 		{
 			A = ~A;
 			PC++;
@@ -2251,7 +2252,7 @@ void CPU::emulateCycle()
 			jr(carry(), mem[PC + 1], 2);
 			break;
 		}
-		case 0x39: // add hl, sp ^^^ is it hl + hl or hl + sp?
+		case 0x39: // add hl, sp
 		{
 			const reg16 hl = HL();
 			HL(hl + SP);
@@ -2302,7 +2303,7 @@ void CPU::emulateCycle()
 		}
 		case 0x3F: // ccf
 		{
-			F ^= 0x1;
+			setCarry();
 			PC++;
 			break;
 		}
@@ -2438,8 +2439,6 @@ void CPU::emulateCycle()
 		case 0x56: // ld d, (hl)
 		{
 			D = mem[(addr16)HL()];
-			//std::cout << "D = " << toHex(int(D)) << std::endl;
-			//std::cout << "HL = " << toHex(HL()) << std::endl;
 			PC++;
 			break;
 		}
@@ -2757,7 +2756,6 @@ void CPU::emulateCycle()
 		}
 		case 0x87: // add a, a
 		{
-			//std::cout << "A = " << toHex((int)A) << std::endl;
 			A += A;
 			updateCarry(A);
 			updateN(ADD);
@@ -3355,6 +3353,7 @@ void CPU::emulateCycle()
 		case 0xC9: // ret
 		{
 			ret(true);
+			clockCycles -= 6;
 			break;
 		}
 		case 0xCA: // jp z, **
@@ -3375,6 +3374,7 @@ void CPU::emulateCycle()
 		case 0xCD: // call **
 		{
 			call(true);
+			clockCycles -= 7; // adjust clock cycles down (always true - no cycles added for testing)
 			break;
 		}
 		case 0xCE: // adc a, *
@@ -3428,7 +3428,6 @@ void CPU::emulateCycle()
 			SP--;
 			mem[SP] = D;
 			PC++;
-			//std::cout << "Pushed DE: " << toHex(DE()) << std::endl;
 			break;
 		}
 		case 0xD6: // sub *
@@ -3454,6 +3453,7 @@ void CPU::emulateCycle()
 		case 0xD9: // reti
 		{
 			ret(true);
+			clockCycles -= 6;
 			IME = true;
 			break;
 		}
@@ -3461,12 +3461,11 @@ void CPU::emulateCycle()
 		{
 			jp(carry(), get16(), 3);
 			break;
-
 		}
 		case 0xDB: // in a, (*) ~!GB
 		{
-			//A = ports[mem[PC + 1]];
-			PC += 2;
+			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
+			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xDC: // call c, **
@@ -3476,7 +3475,8 @@ void CPU::emulateCycle()
 		}
 		case 0xDD: // IX INSTRUCTIONS ~!GB
 		{
-			PC += 2;
+			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
+			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xDE: // sbc a, *
@@ -3496,14 +3496,17 @@ void CPU::emulateCycle()
 		}
 		case 0xE0: //ld (0xFF00 + n), a
 		{
-			mem[0xFF00 + (ubyte)mem[PC + 1]] = A;
-			if ((byte)mem[PC + 1] == 0x46) // dma
+			const ubyte low = mem[PC + 1];
+			const addr16 addr = 0xFF00 + low;
+			mem[addr] = A;
+
+			if (low == 0x46) // dma
 			{
 				dma();
 			}
-			else if ((byte)mem[PC + 1] == 0x00) // read input
+			else if (low == 0x00) // joypad write
 			{
-
+				keyInfo.colID = A;
 			}
 			PC += 2;
 			break;
@@ -3515,14 +3518,12 @@ void CPU::emulateCycle()
 			L = mem[SP];
 			SP++;
 			PC++;
-			//std::cout << "HL popped to: " << toHex(HL()) << std::endl;
-			//std::cout << "H = " << toHex((int)H) << std::endl;
-			//std::cout << "L = " << toHex((int)L) << std::endl;
 			break;
 		}
 		case 0xE2: // ld (C), a
 		{
-			mem[(addr16)C] = A;
+			const addr16 addr = static_cast<ubyte>(C) + 0xFF00;
+			mem[addr] = A;
 			PC++;
 			break;
 		}
@@ -3573,8 +3574,6 @@ void CPU::emulateCycle()
 		case 0xE9: // jp (hl)
 		{
 			PC = HL();
-			//std::cout << "Jumping to HL: " << toHex(HL()) << std::endl;
-			//system("pause");
 			break;
 		}
 		case 0xEA: // ld (**), a
@@ -3585,14 +3584,20 @@ void CPU::emulateCycle()
 		}
 		case 0xEB: // ~!GB
 		{
+			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
+			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xEC: // ~!GB
 		{
+			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
+			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xED: // EXTENDED INSTRUCTIONS ~!GB
 		{
+			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
+			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xEE: // xor *
@@ -3615,6 +3620,18 @@ void CPU::emulateCycle()
 			const ubyte low = mem[PC + 1];
 			const addr16 addr = 0xFF00 + low;
 			A = mem[addr];
+			if (low == 0x00) // joypad read
+			{
+				if (keyInfo.colID == b4)
+				{
+					A = keyInfo.keys[p14];
+				}
+				else if (keyInfo.colID == b5)
+				{
+					A = keyInfo.keys[p14];
+				}
+			}
+
 			PC += 2;
 			break;
 		}
@@ -3629,7 +3646,8 @@ void CPU::emulateCycle()
 		}
 		case 0xF2: // ld a, (C)
 		{
-			A = mem[(reg16)C];
+			const addr16 addr = static_cast<ubyte>(C) + 0xFF00;
+			A = mem[addr];
 			PC++;
 			break;
 		}
@@ -3641,6 +3659,8 @@ void CPU::emulateCycle()
 		}
 		case 0xF4: // ~!GB
 		{
+			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
+			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xF5: // push af
@@ -3694,10 +3714,14 @@ void CPU::emulateCycle()
 		}
 		case 0xFC: // ~!GB
 		{
+			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
+			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xFD: // ~!GB
 		{
+			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
+			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xFE: // cp *

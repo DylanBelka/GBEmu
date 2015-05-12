@@ -25,7 +25,7 @@ int main(int argc, char **argv)
 	Gameboy gb;
 	if (argc == 2)
 	{
-		int gbLoadStatus = gb.init(argv[1]);
+		const int gbLoadStatus = gb.init(argv[1]);
 		if (gbLoadStatus != EXIT_SUCCESS) // something went wrong find out what
 		{
 			if (gbLoadStatus == 1) // ROM load failure

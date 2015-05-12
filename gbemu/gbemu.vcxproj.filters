@@ -35,5 +35,8 @@
     <ClInclude Include="Gameboy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="keyboard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -91,7 +91,9 @@
 
 // $FF00-$FF7F - Hardware I/O Registers
 #define JOYPAD 0xFF00
+
 // Memory locations of various memory registers
+
 // timer registers
 #define TIMA 0xFF05
 #define TMA 0xFF06

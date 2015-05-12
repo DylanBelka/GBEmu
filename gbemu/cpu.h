@@ -8,6 +8,7 @@
 #include <iomanip>
 
 #include "memdefs.h"
+#include "keyboard.h"
 
 /**
 Resources:
@@ -20,7 +21,7 @@ Resources:
 **/
 
 #define MAX_ROM_SIZE 0xBFFF
-#define MEM_SIZE 0xFFFF + 0x1 // give one byte padding
+#define MEM_SIZE 0xFFFF + 0x1 // addresses up to and including 0xFFFF
 
 #define ADD true
 #define SUB false
@@ -60,10 +61,13 @@ public:
 
 	bool isHalted() { return halted; }
 	bool isStopped() { return stopped; }
-	void stopHalt() { halted = false; }
-	void stopStop() { stopped = false; }
+	void unHalt() { halted = false; }
+	void unStop() { stopped = false; }
 
-	unsigned short clockCycles = 0;
+	void resetClock() { clockCycles = 0; }
+	u16 getClockCycles() { return clockCycles; }
+
+	GBKeys& getKeyInfo() { return keyInfo; }
 
 private:
 	void reset();
@@ -110,6 +114,12 @@ private:
 	bool halted = false;	// HALT(ed)?
 	bool stopped = false;	// STOP(ed)?
 
+	u16 clockCycles = 0;
+
+	// initialize keyInfo to default values
+	GBKeys keyInfo;
+
+
 // Flag helper functions
 private:
 	inline void updateZero(reg16 reg);
@@ -140,7 +150,6 @@ private:
 	void push(reg16 val);
 	reg16 pop();
 
-	inline const unsigned short load16();
 	inline const unsigned short get16();
 	inline const unsigned short get16(const addr16 where);
 
