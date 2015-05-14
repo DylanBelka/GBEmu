@@ -1699,7 +1699,7 @@ reg16 CPU::pop()
 	return ret;
 }
 
-inline void CPU::rst(const u8 mode)
+inline void CPU::rst(const uint8 mode)
 {
 	push(PC + 1);
 	PC = mode;
@@ -1707,7 +1707,7 @@ inline void CPU::rst(const u8 mode)
 
 // jrs PC to [to] if cond is true
 // Else it increases PC by [opsize]
-inline void CPU::jr(bool cond, s8 to, u8 opsize)
+inline void CPU::jr(bool cond, int8 to, uint8 opsize)
 {
 	if (cond)
 	{
@@ -1720,7 +1720,7 @@ inline void CPU::jr(bool cond, s8 to, u8 opsize)
 	}
 }
 
-void CPU::jp(bool cond, addr16 to, u8 opsize)
+void CPU::jp(bool cond, addr16 to, uint8 opsize)
 {
 	if (cond)
 	{
@@ -1820,6 +1820,10 @@ void CPU::emulateCycle()
 	{
 		system("pause");
 	}
+
+	/// TODO: find bug in opus5
+	/// might be same bug as in tetris
+	/// either way its a bug fix
 
 	if (_test)
 	{
@@ -2233,7 +2237,7 @@ void CPU::emulateCycle()
 		case 0x34: // inc (hl) 
 		{
 			mem[(addr16)HL()]++;
-			const s16 val = mem[(addr16)HL()];
+			const int16 val = mem[(addr16)HL()];
 			updateN(ADD);
 			updateZero(val);
 			updateHC(val);
@@ -2243,7 +2247,7 @@ void CPU::emulateCycle()
 		case 0x35: // dec (hl)
 		{
 			mem[(addr16)HL()]--;
-			const s16 val = mem[(addr16)HL()];
+			const int16 val = mem[(addr16)HL()];
 			updateN(SUB);
 			updateZero(val);
 			updateHC(val);
@@ -3251,9 +3255,9 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		case 0xB7: // or a &&&
+		case 0xB7: // or a
 		{
-			// A |= A;
+			A |= A;
 			resetCarry();
 			resetN();
 			resetHC();
@@ -3481,7 +3485,7 @@ void CPU::emulateCycle()
 		}
 		case 0xDB: // in a, (*) ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
@@ -3492,7 +3496,7 @@ void CPU::emulateCycle()
 		}
 		case 0xDD: // IX INSTRUCTIONS ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
@@ -3546,12 +3550,12 @@ void CPU::emulateCycle()
 		}
 		case 0xE3: // NOP
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
 			break;
 		}
 		case 0xE4: // call po, **
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
 			break;
 		}
 		case 0xE5: // push hl
@@ -3601,19 +3605,19 @@ void CPU::emulateCycle()
 		}
 		case 0xEB: // ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xEC: // ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xED: // EXTENDED INSTRUCTIONS ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
@@ -3642,7 +3646,6 @@ void CPU::emulateCycle()
 				if (keyInfo.colID == b4)
 				{
 					A = keyInfo.keys[p15] | keyInfo.colID | 0xC0; // set the upper (unused) bits with 0xC0
-					//std::cout << "A = " << toHex((s16)A) << std::endl;
 				}
 				else if (keyInfo.colID == b5)
 				{
@@ -3676,7 +3679,7 @@ void CPU::emulateCycle()
 		}
 		case 0xF4: // ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
@@ -3712,8 +3715,7 @@ void CPU::emulateCycle()
 		}
 		case 0xF9: // ld sp, hl
 		{
-			SP = ((L >> 8) & 0xFF);
-			SP |= (char)HL();
+			SP = HL();
 			PC++;
 			break;
 		}
@@ -3731,19 +3733,19 @@ void CPU::emulateCycle()
 		}
 		case 0xFC: // ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xFD: // ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xFE: // cp *
 		{
-			cmp((addr16)mem[PC + 1]);
+			cmp(mem[PC + 1]);
 			PC += 2;
 			break;
 		}
@@ -3776,7 +3778,7 @@ const std::string toHex(const T val)
 const std::string toHex(const char val)
 {
 	std::stringstream stream;
-	stream << std::hex << (u16)val; // cast to an unsigned short so it isnt treated as a character
+	stream << std::hex << (uint16)val; // cast to an unsigned short so it isnt treated as a character
 	std::string result(stream.str());
 	return "0x" + result;
 }

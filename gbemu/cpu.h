@@ -34,14 +34,14 @@ typedef unsigned char addr8; // 8-bit address
 typedef signed short reg16; // 16-bit register
 typedef signed char reg; // register
  
-typedef unsigned char u8;
-typedef signed char s8;
+typedef unsigned char uint8;
+typedef signed char int8;
 typedef char byte; // 8-bit for when sign is unspecified
 typedef unsigned char ubyte;
 typedef signed char sbyte;
 
-typedef unsigned short u16;
-typedef signed short s16;
+typedef unsigned short uint16;
+typedef signed short int16;
 
 class CPU
 {
@@ -67,7 +67,7 @@ public:
 	void unStop() { stopped = false; }
 
 	void resetClock() { clockCycles = 0; }
-	u16 getClockCycles() { return clockCycles; }
+	uint16 getClockCycles() { return clockCycles; }
 
 	GBKeys& getKeyInfo() { return keyInfo; }
 
@@ -101,10 +101,10 @@ private:
 	inline reg16 DE() { return ((D << 8) | (E & 0xFF)); }
 	inline reg16 HL() { return ((H << 8) | (L & 0xFF)); }
 
-	inline void AF(s16 val) { A = ((val >> 0x8) & 0xFF); F = val & 0xFF; } // For Hb: shift the value up and mask off lower bits
-	inline void BC(s16 val) { B = ((val >> 0x8) & 0xFF); C = val & 0xFF; } // For Lb: mask upper bits
-	inline void DE(s16 val) { D = ((val >> 0x8) & 0xFF); E = val & 0xFF; }
-	inline void HL(s16 val) { H = ((val >> 0x8) & 0xFF); L = val & 0xFF; }
+	inline void AF(int16 val) { A = ((val >> 0x8) & 0xFF); F = val & 0xFF; } // For Hb: shift the value up and mask off lower bits
+	inline void BC(int16 val) { B = ((val >> 0x8) & 0xFF); C = val & 0xFF; } // For Lb: mask upper bits
+	inline void DE(int16 val) { D = ((val >> 0x8) & 0xFF); E = val & 0xFF; }
+	inline void HL(int16 val) { H = ((val >> 0x8) & 0xFF); L = val & 0xFF; }
 
 	byte I;					// interrupt page address register
 	unsigned short PC;		// program counter register
@@ -118,7 +118,7 @@ private:
 	bool halted = false;	// HALT(ed)?
 	bool stopped = false;	// STOP(ed)?
 
-	u16 clockCycles = 0;
+	uint16 clockCycles = 0;
 
 	// initialize keyInfo to default values
 	GBKeys keyInfo;
@@ -144,12 +144,12 @@ private:
 
 // opcode functions
 private:
-	inline void jr(bool cond, s8 to, u8 opsize);
-	void jp(bool cond, addr16 to, u8 opsize);
+	inline void jr(bool cond, int8 to, uint8 opsize);
+	void jp(bool cond, addr16 to, uint8 opsize);
 	void cmp(const byte val);
 	void ret(bool cond);
 	void call(bool cond);
-	void rst(const u8 mode);
+	void rst(const uint8 mode);
 
 	void push(reg16 val);
 	reg16 pop();
