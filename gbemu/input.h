@@ -1,5 +1,5 @@
-#ifndef GB_KEYBOARD_H
-#define GB_KEYBOARD_H
+#ifndef GB_INPUT_H
+#define GB_INPUT_H
 
 struct GBKeys
 {
@@ -25,4 +25,4 @@ enum KeyCodes
 	keyStart = 0x8
 };
 
-#endif // GB_KEYBOARD_H
+#endif // GB_INPUT_H

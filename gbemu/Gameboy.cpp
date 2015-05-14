@@ -193,7 +193,7 @@ void Gameboy::drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigne
 	y++;
 }
 
-void Gameboy::drawBG(const char* mem)
+void Gameboy::drawBG(const byte* mem)
 {
 	unsigned x = 0;
 	unsigned y = 0;
@@ -208,11 +208,11 @@ void Gameboy::drawBG(const char* mem)
 			addr16 chrLocStart;
 			if (lcdc & 0x10 != 0x0) // unsigned characters
 			{
-				chrLocStart = static_cast<unsigned>(mem[i] * 0x10) + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
+				chrLocStart = static_cast<ubyte>(mem[i]) * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 			}
 			else // signed characters
 			{
-				chrLocStart = (ubyte)mem[i] * 0x10 + CHR_MAP_SIGNED; // get the location of the first tile slice in memory
+				chrLocStart = mem[i] * 0x10 + CHR_MAP_SIGNED; // no cast because they are signed
 			}
 			// draw the slice pixel by pixel
 			for (int j = chrLocStart; j < chrLocStart + 0x10; j += 2) // note the += 2, 2 bytes per slice
@@ -236,7 +236,7 @@ void Gameboy::drawBG(const char* mem)
 			addr16 chrLocStart;
 			if (lcdc & 0x10 != 0x0) // unsigned characters
 			{
-				chrLocStart = (ubyte)mem[i] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
+				chrLocStart = static_cast<ubyte>(mem[i]) * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 			}
 			else // signed characters
 			{
@@ -261,7 +261,7 @@ void Gameboy::drawSprites(const byte* mem)
 {
 	const byte lcdc = cpu.getByte(LCDC);
 	// sprite size: 1 = 8x16, 0 = 8x8
-	if (lcdc & 0x4 != 0x0)  // 8x16 wxh ie 2 8x8 sprites stacked on top of each other
+	if (lcdc & b2 != 0x0)  // 8x16 wxh, 2 8x8 sprites stacked on top of each other
 	{
 		for (int i = OAM; i < OAM_END; i += 4)
 		{
@@ -269,7 +269,7 @@ void Gameboy::drawSprites(const byte* mem)
 			unsigned int x = mem[i + 1] - 8; // emulate that offset here
 			// sprites are always unsigned
 			// draw the upper 8x8 tile
-			addr16 chrLocStartUp = (ubyte)mem[i + 2] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
+			addr16 chrLocStartUp = static_cast<ubyte>(mem[i + 2]) * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 			for (int j = chrLocStartUp; j < chrLocStartUp + 0x10; j += 2)
 			{
 				drawSpriteSlice(mem[j], mem[j + 1], x, y);
@@ -287,10 +287,10 @@ void Gameboy::drawSprites(const byte* mem)
 	{
 		for (int i = OAM; i < OAM_END; i += 4)
 		{
-			unsigned y = mem[i] - 16;
-			unsigned x = mem[i + 1] - 8;
+			unsigned int y = mem[i] - 16;
+			unsigned int x = mem[i + 1] - 8;
 			// sprites are always unsigned
-			addr16 chrLocStart = (ubyte)mem[i + 2] * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
+			addr16 chrLocStart = static_cast<ubyte>(mem[i + 2]) * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 			for (int j = chrLocStart; j < chrLocStart + 0x10; j += 2)
 			{
 				drawSpriteSlice(mem[j], mem[j + 1], x, y);
@@ -360,9 +360,18 @@ bool Gameboy::handleEvents()
 			{
 				running = false;
 			}
+			if (key == SDLK_1)
+			{
+				cpu._test = true;
+			}
+			if (key == SDLK_2)
+			{
+				cpu._test = false;
+			}
 			if (key == SDLK_UP) // up
 			{
 				cpu.getKeyInfo().keys[p14] &= ~keyUp;
+				cpu.setByte(0xFFA6, 0);
 				validKeyPressed = true;
 			}
 			if (key == SDLK_DOWN) // down
@@ -380,12 +389,12 @@ bool Gameboy::handleEvents()
 				cpu.getKeyInfo().keys[p14] &= ~keyRight;
 				validKeyPressed = true;
 			}
-			if (key == SDLK_a) // a
+			if (key == SDLK_z) // a
 			{
 				cpu.getKeyInfo().keys[p15] &= ~keyA;
 				validKeyPressed = true;
 			}
-			if (key == SDLK_s) // b
+			if (key == SDLK_x) // b
 			{
 				cpu.getKeyInfo().keys[p15] &= ~keyB;
 				validKeyPressed = true;
@@ -421,19 +430,19 @@ bool Gameboy::handleEvents()
 			{
 				cpu.getKeyInfo().keys[p14] |= keyRight;
 			}
-			if (key == SDLK_a) // a
+			if (key == SDLK_z) // a
 			{
 				cpu.getKeyInfo().keys[p15] |= keyA;
 			}
-			if (key == SDLK_s) // b
+			if (key == SDLK_x) // b
 			{
 				cpu.getKeyInfo().keys[p15] |= keyB;
 			}
-			if (key == SDLK_x) // start
+			if (key == SDLK_RETURN) // start
 			{
 				cpu.getKeyInfo().keys[p15] |= keyStart;
 			}
-			if (key == SDLK_z) // select
+			if (key == SDLK_BACKSPACE) // select
 			{
 				cpu.getKeyInfo().keys[p15] |= keySelect;
 			}

@@ -10,6 +10,8 @@
 #include "memdefs.h"
 #include "input.h"
 
+#include <SDL.h>
+
 /**
 Resources:
 * http://clrhome.org/table/
@@ -68,6 +70,8 @@ public:
 	u16 getClockCycles() { return clockCycles; }
 
 	GBKeys& getKeyInfo() { return keyInfo; }
+
+	bool _test = false;
 
 private:
 	void reset();

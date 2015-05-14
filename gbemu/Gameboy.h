@@ -69,9 +69,6 @@ private:
 	/// @param mem is a full copy of the cpu's memory
 	void drawSprites(const byte* mem);
 
-	/// True while the program is running
-	bool running = true;
-
 	/// CPU HALT
 	void halt();
 	
@@ -87,7 +84,10 @@ private:
 	SDL_Surface* backgroundSurface = nullptr; /// Full 32x32 background, controlled by the scroll registers (SCX, SCY)
 	SDL_Surface* windowSurface = nullptr;  /// Surface that is actually rendered to the window
 
-	// these three are only here as an optimization so 3 new SDL_Rect objects arent made with very high frequency
+	/// True while the program is running
+	bool running = true;
+
+	// these three are only here as an optimization so 3 new SDL_Rect objects arent made at a very high frequency
 	SDL_Rect srcSurfaceRect; /// An SDL_Rect that represents the area and scroll coords of the window to be copied from the backgroundSurface to the fullscreenSurface
 	SDL_Rect pixel; /// A pixel for rendering
 	SDL_Rect scanLineRect; /// An SDL_Rect that represents the area and coords of the current scanline to copy from the fullscreenSurface to the windowSurface

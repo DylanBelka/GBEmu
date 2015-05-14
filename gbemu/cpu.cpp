@@ -23,11 +23,14 @@ unsigned int clockTimes[256] =
 	5, 10, 10, 4, 10, 11, 7, 11, 5, 6, 10, 4, 10, 4, 7, 11,
 };
 
+std::fstream file;
+
 CPU::CPU()
 {
 	keyInfo = { { 0x0F, 0x0F }, 0x0 };
 	mem = new byte[MEM_SIZE];
 	reset();
+	file.open("out.txt", std::ios::out);
 }
 
 CPU::~CPU()
@@ -1731,6 +1734,16 @@ void CPU::jp(bool cond, addr16 to, u8 opsize)
 
 #pragma endregion
 
+void printMem(CPU* cpu, int start, int end)
+{
+	const byte* mem = cpu->dumpMem();
+	for (int i = start; i <= end; i++)
+	{
+		std::cout << toHex((byte)mem[i]) << "\tat" << toHex(i) << "\n";
+	}
+	std::cout << "\n\n";
+}
+
 void CPU::dma()
 {
 	const addr16 dmaStart = A << 0x8; // get the location that the DMA will be copying from
@@ -1759,6 +1772,10 @@ void CPU::handleInterrupts()
 		{
 			const int vblank = 0x40;
 			interrupt(vblank);
+			if (_test)
+			{
+				std::cout << "vblank\n";
+			}
 		}
 	}
 }
@@ -1784,18 +1801,11 @@ void CPU::test()
 	std::cout << "HL: " << toHex(HL()) << std::endl;
 }
 
-void printMem(CPU* cpu, int start, int end)
-{
-	const byte* mem = cpu->dumpMem();
-	for (int i = start; i <= end; i++)
-	{
-		std::cout << toHex((byte)mem[i]) << "\t";
-	}
-	std::cout << "\n\n";
-}
-
-bool x = false;
+bool x = true;
 bool y = false;
+int c = 0;
+
+unsigned ticks = SDL_GetTicks();
 
 void CPU::emulateCycle()
 {
@@ -1803,25 +1813,30 @@ void CPU::emulateCycle()
 	unsigned char opcode = mem[PC]; // get next opcode
 	R++; // I think this is what R does
 	clockCycles += clockTimes[opcode];
-	if (PC == 0x2ef)
+	// std::cout << toHex(opcode) << "\tat " << toHex(PC) << "\n";
+	/// At some point the game jumps to before and continues into 0xFF44
+
+	if (PC == 0xFF44)
 	{
-		x = true;
+		system("pause");
 	}
-	if (x && PC > 0x2F0)
+
+	if (_test)
 	{
-		//std::cout << "0xFF00 = " << toHex(mem[JOYPAD]) << std::endl;
-		//std::cout << "A: " << toHex((byte)A) << std::endl;
-		//std::cout << "B: " << toHex((byte)B) << std::endl;
-		//std::cout << "C: " << toHex((byte)C) << std::endl;
-		//std::cout << "D: " << toHex((byte)D) << std::endl;
-		//std::cout << "E: " << toHex((byte)E) << std::endl;
-		//std::cout << "F: " << toHex((byte)F) << std::endl;
-		//std::cout << "AF: " << toHex(AF()) << std::endl;
-		//std::cout << "BC: " << toHex(BC()) << std::endl;
-		//std::cout << "DE: " << toHex(DE()) << std::endl;
-		//std::cout << "HL: " << toHex(HL()) << std::endl;
+		//std::cout << toHex((byte)opcode) << "\tat " << toHex(PC) << "\n";
+		std::cout << toHex((byte)opcode) << "\tat " << toHex(PC) << "\n";
 	}
-	//std::cout << toHex((int)opcode) << "\tat " << toHex((int)PC) << std::endl;
+	// 15128
+	if (mem[0x00] == 0x2f)
+	{
+		std::cout << SDL_GetTicks() - ticks << std::endl;
+		system("pause");
+		file.close();
+	}
+	if (SDL_GetTicks() - ticks > 15100)
+	{
+		file << toHex((byte)opcode) << "\tat " << toHex(PC) << "\n";
+	}
 
 	/// emulate the opcode (compiles to a jump table)
 	switch (opcode)
@@ -1833,7 +1848,7 @@ void CPU::emulateCycle()
 		}
 		case 0x01: // ld BC, **
 		{
-			BC((addr16)get16());
+			BC(get16());
 			PC += 3;
 			break;
 		}
@@ -1883,10 +1898,10 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		case 0x08: // ex af, af' (~!GB)
+		case 0x08: // ld (**), sp
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
-			system("pause"); // this is for debugging onlybreak;
+			mem[get16()] = SP;
+			PC += 3;
 			break;
 		}
 		case 0x09: // add hl, bc
@@ -3076,7 +3091,7 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		case 0xA7: // and a &&&
+		case 0xA7: // and a
 		{
 			A &= A;
 			resetCarry();
@@ -3156,9 +3171,9 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		case 0xAF: // xor a &&& A = 0
+		case 0xAF: // xor a
 		{
-			A = 0;
+			A ^= A;
 			resetCarry();
 			resetN();
 			resetHC();
@@ -3296,7 +3311,7 @@ void CPU::emulateCycle()
 		}
 		case 0xC0: // ret nz
 		{
-			ret(!carry());
+			ret(!zero());
 			break;
 		}
 		case 0xC1: // pop bc
@@ -3466,7 +3481,7 @@ void CPU::emulateCycle()
 		}
 		case 0xDB: // in a, (*) ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
@@ -3477,7 +3492,7 @@ void CPU::emulateCycle()
 		}
 		case 0xDD: // IX INSTRUCTIONS ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
@@ -3531,12 +3546,12 @@ void CPU::emulateCycle()
 		}
 		case 0xE3: // NOP
 		{
-			PC++;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
 			break;
 		}
 		case 0xE4: // call po, **
 		{
-			PC++;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
 			break;
 		}
 		case 0xE5: // push hl
@@ -3586,19 +3601,19 @@ void CPU::emulateCycle()
 		}
 		case 0xEB: // ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xEC: // ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xED: // EXTENDED INSTRUCTIONS ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
@@ -3626,14 +3641,14 @@ void CPU::emulateCycle()
 			{
 				if (keyInfo.colID == b4)
 				{
-					A = keyInfo.keys[p15];
+					A = keyInfo.keys[p15] | keyInfo.colID | 0xC0; // set the upper (unused) bits with 0xC0
+					//std::cout << "A = " << toHex((s16)A) << std::endl;
 				}
 				else if (keyInfo.colID == b5)
 				{
-					A = keyInfo.keys[p14];
+					A = keyInfo.keys[p14] | keyInfo.colID | 0xC0;
 				}
 			}
-
 			PC += 2;
 			break;
 		}
@@ -3661,7 +3676,7 @@ void CPU::emulateCycle()
 		}
 		case 0xF4: // ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
@@ -3716,13 +3731,13 @@ void CPU::emulateCycle()
 		}
 		case 0xFC: // ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xFD: // ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((s16)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
