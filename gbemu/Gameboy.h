@@ -8,6 +8,7 @@
 #include "cpu.h"
 #include "memdefs.h"
 #include "input.h"
+#include "common.h"
 
 #define WINDOW_WIDTH 160
 #define WINDOW_HEIGHT 144
