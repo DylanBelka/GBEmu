@@ -65,14 +65,11 @@ const std::string opcodeStr[] =
 	"set 7,b", "set 7,c", "set 7,d", "set 7,e", "set 7,h", "set 7,l", "set 7,(hl)", "set 7,a",
 };
 
-std::fstream file;
-
 CPU::CPU()
 {
 	keyInfo = { { 0x0F, 0x0F }, 0x0 };
 	mem = new byte[MEM_SIZE];
 	reset();
-	file.open("out.txt", std::ios::out);
 }
 
 CPU::~CPU()
@@ -1741,7 +1738,7 @@ reg16 CPU::pop()
 	return ret;
 }
 
-inline void CPU::rst(const uint8 mode)
+inline void CPU::rst(const uint8_t mode)
 {
 	push(PC + 1);
 	PC = mode;
@@ -1749,7 +1746,7 @@ inline void CPU::rst(const uint8 mode)
 
 // jrs PC to [to] if cond is true
 // Else it increases PC by [opsize]
-inline void CPU::jr(bool cond, int8 to, uint8 opsize)
+inline void CPU::jr(bool cond, int8_t to, uint8_t opsize)
 {
 	if (cond)
 	{
@@ -1762,7 +1759,7 @@ inline void CPU::jr(bool cond, int8 to, uint8 opsize)
 	}
 }
 
-void CPU::jp(bool cond, addr16 to, uint8 opsize)
+void CPU::jp(bool cond, addr16 to, uint8_t opsize)
 {
 	if (cond)
 	{
@@ -1814,10 +1811,6 @@ void CPU::handleInterrupts()
 		{
 			const int vblank = 0x40;
 			interrupt(vblank);
-			if (_test)
-			{
-				std::cout << "vblank\n";
-			}
 		}
 	}
 }
@@ -1877,17 +1870,16 @@ void CPU::emulateCycle()
 	{
 		std::cout << SDL_GetTicks() - ticks << std::endl;
 		//system("pause");
-		file.close();
 	}
 	//std::cout << toHex((byte)opcode) << "\tat " << toHex(PC) << "\n";
-	if (opcode == 0xCB)
-	{
-		std::cout << opcodeStr[0xCB + opcode] << "\tat " << toHex(PC) << "\n";
-	}
-	else
-	{
-		std::cout << opcodeStr[opcode] << "\tat " << toHex(PC) << "\n";
-	}
+	// if (opcode == 0xCB)
+	// {
+	// 	std::cout << opcodeStr[0xCB + opcode] << "\tat " << toHex(PC) << "\n";
+	// }
+	// else
+	// {
+	// 	std::cout << opcodeStr[opcode] << "\tat " << toHex(PC) << "\n";
+	// }
 	
 	/// emulate the opcode (compiles to a jump table)
 	switch (opcode)
@@ -2284,7 +2276,7 @@ void CPU::emulateCycle()
 		case 0x34: // inc (hl) 
 		{
 			mem[(addr16)HL()]++;
-			const int16 val = mem[(addr16)HL()];
+			const int16_t val = mem[(addr16)HL()];
 			updateN(ADD);
 			updateZero(val);
 			updateHC(val);
@@ -2294,7 +2286,7 @@ void CPU::emulateCycle()
 		case 0x35: // dec (hl)
 		{
 			mem[(addr16)HL()]--;
-			const int16 val = mem[(addr16)HL()];
+			const int16_t val = mem[(addr16)HL()];
 			updateN(SUB);
 			updateZero(val);
 			updateHC(val);
@@ -3531,7 +3523,7 @@ void CPU::emulateCycle()
 		}
 		case 0xDB: // in a, (*) ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
@@ -3542,7 +3534,7 @@ void CPU::emulateCycle()
 		}
 		case 0xDD: // IX INSTRUCTIONS ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
@@ -3596,12 +3588,12 @@ void CPU::emulateCycle()
 		}
 		case 0xE3: // NOP
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			break;
 		}
 		case 0xE4: // call po, **
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			break;
 		}
 		case 0xE5: // push hl
@@ -3651,19 +3643,19 @@ void CPU::emulateCycle()
 		}
 		case 0xEB: // ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xEC: // ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xED: // EXTENDED INSTRUCTIONS ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
@@ -3725,7 +3717,7 @@ void CPU::emulateCycle()
 		}
 		case 0xF4: // ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
@@ -3779,13 +3771,13 @@ void CPU::emulateCycle()
 		}
 		case 0xFC: // ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
 		case 0xFD: // ~!GB
 		{
-			std::cout << "Opcode not supported by Gameboy: " << toHex((int16)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 			break;
 		}
@@ -3824,7 +3816,7 @@ const std::string toHex(const T val)
 const std::string toHex(const char val)
 {
 	std::stringstream stream;
-	stream << std::hex << (uint16)val; // cast to an unsigned short so it isnt treated as a character
+	stream << std::hex << (uint16_t)val; // cast to an unsigned short so it isnt treated as a character
 	std::string result(stream.str());
 	return "0x" + result;
 }

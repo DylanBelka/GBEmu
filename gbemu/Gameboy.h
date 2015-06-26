@@ -4,11 +4,12 @@
 #include <SDL.h>
 #include <iostream>
 #include <string>
+#include <cstdint>
 
 #include "cpu.h"
 #include "memdefs.h"
 #include "input.h"
-#include "common.h"
+#include "types.h"
 
 #define WINDOW_WIDTH 160
 #define WINDOW_HEIGHT 144

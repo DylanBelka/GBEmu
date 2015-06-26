@@ -9,7 +9,7 @@
 
 #include "memdefs.h"
 #include "input.h"
-#include "common.h"
+#include "types.h"
 
 #include <SDL.h>
 
@@ -53,7 +53,7 @@ public:
 	void unStop() { stopped = false; }
 
 	void resetClock() { clockCycles = 0; }
-	uint16 getClockCycles() { return clockCycles; }
+	uint16_t getClockCycles() { return clockCycles; }
 
 	GBKeys& getKeyInfo() { return keyInfo; }
 
@@ -87,10 +87,10 @@ private:
 	inline reg16 DE() { return ((D << 8) | (E & 0xFF)); }
 	inline reg16 HL() { return ((H << 8) | (L & 0xFF)); }
 
-	inline void AF(int16 val) { A = ((val >> 0x8) & 0xFF); F = val & 0xFF; } // For Hb: shift the value up and mask off lower bits
-	inline void BC(int16 val) { B = ((val >> 0x8) & 0xFF); C = val & 0xFF; } // For Lb: mask upper bits
-	inline void DE(int16 val) { D = ((val >> 0x8) & 0xFF); E = val & 0xFF; }
-	inline void HL(int16 val) { H = ((val >> 0x8) & 0xFF); L = val & 0xFF; }
+	inline void AF(int16_t val) { A = ((val >> 0x8) & 0xFF); F = val & 0xFF; } // For Hb: shift the value up and mask off lower bits
+	inline void BC(int16_t val) { B = ((val >> 0x8) & 0xFF); C = val & 0xFF; } // For Lb: mask upper bits
+	inline void DE(int16_t val) { D = ((val >> 0x8) & 0xFF); E = val & 0xFF; }
+	inline void HL(int16_t val) { H = ((val >> 0x8) & 0xFF); L = val & 0xFF; }
 
 	byte I;					// interrupt page address register
 	unsigned short PC;		// program counter register
@@ -104,7 +104,7 @@ private:
 	bool halted = false;	// HALT(ed)?
 	bool stopped = false;	// STOP(ed)?
 
-	uint16 clockCycles = 0;
+	uint16_t clockCycles = 0;
 
 	// initialize keyInfo to default values
 	GBKeys keyInfo;
@@ -130,12 +130,12 @@ private:
 
 // opcode functions
 private:
-	inline void jr(bool cond, int8 to, uint8 opsize);
-	void jp(bool cond, addr16 to, uint8 opsize);
+	inline void jr(bool cond, int8_t to, uint8_t opsize);
+	void jp(bool cond, addr16 to, uint8_t opsize);
 	void cmp(const byte val);
 	void ret(bool cond);
 	void call(bool cond);
-	void rst(const uint8 mode);
+	void rst(const uint8_t mode);
 
 	void push(reg16 val);
 	reg16 pop();
