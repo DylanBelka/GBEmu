@@ -81,7 +81,7 @@ void Gameboy::run()
 			}
 			cpu.resetClock(); // reset number of clock cycles
 		}
-		// full rendering of screen has completed (all scanlines drawn) 
+		// full rendering of screen has completed (all scanlines drawn)
 		// |-> emulate vblank
 		cpu.setByte(IF, 0x1); // set vblank interrupt
 		while (cpu.getClockCycles() < vBlankLen) // emulate vblank
@@ -118,6 +118,10 @@ void Gameboy::drawPixel(SDL_Surface* dest, const char r, const char g, const cha
 	pixel.y = y;
 	// draw the pixel to the screenBuffer
 	SDL_FillRect(dest, &pixel, SDL_MapRGB(dest->format, r, g, b));
+	if (__T)
+	{
+		SDL_Delay(1);
+	}
 }
 
 void clear(SDL_Surface* surf)
@@ -297,7 +301,6 @@ void Gameboy::drawSprites(const byte* mem)
 			}
 		}
 	}
-
 }
 
 void Gameboy::renderFull()
@@ -356,6 +359,10 @@ bool Gameboy::handleEvents()
 		if (e.type == SDL_KEYDOWN)
 		{
 			SDL_Keycode key = e.key.keysym.sym;
+			if (key == SDLK_9)
+			{
+				__T = true;
+			}
 			if (key == SDLK_ESCAPE)
 			{
 				running = false;

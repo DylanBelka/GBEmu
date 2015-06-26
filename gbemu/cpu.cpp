@@ -1,9 +1,6 @@
 #include "cpu.h"
 
-// ^^^ = check this
-// &&& = redundant opcode - 'optimized' ex: ld a, a
-
-unsigned int clockTimes[256] =
+const unsigned int clockTimes[256] =
 {
 	4, 10, 7, 6, 4, 4, 7, 4, 4, 11, 7, 6, 4, 4, 7, 4,
 	4, 10, 7, 6, 4, 4, 7, 4, 12, 11, 7, 6, 4, 4, 7, 4,
@@ -21,6 +18,51 @@ unsigned int clockTimes[256] =
 	5, 10, 10, 11, 10, 11, 7, 11, 5, 4, 10, 11, 10, 4, 7, 11,
 	5, 10, 10, 19, 10, 11, 7, 11, 5, 4, 10, 4, 10, 4, 7, 11,
 	5, 10, 10, 4, 10, 11, 7, 11, 5, 6, 10, 4, 10, 4, 7, 11,
+};
+
+// todo: change opcodes that are gameboy specific
+const std::string opcodeStr[] = 
+{
+	"inc bc", "inc b", "dec b", "add hl,bc", "dec bc", "inc c", "dec c", "inc de", "inc d",
+	"dec d", "add hl,de", "dec de", "inc e", "dec e", "inc hl", "inc h", "dec h", "add hl,hl",
+	"dec hl", "inc l", "dec l", "inc sp", "inc (hl)", "dec (hl)", "add hl,sp", "dec sp", "inc a",
+	"dec a", "add a,b", "add a,c", "add a,d", "add a,e", "add a,h", "add a,l", "add a,(hl)", "add a,a",
+	"adc a,b", "adc a,c", "adc a,d", "adc a,e", "adc a,h", "adc a,l", "adc a,(hl)", "adc a,a", "sub b",
+	"sub c", "sub d", "sub e", "sub h", "sub l", "sub (hl)", "sub a", "sbc a,b", "sbc a,c",
+	"sbc a,d", "sbc a,e", "sbc a,h", "sbc a,l", "sbc a,(hl)", "sbc a,a", "and b", "and c", "and d",
+	"and e", "and h", "and l", "and (hl)", "and a", "xor b", "xor c", "xor d", "xor e",
+	"xor h", "xor l", "xor (hl)", "xor a", "ret nz", "pop bc", "add a,*", "rst 00h", "ret z",
+	"adc a,*", "rst 08h", "ret nc", "pop de", "out (*),a", "sub *", "rst 10h", "ret c", "sbc a,*",
+	"rst 18h", "ret po", "pop hl", "and *", "rst 20h", "ret pe", "xor *", "rst 28h", "ret p",
+	"pop af", "rst 30h", "ret m", "rst 38h", "out (c),b", "sbc hl,bc", "out (c),c", "adc hl,bc", "out (c),d",
+	"sbc hl,de", "out (c),e", "adc hl,de", "out (c),h", "sbc hl,hl", "out (c),l", "adc hl,hl", "out (c),0", "sbc hl,sp",
+	"out (c),a", "adc hl,sp", "rlc b", "rlc c", "rlc d", "rlc e", "rlc h", "rlc l", "rlc (hl)",
+	"rlc a", "rrc b", "rrc c", "rrc d", "rrc e", "rrc h", "rrc l", "rrc (hl)", "rrc a",
+	"sla b", "sla c", "sla d", "sla e", "sla h", "sla l", "sla (hl)", "sla a", "sra b",
+	"sra c", "sra d", "sra e", "sra h", "sra l", "sra (hl)", "sra a", "sll b", "sll c",
+	"sll d", "sll e", "sll h", "sll l", "sll (hl)", "sll a", "srl b", "srl c", "srl d",
+	"srl e", "srl h", "srl l", "srl (hl)", "srl a", "bit 0,b", "bit 0,c", "bit 0,d", "bit 0,e",
+	"bit 0,h", "bit 0,l", "bit 0,(hl)", "bit 0,a", "bit 1,b", "bit 1,c", "bit 1,d", "bit 1,e", "bit 1,h",
+	"bit 1,l", "bit 1,(hl)", "bit 1,a", "bit 2,b", "bit 2,c", "bit 2,d", "bit 2,e", "bit 2,h", "bit 2,l",
+	"bit 2,(hl)", "bit 2,a", "bit 3,b", "bit 3,c", "bit 3,d", "bit 3,e", "bit 3,h", "bit 3,l", "bit 3,(hl)",
+	"bit 3,a", "bit 4,b", "bit 4,c", "bit 4,d", "bit 4,e", "bit 4,h", "bit 4,l", "bit 4,(hl)", "bit 4,a",
+	"bit 5,b", "bit 5,c", "bit 5,d", "bit 5,e", "bit 5,h", "bit 5,l", "bit 5,(hl)", "bit 5,a", "bit 6,b",
+	"bit 6,c", "bit 6,d", "bit 6,e", "bit 6,h", "bit 6,l", "bit 6,(hl)", "bit 6,a", "bit 7,b", "bit 7,c",
+	"bit 7,d", "bit 7,e", "bit 7,h", "bit 7,l", "bit 7,(hl)", "bit 7,a", "res 0,b", "res 0,c", "res 0,d",
+	"res 0,e", "res 0,h", "res 0,l", "res 0,(hl)", "res 0,a", "res 1,b", "res 1,c", "res 1,d", "res 1,e",
+	"res 1,h", "res 1,l", "res 1,(hl)", "res 1,a", "res 2,b", "res 2,c", "res 2,d", "res 2,e", "res 2,h",
+	"res 2,l", "res 2,(hl)", "res 2,a", "res 3,b", "res 3,c", "res 3,d", "res 3,e", "res 3,h", "res 3,l",
+	"res 3,(hl)", "res 3,a", "res 4,b", "res 4,c", "res 4,d", "res 4,e", "res 4,h", "res 4,l", "res 4,(hl)",
+	"res 4,a", "res 5,b", "res 5,c", "res 5,d", "res 5,e", "res 5,h", "res 5,l", "res 5,(hl)", "res 5,a",
+	"res 6,b", "res 6,c", "res 6,d", "res 6,e", "res 6,h", "res 6,l", "res 6,(hl)", "res 6,a", "res 7,b",
+	"res 7,c", "res 7,d", "res 7,e", "res 7,h", "res 7,l", "res 7,(hl)", "res 7,a", "set 0,b", "set 0,c",
+	"set 0,d", "set 0,e", "set 0,h", "set 0,l", "set 0,(hl)", "set 0,a", "set 1,b", "set 1,c", "set 1,d",
+	"set 1,e", "set 1,h", "set 1,l", "set 1,(hl)", "set 1,a", "set 2,b", "set 2,c", "set 2,d", "set 2,e",
+	"set 2,h", "set 2,l", "set 2,(hl)", "set 2,a", "set 3,b", "set 3,c", "set 3,d", "set 3,e", "set 3,h",
+	"set 3,l", "set 3,(hl)", "set 3,a", "set 4,b", "set 4,c", "set 4,d", "set 4,e", "set 4,h", "set 4,l",
+	"set 4,(hl)", "set 4,a", "set 5,b", "set 5,c", "set 5,d", "set 5,e", "set 5,h", "set 5,l", "set 5,(hl)",
+	"set 5,a", "set 6,b", "set 6,c", "set 6,d", "set 6,e", "set 6,h", "set 6,l", "set 6,(hl)", "set 6,a",
+	"set 7,b", "set 7,c", "set 7,d", "set 7,e", "set 7,h", "set 7,l", "set 7,(hl)", "set 7,a",
 };
 
 std::fstream file;
@@ -1818,7 +1860,7 @@ void CPU::emulateCycle()
 
 	if (PC == 0xFF44)
 	{
-		system("pause");
+		//system("pause");
 	}
 
 	/// TODO: find bug in opus5
@@ -1834,14 +1876,19 @@ void CPU::emulateCycle()
 	if (mem[0x00] == 0x2f)
 	{
 		std::cout << SDL_GetTicks() - ticks << std::endl;
-		system("pause");
+		//system("pause");
 		file.close();
 	}
-	if (SDL_GetTicks() - ticks > 15100)
+	//std::cout << toHex((byte)opcode) << "\tat " << toHex(PC) << "\n";
+	if (opcode == 0xCB)
 	{
-		file << toHex((byte)opcode) << "\tat " << toHex(PC) << "\n";
+		std::cout << opcodeStr[0xCB + opcode] << "\tat " << toHex(PC) << "\n";
 	}
-
+	else
+	{
+		std::cout << opcodeStr[opcode] << "\tat " << toHex(PC) << "\n";
+	}
+	
 	/// emulate the opcode (compiles to a jump table)
 	switch (opcode)
 	{
@@ -2785,7 +2832,7 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		case 0x88: // adc a, b ^^^ check all adcs
+		case 0x88: // adc a, b
 		{
 			A += B + carry();
 			updateCarry(A);
@@ -2945,7 +2992,7 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		case 0x98: // sbc a, b ^^^ (B - carry() or B + carry())
+		case 0x98: // sbc a, b
 		{
 			A -= B - carry();
 			updateCarry(A);
@@ -2997,7 +3044,6 @@ void CPU::emulateCycle()
 		}
 		case 0x9D: // sbc a, l
 		{
-			A -= L - carry();
 			updateCarry(A);
 			updateN(SUB);
 			updateHC(A);

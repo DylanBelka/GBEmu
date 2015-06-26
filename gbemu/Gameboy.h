@@ -59,6 +59,12 @@ private:
 	void drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigned& y);
 
 	/// Draws a single pixel of color <color> to the screenbuffer at (<x>, <y>)
+	/// @param dest is a pointer to the SDL_Surface to draw to
+	/// @param r is the red component of the RGB color
+	/// @param g is the green component of the RGB color
+	/// @param b is the blue component of the RGB color
+	/// @param x is the x coordinate to draw the pixel at
+	/// @param y is the y coordinate to draw the pixel at
 	void drawPixel(SDL_Surface* dest, const char r, const char g, const char b, const unsigned x, const unsigned y);
 
 	/// Draws all 32x32 tiles of the background
@@ -75,6 +81,8 @@ private:
 	
 	/// CPU STOP
 	void stop();
+
+	bool __T = false;
 
 private:
 	CPU cpu; // the emulated z80 cpu of the Gameboy

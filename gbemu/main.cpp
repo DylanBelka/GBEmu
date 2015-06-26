@@ -14,7 +14,6 @@
 #define MALLOC_FAIL 4
 #define DEFAULT_ERROR -1
 
-
 int main(int argc, char **argv)
 {
 #ifdef DEBUG_CPU
@@ -53,7 +52,7 @@ int main(int argc, char **argv)
 	else 
 	{
 #ifdef DEBUG_GFX
-		if (gb.init("tetris.gb") != EXIT_SUCCESS)
+		if (gb.init("opus5.gb") != EXIT_SUCCESS)
 		{
 			std::cout << "rom not found" << std::endl;
 			system("pause");
