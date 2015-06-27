@@ -82,7 +82,7 @@ private:
 	inline bool carry() { return F & 0x1; }
 
 	// 16 bit "registers"
-	inline reg16 AF() { return ((A << 8) | (F & 0xFF)); }
+	inline reg16 AF() { return ((A << 8) | (F & 0xFF)); } // can remove the masking
 	inline reg16 BC() { return ((B << 8) | (C & 0xFF)); }
 	inline reg16 DE() { return ((D << 8) | (E & 0xFF)); }
 	inline reg16 HL() { return ((H << 8) | (L & 0xFF)); }
@@ -93,9 +93,9 @@ private:
 	inline void HL(int16_t val) { H = ((val >> 0x8) & 0xFF); L = val & 0xFF; }
 
 	byte I;					// interrupt page address register
-	unsigned short PC;		// program counter register
+	addr16 PC;				// program counter register
 	byte R;					// memory refresh register
-	unsigned short SP;		// stack pointer
+	addr16 SP;				// stack pointer
 
 	byte* mem;				// cpu memory (0x10000 bytes in size)
 

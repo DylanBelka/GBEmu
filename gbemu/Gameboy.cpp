@@ -269,8 +269,11 @@ void Gameboy::drawSprites(const byte* mem)
 	{
 		for (int i = OAM; i < OAM_END; i += 4)
 		{
-			unsigned int y = mem[i] - 16; // sprite are offset on the Gameboy hardware by (-8, -16) so a sprite at (0, 0) is offscreen and actually at (-8, -16)
-			unsigned int x = mem[i + 1] - 8; // emulate that offset here
+			/* sprite are offset on the Gameboy hardware by (-8, -16) 
+			 * so a sprite at (0, 0) is offscreen and actually at (-8, -16)
+			 */
+			unsigned int y = mem[i] - 16; // emulate that offset here
+			unsigned int x = mem[i + 1] - 8; // ... 
 			// sprites are always unsigned
 			// draw the upper 8x8 tile
 			addr16 chrLocStartUp = static_cast<ubyte>(mem[i + 2]) * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
@@ -322,7 +325,9 @@ void Gameboy::renderFull()
 		srcSurfaceRect.x = static_cast<ubyte>(cpu.getByte(SCX));
 		srcSurfaceRect.y = static_cast<ubyte>(cpu.getByte(SCY));
 
-		// emulate background wrapping
+		/* emulate background wrapping in the worst way possible
+		   if the scroll reaches the end of the background, scroll it back to the beginning
+		*/
 		if (srcSurfaceRect.x >= SCR_BUFFER_WIDTH - WINDOW_WIDTH) // if the scroll reaches the end of the background
 		{
 			int mod = srcSurfaceRect.x / (SCR_BUFFER_WIDTH - WINDOW_WIDTH); // get the multiplication modifier (when SCX >= 192 the * 2 adjusts down)

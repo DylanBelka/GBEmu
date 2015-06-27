@@ -36,7 +36,9 @@ const std::string opcodeStr[] =
 	"rst 18h", "ret po", "pop hl", "and *", "rst 20h", "ret pe", "xor *", "rst 28h", "ret p",
 	"pop af", "rst 30h", "ret m", "rst 38h", "out (c),b", "sbc hl,bc", "out (c),c", "adc hl,bc", "out (c),d",
 	"sbc hl,de", "out (c),e", "adc hl,de", "out (c),h", "sbc hl,hl", "out (c),l", "adc hl,hl", "out (c),0", "sbc hl,sp",
-	"out (c),a", "adc hl,sp", "rlc b", "rlc c", "rlc d", "rlc e", "rlc h", "rlc l", "rlc (hl)",
+	"out (c),a", "adc hl,sp", 
+	// these might as well not be here
+	"rlc b", "rlc c", "rlc d", "rlc e", "rlc h", "rlc l", "rlc (hl)",
 	"rlc a", "rrc b", "rrc c", "rrc d", "rrc e", "rrc h", "rrc l", "rrc (hl)", "rrc a",
 	"sla b", "sla c", "sla d", "sla e", "sla h", "sla l", "sla (hl)", "sla a", "sra b",
 	"sra c", "sra d", "sra e", "sra h", "sra l", "sra (hl)", "sra a", "sll b", "sll c",
@@ -179,7 +181,7 @@ void CPU::updateZero(reg16 reg)
 {
 	if (reg == 0)
 	{
-		F |= 0x40;
+		setZero();
 	}
 	else
 	{
@@ -1707,11 +1709,18 @@ void CPU::call(bool cond)
 {
 	if (cond)
 	{
+		addr16 pccpy = PC;
 		SP--;
 		mem[SP] = (PC + 3) & 0xFF; // + 3 is for jumping past the 3 bytes for the opcode and dest
 		SP--;
 		mem[SP] = (((PC + 3) >> 8) & 0xFF);
 		PC = get16();
+		if (PC == 0x24ac)
+		{
+			std::cout << "callllll" << std::endl;
+			std::cout << toHex(pccpy) << std::endl;
+			system("pause");
+		}
 		clockCycles += 7;
 	}
 	else
@@ -1836,25 +1845,26 @@ void CPU::test()
 	std::cout << "HL: " << toHex(HL()) << std::endl;
 }
 
-bool x = true;
+bool x = false;
 bool y = false;
 int c = 0;
 
+addr16 shadowPC;
+
 unsigned ticks = SDL_GetTicks();
+
+#define printOpcode() \
+	if (opcode == 0xCB) { std::cout << opcodeStr[0xCB + mem[PC + 1]] << "\tat " << toHex(PC) << "\t"; } \
+		else { std::cout << opcodeStr[opcode] << "\tat " << toHex(PC) << "\t"; } \
+	std::cout << toHex((uint16_t)opcode) << "\n";
 
 void CPU::emulateCycle()
 {
 	handleInterrupts();
 	unsigned char opcode = mem[PC]; // get next opcode
-	R++; // I think this is what R does
+	R = (R + 1) & 0x7F; // bit 7 never set
 	clockCycles += clockTimes[opcode];
 	// std::cout << toHex(opcode) << "\tat " << toHex(PC) << "\n";
-	/// At some point the game jumps to before and continues into 0xFF44
-
-	if (PC == 0xFF44)
-	{
-		//system("pause");
-	}
 
 	/// TODO: find bug in opus5
 	/// might be same bug as in tetris
@@ -1865,23 +1875,79 @@ void CPU::emulateCycle()
 		//std::cout << toHex((byte)opcode) << "\tat " << toHex(PC) << "\n";
 		std::cout << toHex((byte)opcode) << "\tat " << toHex(PC) << "\n";
 	}
-	// 15128
+	// problems occur in tetris when byte 0 is written to
+	// obviously the game is never meant to actually do that
+	// there must be some kind of loop condition that is not being met
+	// therefore the memory loading never ends, raps around and everything to 0x2F
+	// 0x2F = cpl
+
+	// problem at 0x24af
+	// with 0x77 = ld (hl), a
+	// a should not equal 0x2f
+	// for some reason it does
 	if (mem[0x00] == 0x2f)
 	{
 		std::cout << SDL_GetTicks() - ticks << std::endl;
+		printOpcode();
+		
+		system("pause");
+	}
+	if (SDL_GetTicks() - ticks > 15260)
+	{
+		//printOpcode();
+	}
+	//if (PC == 0x24ac)
+	//{
+	//	std::cout << "A: " << toHex((byte)A) << std::endl;
+	//	std::cout << "B: " << toHex((byte)B) << std::endl;
+	//	std::cout << "C: " << toHex((byte)C) << std::endl;
+	//	std::cout << "D: " << toHex((byte)D) << std::endl;
+	//	std::cout << "E: " << toHex((byte)E) << std::endl;
+	//	std::cout << "F: " << toHex((byte)F) << std::endl;
+	//	std::cout << "AF: " << toHex(AF()) << std::endl;
+	//	std::cout << "BC: " << toHex(BC()) << std::endl;
+	//	std::cout << "DE: " << toHex(DE()) << std::endl;
+	//	std::cout << "HL: " << toHex(HL()) << std::endl;
+	//	std::cout << "mem[de]: " << toHex((uint16_t)mem[(addr16)DE()]) << std::endl;
+	//	printMem(this, (addr16)DE(), (addr16)DE() + 100);
+	//	system("pause");
+	//}
+	// 0x27a8
+	// 0x1ff7 - 0x2004 important, here a lot
+	// call to 0x24ac, there never should be
+	// call comes from 0x22a9, never should happen
+	// never a jump to 0x1a07
+	// std::cout << toHex((byte)opcode) << "\tat " << toHex(PC) << "\n";
+
+	if (PC == 0x1a07)
+	{
+		std::cout << "sdfa" << std::endl;
+		x = true;
+		system("pause");
+	}
+	if (x)
+	{
+		printOpcode();
+	}
+
+	if (mem[0xFFE3] != 0)
+	{
+		//std::cout << "ffe3" << std::endl;
+		//std::cout << "A: " << toHex((byte)A) << std::endl;
+		//std::cout << "B: " << toHex((byte)B) << std::endl;
+		//std::cout << "C: " << toHex((byte)C) << std::endl;
+		//std::cout << "D: " << toHex((byte)D) << std::endl;
+		//std::cout << "E: " << toHex((byte)E) << std::endl;
+		//std::cout << "F: " << toHex((byte)F) << std::endl;
+		//std::cout << "AF: " << toHex(AF()) << std::endl;
+		//std::cout << "BC: " << toHex(BC()) << std::endl;
+		//std::cout << "DE: " << toHex(DE()) << std::endl;
+		//std::cout << "HL: " << toHex(HL()) << std::endl;
+		//std::cout << "mem[de]: " << toHex((uint16_t)mem[(addr16)DE()]) << std::endl;
+		//printMem(this, (addr16)DE(), (addr16)DE() + 100);
 		//system("pause");
 	}
-	//std::cout << toHex((byte)opcode) << "\tat " << toHex(PC) << "\n";
-	// if (opcode == 0xCB)
-	// {
-	// 	std::cout << opcodeStr[0xCB + opcode] << "\tat " << toHex(PC) << "\n";
-	// }
-	// else
-	// {
-	// 	std::cout << opcodeStr[opcode] << "\tat " << toHex(PC) << "\n";
-	// }
-	
-	/// emulate the opcode (compiles to a jump table)
+	/// emulate the opcode 
 	switch (opcode)
 	{
 		case 0x00: // NOP
@@ -2175,17 +2241,22 @@ void CPU::emulateCycle()
 		}
 		case 0x27: // daa ^^^Probably doesnt work ^^^^
 		{
-			short uiResult = 0;
-			while (A > 0)
+			std::cout << "daa" << std::endl;
+			std::cout << "Before A = " << toHex((uint16_t)A) << std::endl;
+			if (A > 9 || half_carry())
 			{
-				uiResult <<= 4;
-				uiResult |= A % 10;
-				A /= 10;
+				A += 0x6;
+			}
+			if (A & 0xF0 > 9 || carry())
+			{
+				A += 0x60;
 			}
 			updateCarry(A);
 			updateHC(A);
 			updateZero(A);
 			PC++;
+			std::cout << "After A = " << toHex((uint16_t)A) << std::endl;
+			system("pause");
 			break;
 		}
 		case 0x28: // jr z, *
@@ -2276,7 +2347,7 @@ void CPU::emulateCycle()
 		case 0x34: // inc (hl) 
 		{
 			mem[(addr16)HL()]++;
-			const int16_t val = mem[(addr16)HL()];
+			const uint8_t val = mem[(addr16)HL()];
 			updateN(ADD);
 			updateZero(val);
 			updateHC(val);
@@ -2286,7 +2357,7 @@ void CPU::emulateCycle()
 		case 0x35: // dec (hl)
 		{
 			mem[(addr16)HL()]--;
-			const int16_t val = mem[(addr16)HL()];
+			const uint8_t val = mem[(addr16)HL()];
 			updateN(SUB);
 			updateZero(val);
 			updateHC(val);
@@ -2325,7 +2396,7 @@ void CPU::emulateCycle()
 		}
 		case 0x3A: // ldd a, (hl)
 		{
-			A = mem[HL()];
+			A = mem[(addr16)HL()];
 			const reg16 hl = HL();
 			HL(hl - 1);
 			PC++;
@@ -2694,6 +2765,10 @@ void CPU::emulateCycle()
 		case 0x77: // ld (hl), a
 		{
 			mem[(addr16)HL()] = A;
+			if (A == 0x2F)
+			{
+				system("pause");
+			}
 			PC++;
 			break;
 		}
@@ -3623,11 +3698,11 @@ void CPU::emulateCycle()
 		case 0xE8: // add sp, *
 		{
 			SP += mem[PC + 1];
-			PC += 2;
 			resetZero();
 			resetN();
-			updateHC(PC);
-			updateCarry(PC);
+			updateHC(SP);
+			updateCarry(SP);
+			PC += 2;
 			break;
 		}
 		case 0xE9: // jp (hl)
@@ -3674,10 +3749,10 @@ void CPU::emulateCycle()
 			rst(0x28);
 			break;
 		}
-		case 0xF0: //ld a, (0xFF00 + n) or ldh, (*)
+		case 0xF0 : //ld a, (0xFF00 + n) or ldh, (*)
 		{
-			const ubyte low = mem[PC + 1];
-			const addr16 addr = 0xFF00 + low;
+			const ubyte low = mem[PC + 1]; // low byte
+			const addr16 addr = 0xFF00 + low; // high byte always 0xFF00
 			A = mem[addr];
 			if (low == 0x00) // joypad read
 			{
@@ -3745,10 +3820,10 @@ void CPU::emulateCycle()
 			rst(0x30);
 			break;
 		}
-		case 0xF8: // ld hl, sp + *
+		case 0xF8: // ld hl, sp
 		{
-			HL(SP + mem[PC + 1]);
-			PC += 2;
+			HL(SP);
+			PC++;
 			break;
 		}
 		case 0xF9: // ld sp, hl

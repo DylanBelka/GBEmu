@@ -17,6 +17,7 @@
 #define SCR_BUFFER_HEIGHT 256
 #define SCR_BUFFER_WIDTH 256
 
+// I tried to mimick the colors of the gameboy screen
 #define BLACK 8, 24, 32
 #define DARK_GREY 52, 104, 86
 #define LIGHT_GREY 136, 192, 112
