@@ -71,12 +71,12 @@ private:
 
 	/// Draws all 32x32 tiles of the background
 	/// @param mem is a full copy of the cpu's memory
-	void drawBG(const byte* mem);
+	void drawBG(const std::vector<byte>& mem);
 
 	/// Draws all of the sprites defined in OAM
 	/// Does NOT restrict number of sprites per line
 	/// @param mem is a full copy of the cpu's memory
-	void drawSprites(const byte* mem);
+	void drawSprites(const std::vector<byte>& mem);
 
 	/// CPU HALT
 	void halt();

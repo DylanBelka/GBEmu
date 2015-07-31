@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <iomanip>
+#include <vector>
 
 #include "memdefs.h"
 #include "input.h"
@@ -39,8 +40,7 @@ public:
 	int loadROM(const std::string& fileName);
 	void test();
 
-	byte* dumpMem() { return mem; }
-	void cpyMem(byte* mem) { this->mem = mem; }
+	std::vector<byte>* dumpMem() { return &mem; }
 
 // CPU status getting/ setting functions
 public:
@@ -97,7 +97,7 @@ private:
 	byte R;					// memory refresh register
 	addr16 SP;				// stack pointer
 
-	byte* mem;				// cpu memory (0x10000 bytes in size)
+	std::vector<byte> mem;				// cpu memory (0x10000 bytes in size)
 
 	bool IME = true;		// interrupt master enable
 

@@ -197,7 +197,7 @@ void Gameboy::drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigne
 	y++;
 }
 
-void Gameboy::drawBG(const byte* mem)
+void Gameboy::drawBG(const std::vector<byte>& mem)
 {
 	unsigned x = 0;
 	unsigned y = 0;
@@ -261,7 +261,7 @@ void Gameboy::drawBG(const byte* mem)
 	}
 }
 
-void Gameboy::drawSprites(const byte* mem)
+void Gameboy::drawSprites(const std::vector<byte>& mem)
 {
 	const byte lcdc = cpu.getByte(LCDC);
 	// sprite size: 1 = 8x16, 0 = 8x8
@@ -315,7 +315,7 @@ void Gameboy::renderFull()
 	if (lcdc & 0x80 != 0x0) // LCD is enabled, do drawing
 	{
 		// get a dump of the cpu's memory (gfx data is stored in this memory)
-		const byte* mem = cpu.dumpMem();
+		const std::vector<byte> mem = *cpu.dumpMem();
 		// draw background first
 		if (lcdc & 0x1 != 0x0) // draw background?
 		{

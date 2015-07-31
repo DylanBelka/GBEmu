@@ -20,16 +20,16 @@ const unsigned int clockTimes[256] =
 	5, 10, 10, 4, 10, 11, 7, 11, 5, 6, 10, 4, 10, 4, 7, 11,
 };
 
-CPU::CPU()
+CPU::CPU() 
+	: mem(MEM_SIZE)
 {
 	keyInfo = { { 0x0F, 0x0F }, 0x0 };
-	mem = new byte[MEM_SIZE];
 	reset();
 }
 
 CPU::~CPU()
 {
-	delete[] mem;
+	
 }
 
 void CPU::reset()
@@ -1737,7 +1737,7 @@ void CPU::jp(bool cond, addr16 to, uint8_t opsize)
 
 void printMem(CPU* cpu, int start, int end)
 {
-	const byte* mem = cpu->dumpMem();
+	const std::vector<byte> mem = *cpu->dumpMem();
 	for (int i = start; i <= end; i++)
 	{
 		std::cout << toHex((byte)mem[i]) << "\tat" << toHex(i) << "\n";
