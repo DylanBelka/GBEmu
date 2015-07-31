@@ -7,6 +7,7 @@
 #include <string>
 #include <iomanip>
 #include <vector>
+#include <functional>
 
 #include "memdefs.h"
 #include "input.h"
@@ -58,7 +59,7 @@ public:
 	GBKeys& getKeyInfo() { return keyInfo; }
 
 	bool _test = false;
-
+	
 private:
 	void reset();
 
@@ -144,18 +145,6 @@ private:
 	inline const unsigned short get16(const addr16 where);
 
 	void decodeExtendedInstruction(byte opcode);
-	void swapNibble(reg& reg);
-	inline void rlc(reg& reg);
-	inline void rrc(reg& reg);
-	inline void rl(reg& reg);
-	inline void rr(reg& reg);
-	inline void sla(reg& reg);
-	inline void sra(reg& reg);
-	inline void srl(reg& reg);
-
-	inline void bit(reg reg, ubyte bit);
-	inline void res(reg& reg, ubyte bit);
-	inline void set(reg& reg, ubyte bit);
 
 	void halt();
 	void stop();
@@ -178,6 +167,9 @@ enum Bits
 };
 
 template<typename T> const std::string toHex(T);
-const std::string toHex(const char);
+template<> const std::string toHex(sbyte);
+template<> const std::string toHex(ubyte);
+template<> const std::string toHex(char);
+
 
 #endif

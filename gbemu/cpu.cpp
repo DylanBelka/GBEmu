@@ -156,8 +156,98 @@ void CPU::setZero()
 
 #pragma region OpFuncs
 
-void CPU::decodeExtendedInstruction(char opcode)
+void CPU::decodeExtendedInstruction(byte opcode)
 {
+	typedef std::function<void(reg&)> XREGFUNC; // extended register modifying function
+	typedef std::function<void(reg&, ubyte)> REGBITMODFUNC; // register modifying function by a single bit
+	XREGFUNC rlc = [this](reg& val) -> void
+	{
+		val <<= 1;
+		resetCarry();
+		F |= val & b7;
+		val |= val & b7;
+		updateCarry(val);
+		resetN();
+		updateZero(val);
+		resetHC();
+	};
+	XREGFUNC rrc = [this](reg& val) -> void
+	{
+		val >>= 1;
+		resetCarry();
+		F |= val & b0;
+		val |= val & b0;
+		resetN();
+		updateZero(val);
+	};
+	XREGFUNC rl = [this](reg& val) -> void
+	{
+		val <<= 1;
+		val |= F & b0;
+		F |= val & b7;
+		updateCarry(val);
+		resetN();
+		resetHC();
+		updateZero(val);
+	};
+	XREGFUNC rr = [this](reg& val) -> void
+	{
+		val >>= 1;
+		val &= F & b7;
+		F |= val & b0;
+		updateCarry(val);
+		resetN();
+		resetHC();
+		updateZero(val);
+	};
+	XREGFUNC sla = [this](reg& val) -> void
+	{
+		val <<= 1;
+		F |= val & b7;
+		val &= ~b0;
+		updateCarry(val);
+		resetN();
+		updateZero(val);
+	};
+	XREGFUNC sra = [this](reg& val) -> void
+	{
+		val >>= 1;
+		F |= val & b0;
+		updateCarry(val);
+		resetN();
+		resetHC();
+		updateZero(val);
+	};
+	XREGFUNC srl = [this](reg& val) -> void
+	{
+		val >>= 1;
+		F |= val & b0;
+		val &= ~b3;
+		updateCarry(val);
+		resetN();
+		resetHC();
+		updateZero(val);
+	};
+	XREGFUNC swapNibble = [this](reg& val) -> void
+	{
+		val = ((val & 0x0F) << 4 | (val & 0xF0) >> 4);
+	};
+
+	std::function<void(reg, ubyte)> bit = [this](reg r, ubyte bit)
+	{
+		updateZero(!(r & bit));
+		setHC();
+		resetN();
+	};
+	REGBITMODFUNC res = [this](reg& r, ubyte bit)
+	{
+		r &= ~bit;
+	};
+	REGBITMODFUNC set = [this](reg& r, ubyte bit)
+	{
+		r |= bit;
+	};
+
 	switch (opcode)
 	{
 	case 0x00: // rlc b
@@ -1515,11 +1605,6 @@ void CPU::decodeExtendedInstruction(char opcode)
 	PC += 2; // all 0xCB instructions are 2 bytes long
 }
 
-void CPU::swapNibble(reg& val)
-{
-	val = ((val & 0x0F) << 4 | (val & 0xF0) >> 4);
-}
-
 void CPU::cmp(const byte val)
 {
 	updateCarry(A - val);
@@ -1536,98 +1621,6 @@ const addr16 CPU::get16()
 const addr16 CPU::get16(const addr16 where)
 {
 	return ((mem[where + 2] << 8) | (mem[where + 1] & 0xFF));
-}
-
-void CPU::rlc(reg& reg)
-{
-	reg <<= 1;
-	resetCarry();
-	F |= reg & b7;
-	reg |= reg & b7;
-	updateCarry(reg);
-	resetN();
-	updateZero(reg);
-	resetHC();
-}
-
-void CPU::rl(reg& reg)
-{
-	reg <<= 1;
-	reg |= F & b0;
-	F |= reg & b7;
-	updateCarry(reg);
-	resetN();
-	resetHC();
-	updateZero(reg);
-}
-
-void CPU::rrc(reg& reg)
-{
-	reg >>= 1;
-	resetCarry();
-	F |= reg & b0;
-	reg |= reg & b0;
-	resetN();
-	updateZero(reg);
-}
-
-void CPU::rr(reg& reg)
-{
-	reg >>= 1;
-	reg &= F & b7;
-	F |= reg & b0;
-	updateCarry(reg);
-	resetN();
-	resetHC();
-	updateZero(reg);
-}
-
-void CPU::sla(reg& reg)
-{
-	reg <<= 1;
-	F |= reg & b7;
-	reg &= ~b0;
-	updateCarry(reg);
-	resetN();
-	updateZero(reg);
-}
-
-void CPU::sra(reg& reg)
-{
-	reg >>= 1;
-	F |= reg & b0;
-	updateCarry(reg);
-	resetN();
-	resetHC();
-	updateZero(reg);
-}
-
-void CPU::srl(reg& reg)
-{
-	reg >>= 1;
-	F |= reg & b0;
-	reg &= ~b3;
-	updateCarry(reg);
-	resetN();
-	resetHC();
-	updateZero(reg);
-}
-
-void CPU::bit(reg reg, ubyte bit)
-{
-	updateZero(!(reg & bit));
-	setHC();
-	resetN();
-}
-
-void CPU::res(reg& reg, ubyte bit)
-{
-	reg &= ~bit;
-}
-
-void CPU::set(reg& reg, ubyte bit)
-{
-	reg |= bit;
 }
 
 // set halted flag
@@ -1754,10 +1747,10 @@ void CPU::dma()
 	}
 }
 
-void CPU::interrupt(const char to)
+void CPU::interrupt(const byte loc)
 {
 	push(PC); // push the program counter onto the stack
-	PC = to; // jump to the interrupt location
+	PC = loc; // jump to the interrupt location
 	interrupted = true;
 	IME = false; // disable interrupts
 	mem[IF] = 0x0;
@@ -3834,12 +3827,19 @@ const std::string toHex(const T val)
 	return "0x" + result;
 }
 
-const std::string toHex(const char val)
+template<> const std::string toHex(sbyte val)
 {
-	std::stringstream stream;
-	stream << std::hex << (uint16_t)val; // cast to an unsigned short so it isnt treated as a character
-	std::string result(stream.str());
-	return "0x" + result;
+	return toHex(static_cast<unsigned short>(val));
+}
+
+template<> const std::string toHex(ubyte val)
+{
+	return toHex(static_cast<unsigned short>(val));
+}
+
+template<> const std::string toHex(char val)
+{
+	return toHex(static_cast<unsigned short>(val));
 }
 
 int CPU::loadROM(const std::string& fileName)
