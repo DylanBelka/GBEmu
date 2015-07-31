@@ -1,6 +1,8 @@
 #include <iostream>
 #include <SDL.h>
 
+#undef main // fixes incompatibilities with some of MSVC2015's C function signitures with what SDL expects
+
 #include "Gameboy.h"
 #include "cpu.h"
 
