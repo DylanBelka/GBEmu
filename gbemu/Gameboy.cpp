@@ -226,7 +226,7 @@ void Gameboy::drawBG(const byte* mem)
 			x += 8;
 			y -= 8;
 			if (x == SCR_BUFFER_WIDTH) // "hblank" (kind of) - at the end of the horiziontal screen, 
-			{						// move the x back to 0 and move y down 8 
+			{						   // move the x back to 0 and move y down 8 
 				y += 8;
 				x = 0;
 			}
