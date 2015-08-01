@@ -1,7 +1,7 @@
 #ifndef GB_CPU_H
 #define GB_CPU_H
 
-//#define DEBUG
+#define DEBUG
 
 #include <iostream>
 #include <fstream>
@@ -78,7 +78,7 @@ private:
 	reg H;
 	reg L;
 
-	unsigned char F;		// flag register
+	ubyte F;		// flag register
 
 	// decode flag register bits
 	inline const bool zero()		const { return F & 0x40; }
