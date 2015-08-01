@@ -351,6 +351,25 @@ void Gameboy::renderFull()
 	}
 }
 
+void Gameboy::halt()
+{
+	while (!cpu.getByte(IE)) // wait for interrupt
+	{
+		// run everything except for emulation of cpu cycles
+		renderFull(); // basically just render so the vblank interrupt can be set
+		handleEvents();
+	}
+	cpu.unHalt();
+}
+
+void Gameboy::stop()
+{
+	while (!handleEvents())
+	{
+		std::cout << "Stopped" << std::endl; // for debugging 
+	}
+}
+
 bool Gameboy::handleEvents()
 {
 	SDL_Event e;
@@ -461,23 +480,4 @@ bool Gameboy::handleEvents()
 		}
 	}
 	return validKeyPressed;
-}
-
-void Gameboy::halt()
-{
-	while (!cpu.getByte(IE)) // wait for interrupt
-	{
-		// run everything except for emulation of cpu cycles
-		renderFull(); // basically just render so the vblank interrupt can be set
-		handleEvents();
-	}
-	cpu.unHalt();
-}
-
-void Gameboy::stop()
-{
-	while (!handleEvents())
-	{
-		std::cout << "Stopped" << std::endl; // for debugging 
-	}
 }

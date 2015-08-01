@@ -6,9 +6,13 @@
 #include "Gameboy.h"
 #include "cpu.h"
 
+#ifdef DEBUG
+
 //#define DEBUG_CPU
 
 #define DEBUG_GFX
+
+#endif // DEBUG
 
 #define ROM_LOAD_FAIL 1
 #define BAD_ARGS 2

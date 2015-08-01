@@ -1661,12 +1661,14 @@ void CPU::call(bool cond)
 		SP--;
 		mem[SP] = (((PC + 3) >> 8) & 0xFF);
 		PC = get16();
+#ifdef DEBUG
 		if (PC == 0x24ac)
 		{
 			std::cout << "callllll" << std::endl;
 			std::cout << toHex(pccpy) << std::endl;
 			system("pause");
 		}
+#endif // DEBUG
 		clockCycles += 7;
 	}
 	else
@@ -1728,6 +1730,7 @@ void CPU::jp(bool cond, addr16 to, uint8_t opsize)
 
 #pragma endregion
 
+#ifdef DEBUG
 void printMem(CPU* cpu, int start, int end)
 {
 	const std::vector<byte> mem = *cpu->dumpMem();
@@ -1737,6 +1740,7 @@ void printMem(CPU* cpu, int start, int end)
 	}
 	std::cout << "\n\n";
 }
+#endif // DEBUG
 
 void CPU::dma()
 {
@@ -1769,9 +1773,15 @@ void CPU::handleInterrupts()
 		}
 	}
 }
-
+#ifdef DEBUG
 void CPU::test()
 {
+	A = 0x30;
+	F = 0x10;
+	std::cout << toHex(AF()) << std::endl;
+	int x = getByte(0x0000);
+	x *= 3;
+
 	loadROM("test.bin");
 	PC = 0x0;
 	for (int i = 0; i < 0x10; i++)
@@ -1799,12 +1809,15 @@ addr16 shadowPC;
 
 unsigned ticks = SDL_GetTicks();
 
+#endif // DEBUG
+
 void CPU::emulateCycle()
 {
 	handleInterrupts();
 	unsigned char opcode = mem[PC]; // get next opcode
 	R = (R + 1) & 0x7F; // bit 7 never set
 	clockCycles += clockTimes[opcode];
+#ifdef DEBUG
 	// std::cout << toHex(opcode) << "\tat " << toHex(PC) << "\n";
 
 	/// TODO: find bug in opus5
@@ -1886,6 +1899,7 @@ void CPU::emulateCycle()
 		//printMem(this, (addr16)DE(), (addr16)DE() + 100);
 		//system("pause");
 	}
+#endif // DEBUG
 	/// emulate the opcode 
 	switch (opcode)
 	{
@@ -2180,8 +2194,10 @@ void CPU::emulateCycle()
 		}
 		case 0x27: // daa ^^^Probably doesnt work ^^^^
 		{
+#ifdef DEBUG
 			std::cout << "daa" << std::endl;
 			std::cout << "Before A = " << toHex((uint16_t)A) << std::endl;
+#endif // DEBUG
 			if (A > 9 || half_carry())
 			{
 				A += 0x6;
@@ -2194,8 +2210,10 @@ void CPU::emulateCycle()
 			updateHC(A);
 			updateZero(A);
 			PC++;
+#ifdef DEBUG
 			std::cout << "After A = " << toHex((uint16_t)A) << std::endl;
 			system("pause");
+#endif // DEBUG
 			break;
 		}
 		case 0x28: // jr z, *
@@ -2704,10 +2722,12 @@ void CPU::emulateCycle()
 		case 0x77: // ld (hl), a
 		{
 			mem[(addr16)HL()] = A;
+#ifdef DEBUG
 			if (A == 0x2F)
 			{
 				system("pause");
 			}
+#endif // DEBUG
 			PC++;
 			break;
 		}
@@ -3537,8 +3557,10 @@ void CPU::emulateCycle()
 		}
 		case 0xDB: // in a, (*) ~!GB
 		{
+#ifdef DEBUG
 			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
+#endif // DEBUG
 			break;
 		}
 		case 0xDC: // call c, **
@@ -3548,8 +3570,10 @@ void CPU::emulateCycle()
 		}
 		case 0xDD: // IX INSTRUCTIONS ~!GB
 		{
+#ifdef DEBUG
 			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
+#endif // DEBUG
 			break;
 		}
 		case 0xDE: // sbc a, *
@@ -3602,12 +3626,16 @@ void CPU::emulateCycle()
 		}
 		case 0xE3: // NOP
 		{
+#ifdef DEBUG
 			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
+#endif // DEBUG
 			break;
 		}
 		case 0xE4: // call po, **
 		{
+#ifdef DEBUG
 			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
+#endif // DEBUG
 			break;
 		}
 		case 0xE5: // push hl
@@ -3657,20 +3685,26 @@ void CPU::emulateCycle()
 		}
 		case 0xEB: // ~!GB
 		{
+#ifdef DEBUG
 			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
+#endif // DEBUG
 			break;
 		}
 		case 0xEC: // ~!GB
 		{
+#ifdef DEBUG
 			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
+#endif // DEBUG
 			break;
 		}
 		case 0xED: // EXTENDED INSTRUCTIONS ~!GB
 		{
+#ifdef DEBUG
 			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
+#endif // DEBUG
 			break;
 		}
 		case 0xEE: // xor *
@@ -3731,8 +3765,10 @@ void CPU::emulateCycle()
 		}
 		case 0xF4: // ~!GB
 		{
+#ifdef DEBUG
 			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
+#endif // DEBUG
 			break;
 		}
 		case 0xF5: // push af
@@ -3785,14 +3821,18 @@ void CPU::emulateCycle()
 		}
 		case 0xFC: // ~!GB
 		{
+#ifdef DEBUG
 			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
+#endif // DEBUG
 			break;
 		}
 		case 0xFD: // ~!GB
 		{
+#ifdef DEBUG
 			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
+#endif // DEBUG
 			break;
 		}
 		case 0xFE: // cp *
@@ -3809,15 +3849,17 @@ void CPU::emulateCycle()
 		}
 		default: // if the definition of a char changes 
 		{
+#ifdef DEBUG
 			std::cout << "You should never ever see this" << std::endl;
 			std::cout << "But here is the opcode : " << toHex(opcode) << std::endl;
 			std::cin.ignore(); // make the user see what they have done
+#endif // DEBUG
 			PC++;
 			break;
 		}
 	}
 }
-
+#ifdef DEBUG
 template<typename T>
 const std::string toHex(const T val)
 {
@@ -3841,6 +3883,7 @@ template<> const std::string toHex(char val)
 {
 	return toHex(static_cast<unsigned short>(val));
 }
+#endif // DEBUG
 
 int CPU::loadROM(const std::string& fileName)
 {

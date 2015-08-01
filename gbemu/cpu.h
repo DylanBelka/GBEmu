@@ -1,6 +1,8 @@
 #ifndef GB_CPU_H
 #define GB_CPU_H
 
+//#define DEBUG
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -13,7 +15,9 @@
 #include "input.h"
 #include "types.h"
 
+#ifdef DEBUG
 #include <SDL.h>
+#endif // DEBUG
 
 /**
 Resources:
@@ -48,13 +52,13 @@ public:
 	void setByte(addr16 addr, byte val) { mem[addr] = val; }
 	byte getByte(addr16 addr) { return mem[addr]; }
 
-	bool isHalted() { return halted; }
-	bool isStopped() { return stopped; }
+	bool isHalted()	 const { return halted; }
+	bool isStopped() const { return stopped; }
 	void unHalt() { halted = false; }
 	void unStop() { stopped = false; }
 
 	void resetClock() { clockCycles = 0; }
-	uint16_t getClockCycles() { return clockCycles; }
+	uint16_t getClockCycles() const { return clockCycles; }
 
 	GBKeys& getKeyInfo() { return keyInfo; }
 
@@ -77,10 +81,10 @@ private:
 	unsigned char F;		// flag register
 
 	// decode flag register bits
-	inline bool zero() { return F & 0x40; }
-	inline bool half_carry() { return F & 0x10; }
-	inline bool N() { return F & 0x2; } // add or subtract
-	inline bool carry() { return F & 0x1; }
+	inline const bool zero()		const { return F & 0x40; }
+	inline const bool half_carry()	const { return F & 0x10; }
+	inline const bool N()			const { return F & 0x2; } // add or subtract
+	inline const bool carry()		const { return F & 0x1; }
 
 	// 16 bit "registers"
 	inline reg16 AF() { return ((A << 8) | (F & 0xFF)); } // can remove the masking
@@ -93,12 +97,11 @@ private:
 	inline void DE(int16_t val) { D = ((val >> 0x8) & 0xFF); E = val & 0xFF; }
 	inline void HL(int16_t val) { H = ((val >> 0x8) & 0xFF); L = val & 0xFF; }
 
-	byte I;					// interrupt page address register
 	addr16 PC;				// program counter register
 	byte R;					// memory refresh register
 	addr16 SP;				// stack pointer
 
-	std::vector<byte> mem;				// cpu memory (0x10000 bytes in size)
+	std::vector<byte> mem;	// cpu memory (0x10000 bytes in size)
 
 	bool IME = true;		// interrupt master enable
 
@@ -109,7 +112,6 @@ private:
 
 	// initialize keyInfo to default values
 	GBKeys keyInfo;
-
 
 // Flag helper functions
 private:
@@ -165,11 +167,11 @@ enum Bits
 	b6 = 0x40,
 	b7 = 0x80,
 };
-
+#ifdef DEBUG
 template<typename T> const std::string toHex(T);
 template<> const std::string toHex(sbyte);
 template<> const std::string toHex(ubyte);
 template<> const std::string toHex(char);
-
+#endif // debug
 
 #endif
