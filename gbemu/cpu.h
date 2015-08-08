@@ -16,7 +16,7 @@
 #include "types.h"
 
 #ifdef DEBUG
-#include <SDL.h>
+#include <SDL.h> // SDL only used in debug in CPU for timing
 #endif // DEBUG
 
 /**
@@ -45,12 +45,19 @@ public:
 	int loadROM(const std::string& fileName);
 	void test();
 
+#ifdef DEBUG
+	void dumpCPU();
+#endif // DEBUG
+
 	std::vector<byte>* dumpMem() { return &mem; }
 
 // CPU status getting/ setting functions
 public:
-	void setByte(addr16 addr, byte val) { mem[addr] = val; }
-	byte getByte(addr16 addr) { return mem[addr]; }
+	void wByte(addr16 addr, byte val) { mem[addr] = val; } // write byte
+	byte rByte(addr16 addr) const { return mem[addr]; } // read byte
+	
+	void wWord(addr16 addr, word val) { mem[addr] = val & 0x00FF; mem[addr + 1] = val & 0xFF00; } // write word
+	word rWord(addr16 addr) const { return ((mem[addr + 1] << 8) | (mem[addr] & 0xFF)); } // read word
 
 	bool isHalted()	 const { return halted; }
 	bool isStopped() const { return stopped; }
@@ -78,7 +85,7 @@ private:
 	reg H;
 	reg L;
 
-	ubyte F;		// flag register
+	unsigned char F;		// flag register
 
 	// decode flag register bits
 	inline const bool zero()		const { return F & 0x40; }
@@ -92,13 +99,12 @@ private:
 	inline reg16 DE() { return ((D << 8) | (E & 0xFF)); }
 	inline reg16 HL() { return ((H << 8) | (L & 0xFF)); }
 
-	inline void AF(int16_t val) { A = ((val >> 0x8) & 0xFF); F = val & 0xFF; } // For Hb: shift the value up and mask off lower bits
-	inline void BC(int16_t val) { B = ((val >> 0x8) & 0xFF); C = val & 0xFF; } // For Lb: mask upper bits
-	inline void DE(int16_t val) { D = ((val >> 0x8) & 0xFF); E = val & 0xFF; }
-	inline void HL(int16_t val) { H = ((val >> 0x8) & 0xFF); L = val & 0xFF; }
+	inline void AF(word val) { A = ((val >> 0x8) & 0xFF); F = val & 0xFF; } // For Hb: shift the value up and mask off lower bits
+	inline void BC(word val) { B = ((val >> 0x8) & 0xFF); C = val & 0xFF; } // For Lb: mask upper bits
+	inline void DE(word val) { D = ((val >> 0x8) & 0xFF); E = val & 0xFF; }
+	inline void HL(word val) { H = ((val >> 0x8) & 0xFF); L = val & 0xFF; }
 
 	addr16 PC;				// program counter register
-	byte R;					// memory refresh register
 	addr16 SP;				// stack pointer
 
 	std::vector<byte> mem;	// cpu memory (0x10000 bytes in size)
@@ -140,11 +146,20 @@ private:
 	void call(bool cond);
 	void rst(const uint8_t mode);
 
+	void dec(byte& b);
+	void inc(byte& b);
+	void add(byte val);
+	void adc(byte val);
+	void sub(byte val);
+	void sbc(byte val);
+	void andr(byte val);
+	void xorr(byte val);
+	void orr(byte val);
+	
 	void push(reg16 val);
 	reg16 pop();
 
-	inline const unsigned short get16();
-	inline const unsigned short get16(const addr16 where);
+	inline const uint16_t getNextWord();
 
 	void decodeExtendedInstruction(byte opcode);
 

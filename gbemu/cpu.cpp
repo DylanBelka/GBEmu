@@ -157,7 +157,7 @@ void CPU::setZero()
 
 void CPU::decodeExtendedInstruction(byte opcode)
 {
-	std::cout << toHex(opcode) << std::endl;
+	//std::cout << toHex(opcode) << std::endl;
 
 	typedef std::function<void(reg&)> XREGFUNC; // extended register modifying function
 	typedef std::function<void(reg&, ubyte)> REGBITMODFUNC; // register modifying function by a single bit
@@ -1614,6 +1614,96 @@ void CPU::cmp(const byte val)
 	updateZero(A - val);
 }
 
+void CPU::dec(byte& b)
+{
+	b--;
+	updateCarry(b);
+	updateZero(b);
+	updateN(SUB);
+	updateHC(b);
+	PC++;
+}
+
+void CPU::inc(byte& b)
+{
+	b++;
+	updateCarry(b);
+	updateZero(b);
+	updateN(SUB);
+	updateHC(b);
+	PC++;
+}
+
+void CPU::add(byte val)
+{
+	A += val;
+	updateCarry(A);
+	updateN(ADD);
+	updateHC(A);
+	updateZero(A);
+	PC++;
+}
+
+void CPU::adc(byte val)
+{
+	A += val + carry();
+	updateCarry(A);
+	updateN(ADD);
+	updateHC(A);
+	updateZero(A);
+	PC++;
+}
+
+void CPU::sub(byte val)
+{
+	A -= val;
+	updateCarry(A);
+	updateN(SUB);
+	updateHC(A);
+	updateZero(A);
+	PC++;
+}
+
+void CPU::sbc(byte val)
+{
+	A -= (val + carry());
+	updateCarry(A);
+	updateN(SUB);
+	updateHC(A);
+	updateZero(A);
+	PC++;
+}
+
+void CPU::andr(byte val)
+{
+	A &= val;
+	resetCarry();
+	resetN();
+	setHC();
+	updateZero(A);
+	PC++;
+}
+
+void CPU::xorr(byte val)
+{
+	A ^= val;
+	resetCarry();
+	resetN();
+	resetHC();
+	updateZero(A);
+	PC++;
+}
+
+void CPU::orr(byte val)
+{
+	A |= val;
+	resetCarry();
+	resetN();
+	resetHC();
+	updateZero(A);
+	PC++;
+}
+
 const addr16 CPU::getNextWord()
 {
 	return ((mem[PC + 2] << 8) | (mem[PC + 1] & 0xFF));
@@ -1663,7 +1753,7 @@ void CPU::call(bool cond)
 		{
 			std::cout << "callllll" << std::endl;
 			std::cout << toHex(pccpy) << std::endl;
-			system("pause");
+			//system("pause");
 		}
 #endif // DEBUG
 	}
@@ -1862,7 +1952,7 @@ void CPU::emulateCycle()
 	if (mem[0x00] == 0x2f)
 	{
 		std::cout << SDL_GetTicks() - ticks << std::endl;
-		
+		std::cout << "mem[0x00] == 0x2f" << std::endl;
 		system("pause");
 	}
 	if (SDL_GetTicks() - ticks > 15260)
@@ -1896,7 +1986,7 @@ void CPU::emulateCycle()
 	{
 		std::cout << "sdfa" << std::endl;
 		x = true;
-		system("pause");
+		//system("pause");
 	}
 	if (x)
 	{
@@ -1950,20 +2040,12 @@ void CPU::emulateCycle()
 		}
 		case 0x04: // inc b
 		{
-			B++;
-			updateN(ADD);
-			updateHC(B);
-			updateZero(B);
-			PC++;
+			inc(B);
 			break;
 		}
 		case 0x05: // dec b
 		{
-			B--;
-			updateN(SUB);
-			updateHC(B);
-			updateZero(B);
-			PC++;
+			dec(B);
 			break;
 		}
 		case 0x06: // ld b, *
@@ -2015,20 +2097,12 @@ void CPU::emulateCycle()
 		}
 		case 0x0C: // inc C
 		{
-			C++;
-			updateN(ADD);
-			updateHC(C);
-			updateZero(C);
-			PC++;
+			inc(C);
 			break;
 		}
 		case 0x0D: // dec C
 		{
-			C--;
-			updateN(SUB);
-			updateHC(C);
-			updateZero(C);
-			PC++;
+			dec(C);
 			break;
 		}
 		case 0x0E: // ld c, *
@@ -2073,20 +2147,12 @@ void CPU::emulateCycle()
 		}
 		case 0x14: // inc d
 		{
-			D++;
-			updateN(ADD);
-			updateHC(D);
-			updateZero(D);
-			PC++;
+			inc(D);
 			break;
 		}
 		case 0x15: // dec d
 		{
-			D--;
-			updateN(SUB);
-			updateHC(D);
-			updateZero(D);
-			PC++;
+			dec(D);
 			break;
 		}
 		case 0x16: // ld d, *
@@ -2135,20 +2201,12 @@ void CPU::emulateCycle()
 		}
 		case 0x1C: // inc e
 		{
-			E++;
-			updateN(ADD);
-			updateZero(E);
-			updateHC(E);
-			PC++;
+			inc(E);
 			break;
 		}
 		case 0x1D: // dec e
 		{
-			E--;
-			updateN(SUB);
-			updateZero(E);
-			updateHC(E);
-			PC++;
+			dec(E);
 			break;
 		}
 		case 0x1E: // ld e, *
@@ -2194,20 +2252,12 @@ void CPU::emulateCycle()
 		}
 		case 0x24: // inc h
 		{
-			H++;
-			updateN(ADD);
-			updateHC(H);
-			updateZero(H);
-			PC++;
+			inc(H);
 			break;
 		}
 		case 0x25: // dec h
 		{
-			H--;
-			updateN(SUB);
-			updateHC(H);
-			updateZero(H);
-			PC++;
+			dec(H);
 			break;
 		}
 		case 0x26: // ld h, *
@@ -2272,20 +2322,12 @@ void CPU::emulateCycle()
 		}
 		case 0x2C: // inc l
 		{
-			L++;
-			updateHC(L);
-			updateN(ADD);
-			updateZero(L);
-			PC++;
+			inc(L);
 			break;
 		}
 		case 0x2D: // dec l
 		{
-			L--;
-			updateHC(L);
-			updateN(SUB);
-			updateZero(L);
-			PC++;
+			dec(L);
 			break;
 		}
 		case 0x2E: // ld l, *
@@ -2327,22 +2369,12 @@ void CPU::emulateCycle()
 		}
 		case 0x34: // inc (hl) 
 		{
-			mem[static_cast<addr16>(HL())]++;
-			const uint8_t val = mem[static_cast<addr16>(HL())];
-			updateN(ADD);
-			updateZero(val);
-			updateHC(val);
-			PC++;
+			inc(mem[static_cast<addr16>(HL())]);
 			break;
 		}
 		case 0x35: // dec (hl)
 		{
-			mem[static_cast<addr16>(HL())]--;
-			const uint8_t val = mem[static_cast<addr16>(HL())];
-			updateN(SUB);
-			updateZero(val);
-			updateHC(val);
-			PC++;
+			dec(mem[static_cast<addr16>(HL())]);
 			break;
 		}
 		case 0x36: // ld (hl), *
@@ -2396,20 +2428,12 @@ void CPU::emulateCycle()
 		}
 		case 0x3C: // inc a
 		{
-			A++;
-			updateN(ADD);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			inc(A);
 			break;
 		}
 		case 0x3D: // dec a
 		{
-			A--;
-			updateN(SUB);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			dec(A);
 			break;
 		}
 		case 0x3E: // ld a, *
@@ -2754,7 +2778,8 @@ void CPU::emulateCycle()
 #ifdef DEBUG
 			if (A == 0x2F)
 			{
-				system("pause");
+				std::cout << "A = 0x2f" << std::endl;
+				//system("pause");
 			}
 #endif // DEBUG
 			PC++;
@@ -2809,562 +2834,282 @@ void CPU::emulateCycle()
 		}
 		case 0x80: // add a, b
 		{
-			A += B;
-			updateCarry(A);
-			updateN(ADD);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			add(B);
 			break;
 		}
 		case 0x81: // add a, c
 		{
-			A += C;
-			updateCarry(A);
-			updateN(ADD);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			add(C);
 			break;
 		}
 		case 0x82: // add a,d 
 		{
-			A += D;
-			updateCarry(A);
-			updateN(ADD);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			add(D);
 			break;
 		}
 		case 0x83: // add a, e
 		{
-			A += E;
-			updateCarry(A);
-			updateN(ADD);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			add(E);
 			break;
 		}
 		case 0x84: // add a, h
 		{
-			A += H;
-			updateCarry(A);
-			updateN(ADD);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			add(H);
 			break;
 		}
 		case 0x85: // add a, l
 		{
-			A += L;
-			updateCarry(A);
-			updateN(ADD);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			add(L);
 			break;
 		}
 		case 0x86: // add a, (hl)
 		{
-			A += mem[static_cast<addr16>(HL())];
-			updateCarry(A);
-			updateN(ADD);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			add(mem[static_cast<addr16>(HL())]);
 			break;
 		}
 		case 0x87: // add a, a
 		{
-			A += A;
-			updateCarry(A);
-			updateN(ADD);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			add(A);
 			break;
 		}
 		case 0x88: // adc a, b
 		{
-			A += B + carry();
-			updateCarry(A);
-			updateN(ADD);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			adc(B);
 			break;
 		}
 		case 0x89: // adc a, c
 		{
-			A += C + carry();
-			updateCarry(A);
-			updateN(ADD);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			adc(C);
 			break;
 		}
 		case 0x8A: // adc a, d
 		{
-			A += D + carry();
-			updateCarry(A);
-			updateN(ADD);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			adc(D);
 			break;
 		}
 		case 0x8B: // adc a, e
 		{
-			A += E + carry();
-			updateCarry(A);
-			updateN(ADD);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			adc(E);
 			break;
 		}
 		case 0x8C: // adc a, h
 		{
-			A += H + carry();
-			updateCarry(A);
-			updateN(ADD);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			adc(H);
 			break;
 		}
 		case 0x8D: // adc a, l
 		{
-			A += L + carry();
-			updateCarry(A);
-			updateN(ADD);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			adc(L);
 			break;
 		}
 		case 0x8E: // adc a, (hl)
 		{
-			A += mem[static_cast<addr16>(HL())] + carry();
-			updateCarry(A);
-			updateN(ADD);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			adc(mem[static_cast<addr16>(HL())]);
 			break;
 		}
 		case 0x8F: // adc a, a
 		{
-			A += A + carry();
-			updateCarry(A);
-			updateN(ADD);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			adc(A);
 			break;
 		}
 		case 0x90: // sub b
 		{
-			A -= B;
-			updateCarry(A);
-			updateN(SUB);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			sub(B);
 			break;
 		}
 		case 0x91: // sub c
 		{
-			A -= C;
-			updateCarry(A);
-			updateN(SUB);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			sub(C);
 			break;
 		}
 		case 0x92: // sub d
 		{
-			A -= D;
-			updateCarry(A);
-			updateN(SUB);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			sub(D);
 			break;
 		}
 		case 0x93: // sub e
 		{
-			A -= E;
-			updateCarry(A);
-			updateN(SUB);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			sub(E);
 			break;
 		}
 		case 0x94: // sub h
 		{
-			A -= H;
-			updateCarry(A);
-			updateN(SUB);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			sub(H);
 			break;
 		}
 		case 0x95: // sub l
 		{
-			A -= L;
-			updateCarry(A);
-			updateN(SUB);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			sub(L);
 			break;
 		}
 		case 0x96: // sub (hl)
 		{
-			A -= mem[static_cast<addr16>(HL())];
-			updateCarry(A);
-			updateN(SUB);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			sub(mem[static_cast<addr16>(HL())]);
 			break;
 		}
 		case 0x97: // sub a 
 		{
-			A -= A;
-			updateCarry(A);
-			updateN(SUB);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			sub(A);
 			break;
 		}
 		case 0x98: // sbc a, b
 		{
-			A -= (B + carry());
-			updateCarry(A);
-			updateN(SUB);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			sbc(B);
 			break;
 		}
 		case 0x99: // sbc a, c
 		{
-			A -= (C + carry());
-			updateCarry(A);
-			updateN(SUB);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			sbc(C);
 			break;
 		}
 		case 0x9A: // sbc a, d
 		{
-			A -= (D + carry());
-			updateCarry(A);
-			updateN(SUB);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			sbc(D);
 			break;
 		}
 		case 0x9B: // sbc a, e
 		{
-			A -= (E + carry());
-			updateCarry(A);
-			updateN(SUB);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			sbc(E);
 			break;
 		}
 		case 0x9C: // sbc a, h
 		{
-			A -= (H + carry());
-			updateCarry(A);
-			updateN(SUB);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			sbc(H);
 			break;
 		}
 		case 0x9D: // sbc a, l
 		{
-			A -= (L + carry());
-			updateCarry(A);
-			updateN(SUB);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			sbc(L);
 			break;
 		}
 		case 0x9E: // sbc a, (hl)
 		{
-			A -= (mem[static_cast<addr16>(HL())] + carry());
-			updateCarry(A);
-			updateN(SUB);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			sbc(mem[static_cast<addr16>(HL())]);
 			break;
 		}
 		case 0x9F: // sbc a, a
 		{
-			A -= (A + carry());
-			updateCarry(A);
-			updateN(SUB);
-			updateHC(A);
-			updateZero(A);
-			PC++;
+			sbc(A);
 			break;
 		}
 		case 0xA0: // and b
 		{
-			A &= B;
-			resetCarry();
-			resetN();
-			setHC();
-			updateZero(A);
-			PC++;
+			andr(B);
 			break;
 		}
 		case 0xA1: // and c
 		{
-			A &= C;
-			resetCarry();
-			resetN();
-			setHC();
-			updateZero(A);
-			PC++;
+			andr(C);
 			break;
 		}
 		case 0xA2: // and d
 		{
-			A &= D;
-			resetCarry();
-			resetN();
-			setHC();
-			updateZero(A);
-			PC++;
+			andr(D);
 			break;
 		}
 		case 0xA3: // and e
 		{
-			A &= E;
-			resetCarry();
-			resetN();
-			setHC();
-			updateZero(A);
-			PC++;
+			andr(E);
 			break;
 		}
 		case 0xA4: // and h
 		{
-			A &= H;
-			resetCarry();
-			resetN();
-			setHC();
-			updateZero(A);
-			PC++;
+			andr(H);
 			break;
 		}
 		case 0xA5: // and l
 		{
-			A &= L;
-			resetCarry();
-			resetN();
-			setHC();
-			updateZero(A);
-			PC++;
+			andr(L);
 			break;
 		}
 		case 0xA6: // and (hl)
 		{
-			A &= mem[static_cast<addr16>(HL())];
-			resetCarry();
-			resetN();
-			setHC();
-			updateZero(A);
-			PC++;
+			andr(mem[static_cast<addr16>(HL())]);
 			break;
 		}
 		case 0xA7: // and a
 		{
-			A &= A;
-			resetCarry();
-			resetN();
-			setHC();
-			updateZero(A);
-			PC++;
+			andr(A);
 			break;
 		}
 		case 0xA8: // xor b
 		{
-			A ^= B;
-			resetCarry();
-			resetN();
-			resetHC();
-			updateZero(A);
-			PC++;
+			xorr(B);
 			break;
 		}
 		case 0xA9: // xor c
 		{
-			A ^= C;
-			resetCarry();
-			resetN();
-			resetHC();
-			updateZero(A);
-			PC++;
+			xorr(C);
 			break;
 		}
 		case 0xAA: // xor d
 		{
-			A ^= D;
-			resetCarry();
-			resetN();
-			resetHC();
-			updateZero(A);
-			PC++;
+			xorr(D);
 			break;
 		}
 		case 0xAB: // xor e
 		{
-			A ^= E;
-			resetCarry();
-			resetN();
-			resetHC();
-			updateZero(A);
-			PC++;
+			xorr(E);
 			break;
 		}
 		case 0xAC: // xor h
 		{
-			A ^= H;
-			resetCarry();
-			resetN();
-			resetHC();
-			updateZero(A);
-			PC++;
+			xorr(H);
 			break;
 		}
 		case 0xAD: // xor l
 		{
-			A ^= L;
-			resetCarry();
-			resetN();
-			resetHC();
-			updateZero(A);
-			PC++;
+			xorr(L);
 			break;
 		}
 		case 0xAE: // xor (hl)
 		{
-			A ^= mem[static_cast<addr16>(HL())];
-			resetCarry();
-			resetN();
-			resetHC();
-			updateZero(A);
-			PC++;
+			xorr(mem[static_cast<addr16>(HL())]);
 			break;
 		}
 		case 0xAF: // xor a
 		{
-			A ^= A;
-			resetCarry();
-			resetN();
-			resetHC();
-			updateZero(A);
-			PC++;
+			xorr(A);
 			break;
 		}
 		case 0xB0: // or b
 		{
-			A |= B;
-			resetCarry();
-			resetN();
-			resetHC();
-			updateZero(A);
-			PC++;
+			orr(B);
 			break;
 		}
 		case 0xB1: // or c
 		{
-			A |= C;
-			resetCarry();
-			resetN();
-			resetHC();
-			updateZero(A);
-			PC++;
+			orr(C);
 			break;
 		}
 		case 0xB2: // or d
 		{
-			A |= D;
-			resetCarry();
-			resetN();
-			resetHC();
-			updateZero(A);
-			PC++;
+			orr(D);
 			break;
 		}
 		case 0xB3: // or e
 		{
-			A |= E;
-			resetCarry();
-			resetN();
-			resetHC();
-			updateZero(A);
-			PC++;
+			orr(E);
 			break;
 		}
 		case 0xB4: // or h
 		{
-			A |= H;
-			resetCarry();
-			resetN();
-			resetHC();
-			updateZero(A);
-			PC++;
+			orr(H);
 			break;
 		}
 		case 0xB5: // or l
 		{
-			A |= L;
-			resetCarry();
-			resetN();
-			resetHC();
-			updateZero(A);
-			PC++;
+			orr(L);
 			break;
 		}
 		case 0xB6: // or (hl)
 		{
-			A |= mem[static_cast<addr16>(HL())];
-			resetCarry();
-			resetN();
-			resetHC();
-			updateZero(A);
-			PC++;
+			orr(mem[static_cast<addr16>(HL())]);
 			break;
 		}
 		case 0xB7: // or a
 		{
-			A |= A;
-			resetCarry();
-			resetN();
-			resetHC();
-			updateZero(A);
-			PC++;
+			orr(A);
 			break;
 		}
 		case 0xB8: // cp b
