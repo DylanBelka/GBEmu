@@ -1,14 +1,20 @@
 #ifndef GB_COMMON_H
 #define GB_COMMON_H
 
-typedef unsigned short addr16; // 16-bit address
-typedef unsigned char addr8; // 8-bit address
+#include <cstdint>
 
-typedef signed short reg16; // 16-bit register
-typedef signed char reg; // register
+typedef uint16_t addr16; // 16-bit address
+typedef uint8_t addr8; // 8-bit address
 
-typedef char byte; // 8-bit for when sign is unspecified
-typedef unsigned char ubyte;
-typedef signed char sbyte;
+typedef int16_t reg16; // 16-bit register
+typedef int8_t reg; // register
+
+typedef int8_t byte; // 8-bit for when sign is unspecified
+typedef uint8_t ubyte;
+typedef int8_t sbyte;
+
+typedef int16_t word;
+typedef uint16_t uword;
+typedef int16_t sword;
 
 #endif // GB_COMMON_H
