@@ -64,15 +64,14 @@ bool Gameboy::init(const std::string& romName)
 
 void Gameboy::run()
 {
+	// CPU timings come from: http://hitmen.c02.at/files/releases/gbc/gbc_cpu_timing.txt
 	const int hblankLen = 456; // length in clock cycles of a single hblank
 	const int vBlankLen = hblankLen * 10; // length in clock cycles of a vblank (vblank is 10 h-lines (hblanks))
-
 	while (running)
 	{
 		renderFull();
 		while (scanline != WINDOW_HEIGHT) // while still drawing the scanlines
 		{
-			handleEvents();
 			drawScanline(); // draw the current scanline (hblank of course comes after this)
 			while (cpu.getClockCycles() < hblankLen) // emulate hblank
 			{
@@ -83,11 +82,11 @@ void Gameboy::run()
 		}
 		// full rendering of screen has completed (all scanlines drawn)
 		// |-> emulate vblank
-		cpu.setByte(IF, 0x1); // set vblank interrupt
+		cpu.wByte(IF, 0x1); // set vblank interrupt
 		while (cpu.getClockCycles() < vBlankLen) // emulate vblank
 		{
 			scanline++; // keep incrementing the LY because many games check that for in the range of the vblank
-			cpu.setByte(LY, scanline);
+			cpu.wByte(LY, scanline);
 			handleEvents();
 			cpu.emulateCycle();
 		}
@@ -103,7 +102,7 @@ void Gameboy::drawScanline()
 	// copy the 1x160 px slice at coords(0, line)
 	SDL_BlitSurface(fullScreenSurface, &scanLineRect, windowSurface, &scanLineRect);
 
-	cpu.setByte(LY, scanline);
+	cpu.wByte(LY, scanline);
 	scanline++;
 	if (scanline == WINDOW_HEIGHT)
 	{
@@ -118,10 +117,6 @@ void Gameboy::drawPixel(SDL_Surface* dest, const char r, const char g, const cha
 	pixel.y = y;
 	// draw the pixel to the screenBuffer
 	SDL_FillRect(dest, &pixel, SDL_MapRGB(dest->format, r, g, b));
-	if (__T)
-	{
-		SDL_Delay(1);
-	}
 }
 
 void clear(SDL_Surface* surf)
@@ -177,7 +172,7 @@ void Gameboy::drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigne
 		int currBit1 = b2 & i;
 		if (currBit0 && currBit1) // bit1 (on) and bit2 (on)
 		{
-			drawPixel(fullScreenSurface, BLACK, x, y); // draw the pixel to the screenBuffer 
+			drawPixel(backgroundSurface, BLACK, x, y); // draw the pixel to the screenBuffer 
 		}
 		else if (!currBit0 && !currBit1) // bit1 (off) and bit2 (off)
 		{
@@ -185,11 +180,11 @@ void Gameboy::drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigne
 		}
 		else if (currBit0 && !currBit1) // bit1 (on) and bit2 (off)
 		{
-			drawPixel(fullScreenSurface, LIGHT_GREY, x, y); // draw the pixel to the screenBuffer 
+			drawPixel(backgroundSurface, LIGHT_GREY, x, y); // draw the pixel to the screenBuffer 
 		}
 		else // bit1 (off) bit2 (on)
 		{
-			drawPixel(fullScreenSurface, DARK_GREY, x, y); // draw the pixel to the screenBuffer 
+			drawPixel(backgroundSurface, DARK_GREY, x, y); // draw the pixel to the screenBuffer 
 		}
 		x++;
 	}
@@ -199,6 +194,14 @@ void Gameboy::drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigne
 
 void Gameboy::drawBG(const std::vector<byte>& mem)
 {
+
+	/// TODO: fix operator precedence bug such as (lcdc & 0x40 != 0x0)
+	/// != has a higher precedence than & so it always evaluates to true
+	/// simply fixing this does not work
+	/// both tetris and apocnow use map0 
+//	std:SDL_GameControllerGetStringForAxis
+//########################READTHIS &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&h43h423jkl12341
+
 	unsigned x = 0;
 	unsigned y = 0;
 	const int lcdc = mem[LCDC];
@@ -244,7 +247,7 @@ void Gameboy::drawBG(const std::vector<byte>& mem)
 			}
 			else // signed characters
 			{
-				chrLocStart = (ubyte)mem[i] * 0x10 + CHR_MAP_SIGNED; // get the location of the first tile slice in memory
+				chrLocStart = static_cast<ubyte>(mem[i]) * 0x10 + CHR_MAP_SIGNED; // get the location of the first tile slice in memory
 			}
 			for (int i = chrLocStart; i < chrLocStart + 0x10; i += 2) // note the += 2
 			{
@@ -263,17 +266,17 @@ void Gameboy::drawBG(const std::vector<byte>& mem)
 
 void Gameboy::drawSprites(const std::vector<byte>& mem)
 {
-	const byte lcdc = cpu.getByte(LCDC);
+	const byte lcdc = cpu.rByte(LCDC);
 	// sprite size: 1 = 8x16, 0 = 8x8
-	if (lcdc & b2 != 0x0)  // 8x16 wxh, 2 8x8 sprites stacked on top of each other
+	if ((lcdc & b2) == 0x1)  // 8x16 wxh, 2 8x8 sprites stacked on top of each other
 	{
 		for (int i = OAM; i < OAM_END; i += 4)
 		{
 			/* sprite are offset on the Gameboy hardware by (-8, -16) 
 			 * so a sprite at (0, 0) is offscreen and actually at (-8, -16)
 			 */
-			unsigned int y = mem[i] - 16; // emulate that offset here
-			unsigned int x = mem[i + 1] - 8; // ... 
+			unsigned int y = (mem[i] & 0xFF) - 16;	// emulate that offset here
+			unsigned int x = (mem[i + 1] & 0xFF) - 8;; // ... 
 			// sprites are always unsigned
 			// draw the upper 8x8 tile
 			addr16 chrLocStartUp = static_cast<ubyte>(mem[i + 2]) * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
@@ -294,8 +297,8 @@ void Gameboy::drawSprites(const std::vector<byte>& mem)
 	{
 		for (int i = OAM; i < OAM_END; i += 4)
 		{
-			unsigned int y = mem[i] - 16;
-			unsigned int x = mem[i + 1] - 8;
+			unsigned int y = (mem[i] & 0xFF) - 16;
+			unsigned int x = (mem[i + 1] & 0xFF) - 8;
 			// sprites are always unsigned
 			addr16 chrLocStart = static_cast<ubyte>(mem[i + 2]) * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 			for (int j = chrLocStart; j < chrLocStart + 0x10; j += 2)
@@ -311,19 +314,19 @@ void Gameboy::renderFull()
 	// clear everything
 	clear(backgroundSurface);
 	clear(fullScreenSurface);
-	const byte lcdc = cpu.getByte(LCDC); // get the current state of the lcd status register
-	if (lcdc & 0x80 != 0x0) // LCD is enabled, do drawing
+	const byte lcdc = cpu.rByte(LCDC); // get the current state of the lcd status register
+	if ((lcdc & b7) != 0x0) // LCD is enabled, do drawing
 	{
 		// get a dump of the cpu's memory (gfx data is stored in this memory)
 		const std::vector<byte> mem = *cpu.dumpMem();
 		// draw background first
-		if (lcdc & 0x1 != 0x0) // draw background?
+		if ((lcdc & 0x1) != 0x0) // draw background?
 		{
 			drawBG(mem);
 		}
 		// get the scroll x and y positions
-		srcSurfaceRect.x = static_cast<ubyte>(cpu.getByte(SCX));
-		srcSurfaceRect.y = static_cast<ubyte>(cpu.getByte(SCY));
+		srcSurfaceRect.x = static_cast<ubyte>(cpu.rByte(SCX));
+		srcSurfaceRect.y = static_cast<ubyte>(cpu.rByte(SCY));
 
 		/* emulate background wrapping in the worst way possible
 		   if the scroll reaches the end of the background, scroll it back to the beginning
@@ -339,21 +342,22 @@ void Gameboy::renderFull()
 			srcSurfaceRect.y = srcSurfaceRect.y - (SCR_BUFFER_HEIGHT - WINDOW_HEIGHT) * mod; // scroll it back (y - 112) 112 is when the window reaches the end of the buffer vertically
 		}
 		// copy the screen buffer (the background) to the actual screen
-		SDL_BlitSurface(backgroundSurface, &srcSurfaceRect, fullScreenSurface, NULL);
+		//SDL_BlitSurface(backgroundSurface, &srcSurfaceRect, fullScreenSurface, NULL);
 		// draw sprites on top of background
-		if (lcdc & 0x2 != 0x0) // draw sprites?
+		if ((lcdc & b1) != 0x0) // draw sprites?
 		{
 			drawSprites(mem);
 		}
+		SDL_BlitSurface(backgroundSurface, &srcSurfaceRect, fullScreenSurface, NULL);
 		// reset the LY and current scanline
 		scanline = 0;
-		cpu.setByte(LY, scanline);
+		cpu.wByte(LY, scanline);
 	}
 }
 
 void Gameboy::halt()
 {
-	while (!cpu.getByte(IE)) // wait for interrupt
+	while (!cpu.rByte(IE)) // wait for interrupt
 	{
 		// run everything except for emulation of cpu cycles
 		renderFull(); // basically just render so the vblank interrupt can be set
@@ -366,15 +370,18 @@ void Gameboy::stop()
 {
 	while (!handleEvents())
 	{
+#ifdef DEBUG
 		std::cout << "Stopped" << std::endl; // for debugging 
+#endif // DEBUG
 	}
 }
 
 bool Gameboy::handleEvents()
 {
 	SDL_Event e;
+	int eventR;
 	bool validKeyPressed = false; // is a valid (Gameboy) key pressed?
-	while (SDL_PollEvent(&e))
+	while (eventR = SDL_PollEvent(&e))
 	{
 		if (e.type == SDL_QUIT)
 		{
@@ -383,6 +390,8 @@ bool Gameboy::handleEvents()
 		if (e.type == SDL_KEYDOWN)
 		{
 			SDL_Keycode key = e.key.keysym.sym;
+#ifdef DEBUG
+			std::cout << "key presssed:\t" << key << std::endl;
 			if (key == SDLK_9)
 			{
 				__T = true;
@@ -390,6 +399,13 @@ bool Gameboy::handleEvents()
 			if (key == SDLK_ESCAPE)
 			{
 				running = false;
+			}
+			if (key == SDLK_g)
+			{
+				static int checkCount = 0;
+				std::cout << "still running" << std::endl;
+				std::cout << checkCount << std::endl;
+				checkCount++;
 			}
 			if (key == SDLK_1)
 			{
@@ -399,85 +415,116 @@ bool Gameboy::handleEvents()
 			{
 				cpu._test = false;
 			}
-			if (key == SDLK_UP) // up
+#endif // DEBUG
+			if ((cpu.rByte(JOYPAD) & b4) == 0)
 			{
-				cpu.getKeyInfo().keys[p14] &= ~keyUp;
-				cpu.setByte(0xFFA6, 0);
-				validKeyPressed = true;
+				if (key == SDLK_UP) // up
+				{
+					cpu.keyInfo.keys[p14] &= ~keyUp;
+					cpu.clrBit(JOYPAD, keyUp);
+					validKeyPressed = true;
+				}
+				if (key == SDLK_DOWN) // down
+				{
+					cpu.keyInfo.keys[p14] &= ~keyDown;
+					cpu.clrBit(JOYPAD, keyDown);
+					validKeyPressed = true;
+				}
+				if (key == SDLK_LEFT) // left
+				{
+					cpu.keyInfo.keys[p14] &= ~keyLeft;
+					cpu.clrBit(JOYPAD, keyLeft);
+					validKeyPressed = true;
+				}
+				if (key == SDLK_RIGHT) // right
+				{
+					cpu.keyInfo.keys[p14] &= ~keyRight;
+					cpu.clrBit(JOYPAD, keyRight);
+					validKeyPressed = true;
+				}
 			}
-			if (key == SDLK_DOWN) // down
+			else if ((cpu.rByte(JOYPAD) & b5) == 0)
 			{
-				cpu.getKeyInfo().keys[p14] &= ~keyDown;
-				validKeyPressed = true;
+				if (key == SDLK_z) // a
+				{
+					cpu.keyInfo.keys[p15] &= ~keyA;
+					cpu.clrBit(JOYPAD, keyA);
+					validKeyPressed = true;
+				}
+				if (key == SDLK_x) // b
+				{
+					cpu.keyInfo.keys[p15] &= ~keyB;
+					cpu.clrBit(JOYPAD, keyB);
+					validKeyPressed = true;
+				}
+				if (key == SDLK_RETURN) // start
+				{
+					cpu.keyInfo.keys[p15] &= ~keyStart;
+					cpu.clrBit(JOYPAD, keyStart);
+					validKeyPressed = true;
+				}
+				if (key == SDLK_BACKSPACE) // select
+				{
+					cpu.keyInfo.keys[p15] &= ~keySelect;
+					cpu.clrBit(JOYPAD, keySelect);
+					validKeyPressed = true;
+				}
 			}
-			if (key == SDLK_LEFT) // left
+			else
 			{
-				cpu.getKeyInfo().keys[p14] &= ~keyLeft;
-				validKeyPressed = true;
-			}
-			if (key == SDLK_RIGHT) // right
-			{
-				cpu.getKeyInfo().keys[p14] &= ~keyRight;
-				validKeyPressed = true;
-			}
-			if (key == SDLK_z) // a
-			{
-				cpu.getKeyInfo().keys[p15] &= ~keyA;
-				validKeyPressed = true;
-			}
-			if (key == SDLK_x) // b
-			{
-				cpu.getKeyInfo().keys[p15] &= ~keyB;
-				validKeyPressed = true;
-			}
-			if (key == SDLK_RETURN) // start
-			{
-				cpu.getKeyInfo().keys[p15] &= ~keyStart;
-				validKeyPressed = true;
-			}
-			if (key == SDLK_BACKSPACE) // select
-			{
-				cpu.getKeyInfo().keys[p15] &= ~keySelect;
-				validKeyPressed = true;
+				cpu.wByte(JOYPAD, 0xFF);
 			}
 		}
 		else if (e.type == SDL_KEYUP)
 		{
 			SDL_Keycode key = e.key.keysym.sym;
-			const byte joypadState = cpu.getByte(JOYPAD);
+			std::cout << "key up:\t\t" << key << std::endl;
 			if (key == SDLK_UP) // up
 			{
-				cpu.getKeyInfo().keys[p14] |= keyUp;
+				cpu.orByte(JOYPAD, keyUp);
+				cpu.keyInfo.keys[p14] |= keyUp;
 			}
 			if (key == SDLK_DOWN) // down
 			{
-				cpu.getKeyInfo().keys[p14] |= keyDown;
+				cpu.orByte(JOYPAD, keyDown);
+				cpu.keyInfo.keys[p14] |= keyDown;
 			}
 			if (key == SDLK_LEFT) // left
 			{
-				cpu.getKeyInfo().keys[p14] |= keyLeft;
+				cpu.orByte(JOYPAD, keyLeft);
+				cpu.keyInfo.keys[p14] |= keyLeft;
 			}
 			if (key == SDLK_RIGHT) // right
 			{
-				cpu.getKeyInfo().keys[p14] |= keyRight;
+				cpu.orByte(JOYPAD, keyRight);
+				cpu.keyInfo.keys[p14] |= keyRight;
 			}
 			if (key == SDLK_z) // a
 			{
-				cpu.getKeyInfo().keys[p15] |= keyA;
+				cpu.orByte(JOYPAD, keyA);
+				cpu.keyInfo.keys[p15] |= keyA;
 			}
 			if (key == SDLK_x) // b
 			{
-				cpu.getKeyInfo().keys[p15] |= keyB;
+				cpu.orByte(JOYPAD, keyB);
+				cpu.keyInfo.keys[p15] |= keyB;
 			}
 			if (key == SDLK_RETURN) // start
 			{
-				cpu.getKeyInfo().keys[p15] |= keyStart;
+				cpu.orByte(JOYPAD, keyStart);
+				cpu.keyInfo.keys[p15] |= keyStart;
 			}
 			if (key == SDLK_BACKSPACE) // select
 			{
-				cpu.getKeyInfo().keys[p15] |= keySelect;
+				cpu.orByte(JOYPAD, keySelect);
+				cpu.keyInfo.keys[p15] |= keySelect;
 			}
 		}
+	}
+	if (eventR == 0)
+	{
+		//std::cout << "no event " << std::endl;
+		cpu.wByte(JOYPAD, 0x0F);
 	}
 	return validKeyPressed;
 }

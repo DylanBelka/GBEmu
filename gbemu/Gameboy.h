@@ -45,6 +45,7 @@ private:
 
 	/// @Returns true if a key valid key on the Gameboy was pressed (this is used for breaking out of the STOP command)
 	bool handleEvents(); 
+
 	/// Draws a single 8 pixel slice of a background
 	/// @param b1 is byte one of the slice
 	/// @param b2 is byte two of the slice
@@ -105,6 +106,7 @@ private:
 
 /// Clears an SDL_Surface to white
 void clear(SDL_Surface*);
+
 #ifdef DEBUG
 /// TODO: remove this
 template<typename T>
