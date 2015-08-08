@@ -114,7 +114,6 @@
 #define NR41 0xFF20
 #define NR42 0xFF21
 #define NR43 0xFF22
-#define NR30 0xFF23
 #define NR50 0xFF24
 #define NR51 0xFF25
 #define NR52 0xFF26
