@@ -1,23 +1,23 @@
 #include "cpu.h"
 
-const unsigned int clockTimes[256] =
+const int clockTimes[256] =
 {
-	4, 10, 7, 6, 4, 4, 7, 4, 4, 11, 7, 6, 4, 4, 7, 4,
-	4, 10, 7, 6, 4, 4, 7, 4, 12, 11, 7, 6, 4, 4, 7, 4,
-	7, 10, 16, 6, 4, 4, 7, 4, 7, 11, 16, 6, 4, 4, 7, 4,
-	7, 10, 13, 6, 11, 11, 10, 4, 7, 11, 13, 6, 4, 4, 7, 4,
-	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-	7, 7, 7, 7, 7, 7, 4, 7, 4, 4, 4, 4, 4, 4, 7, 4,
-	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-	5, 10, 10, 10, 10, 11, 7, 11, 5, 10, 10, 8, 10, 17, 7, 11,
-	5, 10, 10, 11, 10, 11, 7, 11, 5, 4, 10, 11, 10, 4, 7, 11,
-	5, 10, 10, 19, 10, 11, 7, 11, 5, 4, 10, 4, 10, 4, 7, 11,
-	5, 10, 10, 4, 10, 11, 7, 11, 5, 6, 10, 4, 10, 4, 7, 11,
+	4, 12, 8, 8, 4, 4, 8, 4, 20, 8, 8, 8, 4, 4, 8, 4,
+	4, 12, 8, 8, 4, 4, 8, 4, 12, 8, 8, 8, 4, 4, 8, 4,
+	8, 12, 8, 8, 4, 4, 8, 4, 8, 8, 8, 8, 4, 4, 8, 4,
+	8, 12, 8, 8, 4, 4, 8, 4, 8, 8, 8, 8, 4, 4, 8, 4,
+	4, 4, 4, 4, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 9, 4,
+	4, 4, 4, 4, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 9, 4,
+	4, 4, 4, 4, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 9, 4,
+	8, 8, 8, 8, 8, 8, 4, 8, 4, 4, 4, 4, 4, 4, 8, 4,
+	4, 4, 4, 4, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 9, 4,
+	4, 4, 4, 4, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 9, 4,
+	4, 4, 4, 4, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 9, 4,
+	4, 4, 4, 4, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 9, 4,
+	8, 12, 12, 16, 12, 16, 8, 16, 8, 16, 12, 12, 12, 24, 8, 16,
+	8, 12, 12, 0, 12, 16, 8, 16, 8, 16, 12, 0, 12, 0, 8, 16,
+	12, 12, 8, 0, 0, 16, 8, 16, 16, 4, 16, 0, 0, 0, 8, 16,
+	12, 12, 8, 4, 0, 16, 8, 16, 12, 8, 16, 4, 0, 0, 8, 16,
 };
 
 CPU::CPU() 
@@ -45,7 +45,6 @@ void CPU::reset()
 	DE(0xD8);
 	HL(0x14D);
 	SP = 0xFFFE;
-	R = 0x0;
 	PC = 0x100;
 	// set memory registers to their known starting values
 	mem[TIMA] = 0x00;
@@ -116,7 +115,7 @@ void CPU::setHC()
 
 void CPU::updateN(bool add)
 {
-	if (add) { F |= 0x2; }
+	if (!add) { F |= 0x2; }
 	else { F &= 0xFD; }
 }
 
@@ -158,6 +157,8 @@ void CPU::setZero()
 
 void CPU::decodeExtendedInstruction(byte opcode)
 {
+	std::cout << toHex(opcode) << std::endl;
+
 	typedef std::function<void(reg&)> XREGFUNC; // extended register modifying function
 	typedef std::function<void(reg&, ubyte)> REGBITMODFUNC; // register modifying function by a single bit
 	XREGFUNC rlc = [this](reg& val) -> void
@@ -248,7 +249,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		r |= bit;
 	};
 
-	switch (opcode)
+	switch (opcode & 0xFF)
 	{
 	case 0x00: // rlc b
 	{
@@ -378,7 +379,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	{
 		char val = mem[(addr16)HL()];
 		val <<= 1;
-		val |= carry();
+		val |= static_cast<byte>(carry());
 		F |= val & b7;
 		updateCarry(val);
 		resetN();
@@ -1597,8 +1598,8 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	}
 	default:
 	{
-		//std::cout << "Unimplemented CB instruction: " << toHex(opcode) << std::endl;
-	//	std::cout << "At: " << toHex(PC + 1) << std::endl;
+		std::cout << "Unimplemented CB instruction: " << toHex(opcode) << std::endl;
+		std::cout << "At: " << toHex(PC + 1) << std::endl;
 		break;
 	}
 	}
@@ -1643,7 +1644,7 @@ void CPU::ret(bool cond)
 	if (cond)
 	{
 		PC = pop(); // pop PC off the stack
-		clockCycles += 6;
+		clockCycles += 12;
 	}
 	else
 	{
@@ -1661,6 +1662,7 @@ void CPU::call(bool cond)
 		SP--;
 		mem[SP] = (((PC + 3) >> 8) & 0xFF);
 		PC = get16();
+		clockCycles += 12;
 #ifdef DEBUG
 		if (PC == 0x24ac)
 		{
@@ -1669,7 +1671,6 @@ void CPU::call(bool cond)
 			system("pause");
 		}
 #endif // DEBUG
-		clockCycles += 7;
 	}
 	else
 	{
@@ -1708,7 +1709,7 @@ inline void CPU::jr(bool cond, int8_t to, uint8_t opsize)
 	if (cond)
 	{
 		PC += to + opsize; // + opsize is to jump over the opsize in bytes
-		clockCycles += 5; // 5 more cycles added (total of 12) for jump
+		clockCycles += 4; // 5 more cycles added (total of 12) for jump
 	}
 	else
 	{
@@ -1721,6 +1722,7 @@ void CPU::jp(bool cond, addr16 to, uint8_t opsize)
 	if (cond)
 	{
 		PC = to;
+		clockCycles += 4;
 	}
 	else
 	{
@@ -1741,6 +1743,20 @@ void printMem(CPU* cpu, int start, int end)
 	std::cout << "\n\n";
 }
 #endif // DEBUG
+
+void CPU::dumpCPU()
+{
+	std::cout << "A: " << toHex((byte)A) << std::endl;
+	std::cout << "B: " << toHex((byte)B) << std::endl;
+	std::cout << "C: " << toHex((byte)C) << std::endl;
+	std::cout << "D: " << toHex((byte)D) << std::endl;
+	std::cout << "E: " << toHex((byte)E) << std::endl;
+	std::cout << "F: " << toHex((byte)F) << std::endl;
+	std::cout << "AF: " << toHex(AF()) << std::endl;
+	std::cout << "BC: " << toHex(BC()) << std::endl;
+	std::cout << "DE: " << toHex(DE()) << std::endl;
+	std::cout << "HL: " << toHex(HL()) << std::endl;
+}
 
 void CPU::dma()
 {
@@ -1773,6 +1789,7 @@ void CPU::handleInterrupts()
 		}
 	}
 }
+
 #ifdef DEBUG
 void CPU::test()
 {
@@ -1815,14 +1832,17 @@ void CPU::emulateCycle()
 {
 	handleInterrupts();
 	unsigned char opcode = mem[PC]; // get next opcode
-	R = (R + 1) & 0x7F; // bit 7 never set
 	clockCycles += clockTimes[opcode];
+
 #ifdef DEBUG
 	// std::cout << toHex(opcode) << "\tat " << toHex(PC) << "\n";
 
 	/// TODO: find bug in opus5
 	/// might be same bug as in tetris
 	/// either way its a bug fix
+
+	/// if extended opcode 0x87: // res 0, a 
+	/// never occures the bug does not happen
 
 	if (_test)
 	{
@@ -1835,6 +1855,11 @@ void CPU::emulateCycle()
 	// therefore the memory loading never ends, raps around and everything to 0x2F
 	// 0x2F = cpl
 
+	if (opcode > 0x88 && opcode < 0x9f)
+	{
+		std::cout << "fix carry " << std::endl;
+		std::cout << toHex(opcode) << std::endl;
+	}
 	// problem at 0x24af
 	// with 0x77 = ld (hl), a
 	// a should not equal 0x2f
@@ -1901,7 +1926,7 @@ void CPU::emulateCycle()
 	}
 #endif // DEBUG
 	/// emulate the opcode 
-	switch (opcode)
+	switch (opcode & 0xFF)
 	{
 		case 0x00: // NOP
 		{
@@ -1963,6 +1988,9 @@ void CPU::emulateCycle()
 		case 0x08: // ld (**), sp
 		{
 			mem[get16()] = SP;
+#ifdef DEBUG
+			std::cout << "ld (**), sp" << std::endl;
+#endif // DEBUG
 			PC += 3;
 			break;
 		}
@@ -2202,7 +2230,7 @@ void CPU::emulateCycle()
 			{
 				A += 0x6;
 			}
-			if (A & 0xF0 > 9 || carry())
+			if ((A & 0xF0) > 9 || carry())
 			{
 				A += 0x60;
 			}
@@ -2337,6 +2365,11 @@ void CPU::emulateCycle()
 		}
 		case 0x38: // jr c, *
 		{
+#ifdef DEBUG
+			std::cout << "carry matters FIX IT" << std::endl;
+			std::cout << toHex(opcode) << std::endl;
+#endif // DEBUG
+
 			jr(carry(), mem[PC + 1], 2);
 			break;
 		}
@@ -2391,7 +2424,7 @@ void CPU::emulateCycle()
 		}
 		case 0x3F: // ccf
 		{
-			setCarry();
+			updateCarry(!carry()); // invert carry
 			PC++;
 			break;
 		}
@@ -2870,7 +2903,7 @@ void CPU::emulateCycle()
 		}
 		case 0x89: // adc a, c
 		{
-			A += B + carry();
+			A += C + carry();
 			updateCarry(A);
 			updateN(ADD);
 			updateHC(A);
@@ -3020,7 +3053,7 @@ void CPU::emulateCycle()
 		}
 		case 0x98: // sbc a, b
 		{
-			A -= B - carry();
+			A -= (B + carry());
 			updateCarry(A);
 			updateN(SUB);
 			updateHC(A);
@@ -3030,7 +3063,7 @@ void CPU::emulateCycle()
 		}
 		case 0x99: // sbc a, c
 		{
-			A -= C - carry();
+			A -= (C + carry());
 			updateCarry(A);
 			updateN(SUB);
 			updateHC(A);
@@ -3040,7 +3073,7 @@ void CPU::emulateCycle()
 		}
 		case 0x9A: // sbc a, d
 		{
-			A -= D - carry();
+			A -= (D + carry());
 			updateCarry(A);
 			updateN(SUB);
 			updateHC(A);
@@ -3050,7 +3083,7 @@ void CPU::emulateCycle()
 		}
 		case 0x9B: // sbc a, e
 		{
-			A -= E - carry();
+			A -= (E + carry());
 			updateCarry(A);
 			updateN(SUB);
 			updateHC(A);
@@ -3060,7 +3093,7 @@ void CPU::emulateCycle()
 		}
 		case 0x9C: // sbc a, h
 		{
-			A -= H - carry();
+			A -= (H + carry());
 			updateCarry(A);
 			updateN(SUB);
 			updateHC(A);
@@ -3070,6 +3103,7 @@ void CPU::emulateCycle()
 		}
 		case 0x9D: // sbc a, l
 		{
+			A -= (L + carry());
 			updateCarry(A);
 			updateN(SUB);
 			updateHC(A);
@@ -3079,7 +3113,7 @@ void CPU::emulateCycle()
 		}
 		case 0x9E: // sbc a, (hl)
 		{
-			A -= mem[(addr16)HL()] - carry();
+			A -= (mem[(addr16)HL()] + carry());
 			updateCarry(A);
 			updateN(SUB);
 			updateHC(A);
@@ -3089,7 +3123,7 @@ void CPU::emulateCycle()
 		}
 		case 0x9F: // sbc a, a
 		{
-			A -= A - carry();
+			A -= (A + carry());
 			updateCarry(A);
 			updateN(SUB);
 			updateHC(A);
@@ -3446,7 +3480,7 @@ void CPU::emulateCycle()
 		case 0xC9: // ret
 		{
 			ret(true);
-			clockCycles -= 6;
+			clockCycles -= 4; // adjust clock cycles
 			break;
 		}
 		case 0xCA: // jp z, **
@@ -3501,6 +3535,10 @@ void CPU::emulateCycle()
 		}
 		case 0xD2: // jp nc, **
 		{
+#ifdef DEBUG
+			std::cout << "carry matters FIX IT" << std::endl;
+			std::cout << toHex(opcode) << std::endl;
+#endif // DEBUG
 			jp(!carry(), get16(), 3);
 			break;
 		}
@@ -3511,6 +3549,11 @@ void CPU::emulateCycle()
 		}
 		case 0xD4: // call nc, **
 		{
+#ifdef DEBUG
+			std::cout << "carry matters FIX IT" << std::endl;
+			std::cout << toHex(opcode) << std::endl;
+#endif // DEBUG
+
 			call(!carry());
 			break;
 		}
@@ -3540,18 +3583,28 @@ void CPU::emulateCycle()
 		}
 		case 0xD8: // ret c
 		{
+#ifdef DEBUG
+			std::cout << "carry matters FIX IT" << std::endl;
+			std::cout << toHex(opcode) << std::endl;
+#endif // DEBUG
+
 			ret(carry());
 			break;
 		}
 		case 0xD9: // reti
 		{
 			ret(true);
-			clockCycles -= 6;
+			clockCycles -= 4;
 			IME = true;
 			break;
 		}
 		case 0xDA: // jp c, **
 		{
+#ifdef DEBUG
+			std::cout << "carry matters FIX IT" << std::endl;
+			std::cout << toHex(opcode) << std::endl;
+#endif // DEBUG
+
 			jp(carry(), get16(), 3);
 			break;
 		}
@@ -3565,6 +3618,11 @@ void CPU::emulateCycle()
 		}
 		case 0xDC: // call c, **
 		{
+#ifdef DEBUG
+			std::cout << "carry matters FIX IT" << std::endl;
+			std::cout << toHex(opcode) << std::endl;
+#endif // DEBUG
+
 			call(carry());
 			break;
 		}
@@ -3578,7 +3636,7 @@ void CPU::emulateCycle()
 		}
 		case 0xDE: // sbc a, *
 		{
-			A -= mem[PC + 1] - carry();
+			A -= (mem[PC + 1] + carry());
 			updateCarry(A);
 			updateN(ADD);
 			updateHC(A);
@@ -3593,7 +3651,7 @@ void CPU::emulateCycle()
 		}
 		case 0xE0: //ld (0xFF00 + n), a
 		{
-			const ubyte low = mem[PC + 1];
+			const ubyte low = static_cast<ubyte>(mem[PC + 1]);
 			const addr16 addr = 0xFF00 + low;
 			mem[addr] = A;
 
@@ -3724,7 +3782,7 @@ void CPU::emulateCycle()
 		}
 		case 0xF0 : //ld a, (0xFF00 + n) or ldh, (*)
 		{
-			const ubyte low = mem[PC + 1]; // low byte
+			const ubyte low = static_cast<ubyte>(mem[PC + 1]); // low byte
 			const addr16 addr = 0xFF00 + low; // high byte always 0xFF00
 			A = mem[addr];
 			if (low == 0x00) // joypad read
@@ -3844,7 +3902,6 @@ void CPU::emulateCycle()
 		case 0xFF: // rst 0x38
 		{
 			rst(0x38);
-			PC++;
 			break;
 		}
 		default: // if the definition of a char changes 
