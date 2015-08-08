@@ -23,7 +23,7 @@ const int clockTimes[256] =
 CPU::CPU() 
 	: mem(MEM_SIZE)
 {
-	keyInfo = { { 0x0F, 0x0F }, 0x0 };
+	keyInfo = { { 0xFF, 0xFF }, 0x30 };
 	reset();
 }
 
@@ -157,6 +157,9 @@ void CPU::setZero()
 
 void CPU::decodeExtendedInstruction(byte opcode)
 {
+
+	PC += 2; // all 0xCB instructions are 2 bytes long
+
 	//std::cout << toHex(opcode) << std::endl;
 
 	typedef std::function<void(reg&)> XREGFUNC; // extended register modifying function
@@ -1603,7 +1606,6 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		break;
 	}
 	}
-	PC += 2; // all 0xCB instructions are 2 bytes long
 }
 
 void CPU::cmp(const byte val)
@@ -1861,6 +1863,8 @@ void CPU::interrupt(const byte loc)
 	mem[IF] = 0x0;
 }
 
+static bool x = false;
+
 void CPU::handleInterrupts()
 {
 	const byte intEnable = mem[IE];
@@ -1872,6 +1876,32 @@ void CPU::handleInterrupts()
 			const int vblank = 0x40;
 			interrupt(vblank);
 		}
+	}
+}
+
+void CPU::wByte(addr16 addr, byte val)
+{
+	if (addr > MAX_ROM_SIZE)
+	{
+		mem[addr] = val;
+	}
+	else
+	{
+		std::cout << "Illegal access of ROM\nMemory mappers not yet supported" << std::endl;
+		std::cout << "val = " << toHex(val) << "\tat" << toHex(PC) << std::endl;
+	}
+}
+
+void CPU::wWord(addr16 addr, word val)
+{
+	if (addr > MAX_ROM_SIZE)
+	{
+		mem[addr] = val & 0x00FF; mem[addr + 1] = val & 0xFF00;
+	}
+	else
+	{
+		std::cout << "Illegal access of ROM\nMemory mappers not yet supported" << std::endl;
+		std::cout << "val = " << toHex(val) << "addr = " << toHex(addr) << "\tat " << toHex(PC) << std::endl;
 	}
 }
 
@@ -1903,9 +1933,8 @@ void CPU::test()
 	std::cout << "HL: " << toHex(HL()) << std::endl;
 }
 
-bool x = false;
-bool y = false;
-int c = 0;
+static bool y = false;
+static int c = 0;
 
 addr16 shadowPC;
 
@@ -1918,99 +1947,12 @@ void CPU::emulateCycle()
 	handleInterrupts();
 	unsigned char opcode = mem[PC]; // get next opcode
 	clockCycles += clockTimes[opcode];
+	//std::cout << toHex(opcode) << std::endl;
 
 #ifdef DEBUG
-	// std::cout << toHex(opcode) << "\tat " << toHex(PC) << "\n";
-
-	/// TODO: find bug in opus5
-	/// might be same bug as in tetris
-	/// either way its a bug fix
-
-	/// if extended opcode 0x87: // res 0, a 
-	/// never occures the bug does not happen
-
-	if (_test)
-	{
-		//std::cout << toHex((byte)opcode) << "\tat " << toHex(PC) << "\n";
-		std::cout << toHex((byte)opcode) << "\tat " << toHex(PC) << "\n";
-	}
-	// problems occur in tetris when byte 0 is written to
-	// obviously the game is never meant to actually do that
-	// there must be some kind of loop condition that is not being met
-	// therefore the memory loading never ends, raps around and everything to 0x2F
-	// 0x2F = cpl
-
-	if (opcode > 0x88 && opcode < 0x9f)
-	{
-		std::cout << "fix carry " << std::endl;
-		std::cout << toHex(opcode) << std::endl;
-	}
-	// problem at 0x24af
-	// with 0x77 = ld (hl), a
-	// a should not equal 0x2f
-	// for some reason it does
-	if (mem[0x00] == 0x2f)
-	{
-		std::cout << SDL_GetTicks() - ticks << std::endl;
-		std::cout << "mem[0x00] == 0x2f" << std::endl;
-		system("pause");
-	}
-	if (SDL_GetTicks() - ticks > 15260)
-	{
-		//printOpcode();
-	}
-	//if (PC == 0x24ac)
-	//{
-	//	std::cout << "A: " << toHex((byte)A) << std::endl;
-	//	std::cout << "B: " << toHex((byte)B) << std::endl;
-	//	std::cout << "C: " << toHex((byte)C) << std::endl;
-	//	std::cout << "D: " << toHex((byte)D) << std::endl;
-	//	std::cout << "E: " << toHex((byte)E) << std::endl;
-	//	std::cout << "F: " << toHex((byte)F) << std::endl;
-	//	std::cout << "AF: " << toHex(AF()) << std::endl;
-	//	std::cout << "BC: " << toHex(BC()) << std::endl;
-	//	std::cout << "DE: " << toHex(DE()) << std::endl;
-	//	std::cout << "HL: " << toHex(HL()) << std::endl;
-	//	std::cout << "mem[de]: " << toHex((uint16_t)mem[static_cast<addr16>(DE())]) << std::endl;
-	//	printMem(this, static_cast<addr16>(DE()), static_cast<addr16>(DE()) + 100);
-	//	system("pause");
-	//}
-	// 0x27a8
-	// 0x1ff7 - 0x2004 important, here a lot
-	// call to 0x24ac, there never should be
-	// call comes from 0x22a9, never should happen
-	// never a jump to 0x1a07
-	// std::cout << toHex((byte)opcode) << "\tat " << toHex(PC) << "\n";
-
-	if (PC == 0x1a07)
-	{
-		std::cout << "sdfa" << std::endl;
-		x = true;
-		//system("pause");
-	}
-	if (x)
-	{
-	}
-
-	if (mem[0xFFE3] != 0)
-	{
-		//std::cout << "ffe3" << std::endl;
-		//std::cout << "A: " << toHex((byte)A) << std::endl;
-		//std::cout << "B: " << toHex((byte)B) << std::endl;
-		//std::cout << "C: " << toHex((byte)C) << std::endl;
-		//std::cout << "D: " << toHex((byte)D) << std::endl;
-		//std::cout << "E: " << toHex((byte)E) << std::endl;
-		//std::cout << "F: " << toHex((byte)F) << std::endl;
-		//std::cout << "AF: " << toHex(AF()) << std::endl;
-		//std::cout << "BC: " << toHex(BC()) << std::endl;
-		//std::cout << "DE: " << toHex(DE()) << std::endl;
-		//std::cout << "HL: " << toHex(HL()) << std::endl;
-		//std::cout << "mem[de]: " << toHex((uint16_t)mem[static_cast<addr16>(DE())]) << std::endl;
-		//printMem(this, static_cast<addr16>(DE()), static_cast<addr16>(DE()) + 100);
-		//system("pause");
-	}
 
 #endif // DEBUG
+
 	/// emulate the opcode 
 	switch (opcode & 0xFF)
 	{
@@ -2065,10 +2007,7 @@ void CPU::emulateCycle()
 		}
 		case 0x08: // ld (**), sp
 		{
-			mem[getNextWord()] = SP;
-#ifdef DEBUG
-			std::cout << "ld (**), sp" << std::endl;
-#endif // DEBUG
+			wWord(getNextWord(), SP);
 			PC += 3;
 			break;
 		}
@@ -3392,7 +3331,7 @@ void CPU::emulateCycle()
 		}
 		case 0xE0: //ld (0xFF00 + n), a
 		{
-			const ubyte low = static_cast<ubyte>(mem[PC + 1]);
+			const ubyte low = static_cast<ubyte>(mem[PC + 1]) & 0xFF;
 			const addr16 addr = 0xFF00 + low;
 			mem[addr] = A;
 
@@ -3400,9 +3339,11 @@ void CPU::emulateCycle()
 			{
 				dma();
 			}
-			else if (low == 0x00) // joypad write
+			else if (addr == JOYPAD) // joypad write
 			{
 				keyInfo.colID = A;
+				keyInfo.keys[p14] = 0xFF;
+				keyInfo.keys[p15] = 0xFF;
 			}
 			PC += 2;
 			break;
@@ -3478,7 +3419,7 @@ void CPU::emulateCycle()
 		}
 		case 0xEA: // ld (**), a
 		{
-			mem[getNextWord()] = A;
+			wByte(getNextWord(), A);
 			PC += 3;
 			break;
 		}
@@ -3523,20 +3464,42 @@ void CPU::emulateCycle()
 		}
 		case 0xF0 : //ld a, (0xFF00 + n) or ldh, (*)
 		{
+			//std::cout << "p15: " << toHex(keyInfo.keys[p15]) << std::endl;
+			//std::cout << "p14: " << toHex(keyInfo.keys[p14]) << std::endl;
+			//std::cout << "col: " << toHex(keyInfo.colID) << "\n" << std::endl;
 			const ubyte low = static_cast<ubyte>(mem[PC + 1]); // low byte
 			const addr16 addr = 0xFF00 + low; // high byte always 0xFF00
 			A = mem[addr];
-			if (low == 0x00) // joypad read
+			if (addr == JOYPAD) // joypad read
 			{
-				if (keyInfo.colID == b4)
-				{
-					A = keyInfo.keys[p15] | keyInfo.colID | 0xC0; // set the upper (unused) bits with 0xC0
-				}
-				else if (keyInfo.colID == b5)
-				{
-					A = keyInfo.keys[p14] | keyInfo.colID | 0xC0;
-				}
+				A = 0xFF;
+				//std::cout << toHex(rByte(addr)) << std::endl;
+
+				//A = 0xFF;
+				//std::cout << "joy = " << toHex(mem[addr]) << std::endl;
+				//
+				//if (!(keyInfo.colID & b4)) // bit4 low = p15
+				//{
+				//	A = keyInfo.keys[p15]; // set the upper (unused) bits with 0xC0
+				//}
+				//else if (!(keyInfo.colID & b5))
+				//{
+				//	A = keyInfo.keys[p14];
+				//}
+				//int x = A & 0xFF;
+				//if (x != 0xFF)
+				//{
+				//	//std::cout << toHex(x) << std::endl;
+				//}
+				//else
+				//{
+				//	//std::cout << "------" << std::endl;
+				//}
+				//std::cout << "A = " << toHex(A) << std::endl;
 			}
+			//4a9 check/ operate on input
+			//if right key is pressed jump to 502
+
 			PC += 2;
 			break;
 		}
@@ -3657,6 +3620,7 @@ void CPU::emulateCycle()
 		}
 	}
 }
+
 #ifdef DEBUG
 template<typename T>
 const std::string toHex(const T val)

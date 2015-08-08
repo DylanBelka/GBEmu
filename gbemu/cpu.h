@@ -53,11 +53,13 @@ public:
 
 // CPU status getting/ setting functions
 public:
-	void wByte(addr16 addr, byte val) { mem[addr] = val; } // write byte
-	byte rByte(addr16 addr) const { return mem[addr]; } // read byte
-	
-	void wWord(addr16 addr, word val) { mem[addr] = val & 0x00FF; mem[addr + 1] = val & 0xFF00; } // write word
-	word rWord(addr16 addr) const { return ((mem[addr + 1] << 8) | (mem[addr] & 0xFF)); } // read word
+	void wByte(addr16 addr, byte val);
+	inline byte rByte(addr16 addr) const { return mem[addr]; } // read byte
+	void orByte(addr16 addr, byte val) { mem[addr] |= val; } // or byte
+	void clrBit(addr16 addr, byte bit) { mem[addr] &= ~bit; } // clear bit in memory
+
+	void wWord(addr16 addr, word val);
+	inline word rWord(addr16 addr) const { return ((mem[addr + 1] << 8) | (mem[addr] & 0xFF)); } // read word
 
 	bool isHalted()	 const { return halted; }
 	bool isStopped() const { return stopped; }
@@ -67,7 +69,7 @@ public:
 	void resetClock() { clockCycles = 0; }
 	uint16_t getClockCycles() const { return clockCycles; }
 
-	GBKeys& getKeyInfo() { return keyInfo; }
+	GBKeys keyInfo;
 
 	bool _test = false;
 	
@@ -115,9 +117,6 @@ private:
 	bool stopped = false;	// STOP(ed)?
 
 	uint16_t clockCycles = 0;
-
-	// initialize keyInfo to default values
-	GBKeys keyInfo;
 
 // Flag helper functions
 private:
