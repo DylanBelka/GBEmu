@@ -26,6 +26,10 @@ Resources:
 * http://gameboy.mongenel.com/dmg/asmmemmap.html
 * http://tutorials.eeems.ca/ASMin28Days/lesson/day04.html
 * http://www.zophar.net/fileuploads/2/10807fvllz/z80-1.txt
+* http://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html
+* http://www.z80.info/z80sflag.htm
+* http://www.chrisantonellis.com/files/gameboy/gb-cribsheet.pdf
+* http://chrisantonellis.com/files/gameboy/gb-programming-manual.pdf
 * And many more
 **/
 
@@ -71,8 +75,10 @@ public:
 
 	GBKeys keyInfo;
 
+#ifdef DEBUG
 	bool _test = false;
-	
+#endif
+
 private:
 	void reset();
 
@@ -124,7 +130,7 @@ private:
 	inline void resetZero();
 	inline void setZero();
 
-	inline void updateHC(reg16 reg);
+	inline void updateHC(byte prevVal, byte newVal);
 	inline void resetHC();
 	inline void setHC();
 
@@ -155,7 +161,7 @@ private:
 	void andr(byte val);
 	void xorr(byte val);
 	void orr(byte val);
-	
+
 	void push(reg16 val);
 	reg16 pop();
 
@@ -182,6 +188,7 @@ enum Bits
 	b6 = 0x40,
 	b7 = 0x80,
 };
+
 #ifdef DEBUG
 template<typename T> const std::string toHex(T);
 template<> const std::string toHex(sbyte);

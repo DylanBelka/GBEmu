@@ -118,9 +118,16 @@ void CPU::setCarry()
 	F |= 0x1;
 }
 
-void CPU::updateHC(reg16 reg)
+void CPU::updateHC(byte prevVal, byte newVal) 
 {
-	F |= (reg > 0xF) ? 0x10 : F;
+	if ((prevVal & b3) != (newVal & b4) && (newVal & b4))
+	{
+		setHC();
+	}
+	else
+	{
+		resetHC();
+	}
 }
 
 void CPU::resetHC()
@@ -135,7 +142,7 @@ void CPU::setHC()
 
 void CPU::updateN(bool add)
 {
-	if (!add) { F |= 0x2; }
+	if (add == SUB) { F |= 0x2; }
 	else { F &= 0xFD; }
 }
 
@@ -1629,7 +1636,7 @@ void CPU::cmp(const byte val)
 {
 	updateCarry(A, A - val);
 	updateN(SUB);
-	updateHC(A - val);
+	updateHC(A, A - val);
 	updateZero(A - val);
 }
 
@@ -1637,10 +1644,9 @@ void CPU::dec(byte& b)
 {
 	const byte before = b;
 	b--;
-	updateCarry(before, b);
 	updateZero(b);
 	updateN(SUB);
-	updateHC(b);
+	updateHC(before, b);
 	PC++;
 }
 
@@ -1648,10 +1654,9 @@ void CPU::inc(byte& b)
 {
 	const byte before = b;
 	b++;
-	updateCarry(before, b);
 	updateZero(b);
-	updateN(SUB);
-	updateHC(b);
+	updateN(ADD);
+	updateHC(before, b);
 	PC++;
 }
 
@@ -1661,7 +1666,7 @@ void CPU::add(byte val)
 	A += val;
 	updateCarry(before, A);
 	updateN(ADD);
-	updateHC(A);
+	updateHC(before, A);
 	updateZero(A);
 	PC++;
 }
@@ -1672,7 +1677,7 @@ void CPU::adc(byte val)
 	A += val + carry();
 	updateCarry(before, A);
 	updateN(ADD);
-	updateHC(A);
+	updateHC(before, A);
 	updateZero(A);
 	PC++;
 }
@@ -1683,7 +1688,7 @@ void CPU::sub(byte val)
 	A -= val;
 	updateCarry(before, A);
 	updateN(SUB);
-	updateHC(A);
+	updateHC(before, A);
 	updateZero(A);
 	PC++;
 }
@@ -1694,7 +1699,7 @@ void CPU::sbc(byte val)
 	A -= (val + carry());
 	updateCarry(before, A);
 	updateN(SUB);
-	updateHC(A);
+	updateHC(before, A);
 	updateZero(A);
 	PC++;
 }
@@ -1910,7 +1915,8 @@ void CPU::wWord(addr16 addr, word val)
 {
 	if (addr > MAX_ROM_SIZE)
 	{
-		mem[addr] = val & 0x00FF; mem[addr + 1] = val & 0xFF00;
+		mem[addr] = val & 0x00FF; // lower byte
+		mem[addr + 1] = ((val & 0xFF00) >> 8) & 0xFF; // upper byte
 	}
 	else
 	{
@@ -2031,9 +2037,9 @@ void CPU::emulateCycle()
 		{
 			const reg16 hl = HL();
 			HL(BC() + hl);
-			updateCarry16(hl, HL());
+			updateCarry(hl, HL());
 			updateN(ADD);
-			updateHC(HL());
+			updateHC(hl, HL());
 			PC++;
 			break;
 		}
@@ -2137,9 +2143,9 @@ void CPU::emulateCycle()
 		{
 			const reg16 hl = HL();
 			HL(hl + DE());
-			updateCarry16(hl, HL());
+			updateCarry(hl, HL());
 			updateN(ADD);
-			updateHC(HL());
+			updateHC(hl, HL());
 			PC++;
 			break;
 		}
@@ -2224,29 +2230,42 @@ void CPU::emulateCycle()
 			PC += 2;
 			break;
 		}
-		case 0x27: // daa ^^^Probably doesnt work ^^^^
+		case 0x27: // daa
 		{
 #ifdef DEBUG
 			std::cout << "daa" << std::endl;
 			std::cout << "Before A = " << toHex((uint16_t)A) << std::endl;
 #endif // DEBUG
-
+			// implementation from http://www.worldofspectrum.org/faq/reference/z80reference.htm
 			const reg before = A;
-			if (A > 9 || half_carry())
+			byte correction = 0x0;
+			if (A > 0x99 || carry())
 			{
-				A += 0x6;
+				correction |= 0x60;
+				setCarry();
 			}
-			if ((A & 0xF0) > 9 || carry())
+			else
 			{
-				A += 0x60;
+				correction = 0x0;
+				resetCarry();
 			}
-			updateCarry(before, A);
-			updateHC(A);
+			if (((A & 0x0F) > 0x9) || half_carry())
+			{
+				correction |= 0x6;
+			}
+			if (!N())
+			{
+				A += correction;
+			}
+			else
+			{
+				A -= correction;
+			}
 			updateZero(A);
+			updateHC(before, A);
 			PC++;
 #ifdef DEBUG
 			std::cout << "After A = " << toHex((uint16_t)A) << std::endl;
-			//system("pause");
 #endif // DEBUG
 			break;
 		}
@@ -2259,9 +2278,9 @@ void CPU::emulateCycle()
 		{
 			const reg16 hl = HL();
 			HL(hl + hl);
-			updateCarry16(hl, HL());
+			updateCarry(hl, HL());
 			updateN(ADD);
-			updateHC(HL());
+			updateHC(hl, HL());
 			PC++;
 			break;
 		}
@@ -2360,10 +2379,9 @@ void CPU::emulateCycle()
 		{
 			const reg16 hl = HL();
 			HL(hl + SP);
-			updateCarry16(hl, HL());
+			updateCarry(hl, HL());
 			updateN(ADD);
-			updateHC(HL());
-			updateZero(HL());
+			updateHC(hl, HL());
 			PC++;
 			break;
 		}
@@ -3159,7 +3177,7 @@ void CPU::emulateCycle()
 			A += mem[PC + 1];
 			updateCarry(before, A);
 			updateN(ADD);
-			updateHC(A);
+			updateHC(before, A);
 			updateZero(A);
 			PC += 2;
 			break;
@@ -3205,7 +3223,7 @@ void CPU::emulateCycle()
 			A += mem[PC + 1] + carry();
 			updateCarry(before, A);
 			updateN(ADD);
-			updateHC(A);
+			updateHC(before, A);
 			updateZero(A);
 			PC += 2;
 			break;
@@ -3259,7 +3277,7 @@ void CPU::emulateCycle()
 			A -= mem[PC + 1];
 			updateCarry(before, A);
 			updateN(SUB);
-			updateHC(A);
+			updateHC(before, A);
 			updateZero(A);
 			PC += 2;
 			break;
@@ -3312,8 +3330,8 @@ void CPU::emulateCycle()
 			const reg before = A;
 			A -= (mem[PC + 1] + carry());
 			updateCarry(before, A);
-			updateN(ADD);
-			updateHC(A);
+			updateN(SUB);
+			updateHC(before, A);
 			updateZero(A);
 			PC += 2;
 			break;
@@ -3400,8 +3418,8 @@ void CPU::emulateCycle()
 			SP += mem[PC + 1];
 			resetZero();
 			resetN();
-			updateHC(SP);
-			updateCarry16(before, SP);
+			updateHC(before, SP);
+			updateCarry(before, SP);
 			PC += 2;
 			break;
 		}
