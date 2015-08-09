@@ -132,7 +132,8 @@ private:
 	inline void resetN();
 	inline void setN();
 
-	inline void updateCarry(reg16 reg);
+	void updateCarry(byte prevVal, byte newVal);
+	void updateCarry16(word prevVal, word newVal);
 	inline void resetCarry();
 	inline void setCarry();
 
