@@ -182,110 +182,110 @@ void CPU::setZero()
 
 #pragma region OpFuncs
 
-void CPU::decodeExtendedInstruction(byte opcode)
-{	
-	typedef std::function<void(reg&)> XREGFUNC; // extended register modifying function
-	typedef std::function<void(reg&, ubyte)> REGBITMODFUNC; // register modifying function by a single bit
-	XREGFUNC rlc = [this](reg& val) -> void
-	{
-		byte bit7 = ((val & b7) >> 7) & b0;
-		val <<= 1;
-		F |= bit7;
-		val |= bit7;
-		resetN();
-		resetHC();
-		updateZero(val);
-	};
-	XREGFUNC rrc = [this](reg& val) -> void
-	{
-		byte bit0 = val & b0;
-		val >>= 1;
-		F |= bit0;
-		val |= (bit0 << 7);
-		updateZero(val);
-		resetHC();
-		resetN();
-	};
-	XREGFUNC rl = [this](reg& val) -> void
-	{
-		byte bit7 = ((val & b7) >> 7) & b0;
-		byte carryCpy = F & b0;
-		val <<= 1;
-		F |= bit7;
-		val |= carryCpy;
-		updateZero(val);
-		resetHC();
-		resetN();
-	};
-	XREGFUNC rr = [this](reg& val) -> void
-	{
-		byte bit0 = val & b0;
-		byte carryCpy = F & b0;
-		val >>= 1;
-		F |= bit0;
-		val &= ~b7;
-		val |= carryCpy;
-		updateZero(val);
-		resetHC();
-		resetN();
-	};
-	XREGFUNC sla = [this](reg& val) -> void
-	{
-		byte bit7 = ((val & b7) >> 7) & b0;
-		val <<= 1;
-		F |= bit7;
-		updateZero(val);
-		resetN();
-		resetHC();
-	};
-	XREGFUNC sra = [this](reg& val) -> void
-	{
-		byte bit0 = val & b0;
-		val >>= 1;
-		F |= bit0;
-		updateZero(val);
-		resetN();
-		resetHC();
-	};
-	XREGFUNC srl = [this](reg& val) -> void
-	{
-		byte bit0 = val & b0;
-		val >>= 1;
-		F |= bit0;
-		val &= ~b7;
-		updateZero(val);
-		resetN();
-		resetHC();
-	};
+void CPU::rlc(reg& val)
+{
+	byte bit7 = ((val & b7) >> 7) & b0;
+	val <<= 1;
+	F |= bit7;
+	val |= bit7;
+	resetN();
+	resetHC();
+	updateZero(val);
+}
 
-	XREGFUNC swapNibble = [this](reg& val) -> void
-	{
-		val = ((val & 0x0F) << 4 | (val & 0xF0) >> 4);
-	};
+void CPU::rrc(reg& val)
+{
+	byte bit0 = val & b0;
+	val >>= 1;
+	F |= bit0;
+	val |= (bit0 << 7);
+	updateZero(val);
+	resetHC();
+	resetN();
+}
 
-	std::function<void(reg, ubyte)> bit = [this](reg r, ubyte bit)
-	{
-		if (r & bit)
-		{
-			resetZero();
-		}
-		else
-		{
-			setZero();
-		}
-		setHC();
-		resetN();
-	};
+void CPU::rl(reg& val)
+{
+	byte bit7 = ((val & b7) >> 7) & b0;
+	byte carryCpy = F & b0;
+	val <<= 1;
+	F |= bit7;
+	val |= carryCpy;
+	updateZero(val);
+	resetHC();
+	resetN();
+}
 
-	REGBITMODFUNC res = [this](reg& r, ubyte bit)
-	{
-		r &= ~bit;
-	};
-	REGBITMODFUNC set = [this](reg& r, ubyte bit)
-	{
-		r |= bit;
-	};
+void CPU::rr(reg& val)
+{
+	byte bit0 = val & b0;
+	byte carryCpy = F & b0;
+	val >>= 1;
+	F |= bit0;
+	val &= ~b7;
+	val |= carryCpy;
+	updateZero(val);
+	resetHC();
+	resetN();
+}
 
+void CPU::sla(reg& val)
+{
+	byte bit7 = ((val & b7) >> 7) & b0;
+	val <<= 1;
+	F |= bit7;
+	updateZero(val);
+	resetN();
+	resetHC();
+}
+
+void CPU::sra(reg& val)
+{
+	byte bit0 = val & b0;
+	val >>= 1;
+	F |= bit0;
+	updateZero(val);
+	resetN();
+	resetHC();
+}
+
+void CPU::srl(reg& val)
+{
+	byte bit0 = val & b0;
+	val >>= 1;
+	F |= bit0;
+	val &= ~b7;
+	updateZero(val);
+	resetN();
+	resetHC();
+}
+
+void CPU::bit(reg r, ubyte bit)
+{
+	if (r & bit)
+	{
+		resetZero();
+	}
+	else
+	{
+		setZero();
+	}
+	setHC();
+	resetN();
+}
+
+void CPU::res(reg& r, ubyte bit)
+{
+	r &= ~bit;
+}
+
+void CPU::set(reg& r, ubyte bit)
+{
+	r |= bit;
+}
+
+void CPU::emulateExtendedInstruction(byte opcode)
+{
 	switch (opcode & 0xFF)
 	{
 	case 0x00: // rlc b
@@ -562,7 +562,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		break;
 	case 0x37: // swap a
 	{
-		swapNibble(A);
+		A = ((A & 0x0F) << 4 | (A & 0xF0) >> 4);
 		break;
 	}
 	case 0x38: // srl b
@@ -1928,7 +1928,7 @@ void CPU::wWord(addr16 addr, word val)
 #ifdef DEBUG
 void CPU::test()
 {
-	decodeExtendedInstruction(00);
+	emulateExtendedInstruction(00);
 	//A = 0x30;
 	//F = 0x10;
 	//std::cout << toHex(AF()) << std::endl;
@@ -3204,7 +3204,7 @@ void CPU::emulateCycle()
 		}
 		case 0xCB: // EXTENDED INSTRUCTIONS
 		{
-			decodeExtendedInstruction(mem[PC + 1]);
+			emulateExtendedInstruction(mem[PC + 1]);
 			break;
 		}
 		case 0xCC: // call z, **

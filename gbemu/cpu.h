@@ -161,13 +161,24 @@ private:
 	void andr(byte val);
 	void xorr(byte val);
 	void orr(byte val);
+	// extended instructions
+	void rlc(reg& val);
+	void rrc(reg& val);
+	void rl(reg& val);
+	void rr(reg& val);
+	void sla(reg& val);
+	void sra(reg& val);
+	void srl(reg& val);
+	void bit(reg r, ubyte bit);
+	void res(reg& r, ubyte bit);
+	void set(reg& r, ubyte bit);
+
+	void emulateExtendedInstruction(byte opcode);
 
 	void push(reg16 val);
 	reg16 pop();
 
 	inline const uint16_t getNextWord();
-
-	void decodeExtendedInstruction(byte opcode);
 
 	void halt();
 	void stop();
