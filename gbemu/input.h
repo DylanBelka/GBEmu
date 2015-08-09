@@ -1,10 +1,12 @@
 #ifndef GB_INPUT_H
 #define GB_INPUT_H
 
+#include "types.h"
+
 struct GBKeys
 {
-	char keys[2];
-	char colID;
+	ubyte keys[2];
+	ubyte colID;
 };
 
 enum KeyGroups

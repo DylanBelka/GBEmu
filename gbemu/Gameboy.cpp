@@ -172,7 +172,7 @@ void Gameboy::drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigne
 		int currBit1 = b2 & i;
 		if (currBit0 && currBit1) // bit1 (on) and bit2 (on)
 		{
-			drawPixel(backgroundSurface, BLACK, x, y); // draw the pixel to the screenBuffer 
+			drawPixel(fullScreenSurface, BLACK, x, y); // draw the pixel to the screenBuffer 
 		}
 		else if (!currBit0 && !currBit1) // bit1 (off) and bit2 (off)
 		{
@@ -180,11 +180,11 @@ void Gameboy::drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigne
 		}
 		else if (currBit0 && !currBit1) // bit1 (on) and bit2 (off)
 		{
-			drawPixel(backgroundSurface, LIGHT_GREY, x, y); // draw the pixel to the screenBuffer 
+			drawPixel(fullScreenSurface, LIGHT_GREY, x, y); // draw the pixel to the screenBuffer 
 		}
 		else // bit1 (off) bit2 (on)
 		{
-			drawPixel(backgroundSurface, DARK_GREY, x, y); // draw the pixel to the screenBuffer 
+			drawPixel(fullScreenSurface, DARK_GREY, x, y); // draw the pixel to the screenBuffer 
 		}
 		x++;
 	}
@@ -197,7 +197,7 @@ void Gameboy::drawBG(const std::vector<byte>& mem)
 	unsigned x = 0;
 	unsigned y = 0;
 	const int lcdc = mem[LCDC];
-	if ((lcdc & 0x40) != 0x0) // 0 = bg0, 1 = bg1
+	if (lcdc & 0x40 != 0x0) // 0 = bg0, 1 = bg1
 	{
 		// bg0, draw all of the 8x8 tiles
 		for (int i = BG_MAP_0; i < BG_MAP_0_END; i++)
@@ -205,7 +205,7 @@ void Gameboy::drawBG(const std::vector<byte>& mem)
 			// draw the 8x8 tile
 			// first get the location in memory of the tile
 			addr16 chrLocStart;
-			if ((lcdc & 0x10) != 0x0) // unsigned characters
+			if (lcdc & 0x10 != 0x0) // unsigned characters
 			{
 				chrLocStart = static_cast<ubyte>(mem[i]) * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 			}
@@ -233,7 +233,7 @@ void Gameboy::drawBG(const std::vector<byte>& mem)
 		{
 			// draw the 8x8 tile
 			addr16 chrLocStart;
-			if ((lcdc & 0x10) != 0x0) // unsigned characters
+			if (lcdc & 0x10 != 0x0) // unsigned characters
 			{
 				chrLocStart = static_cast<ubyte>(mem[i]) * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 			}
@@ -260,7 +260,7 @@ void Gameboy::drawSprites(const std::vector<byte>& mem)
 {
 	const byte lcdc = cpu.rByte(LCDC);
 	// sprite size: 1 = 8x16, 0 = 8x8
-	if ((lcdc & b2) == 0x1)  // 8x16 wxh, 2 8x8 sprites stacked on top of each other
+	if ((lcdc & b2) != 0x0)  // 8x16 wxh, 2 8x8 sprites stacked on top of each other
 	{
 		for (int i = OAM; i < OAM_END; i += 4)
 		{
@@ -334,13 +334,13 @@ void Gameboy::renderFull()
 			srcSurfaceRect.y = srcSurfaceRect.y - (SCR_BUFFER_HEIGHT - WINDOW_HEIGHT) * mod; // scroll it back (y - 112) 112 is when the window reaches the end of the buffer vertically
 		}
 		// copy the screen buffer (the background) to the actual screen
-		//SDL_BlitSurface(backgroundSurface, &srcSurfaceRect, fullScreenSurface, NULL);
+		SDL_BlitSurface(backgroundSurface, &srcSurfaceRect, fullScreenSurface, NULL);
 		// draw sprites on top of background
 		if ((lcdc & b1) != 0x0) // draw sprites?
 		{
 			drawSprites(mem);
 		}
-		SDL_BlitSurface(backgroundSurface, &srcSurfaceRect, fullScreenSurface, NULL);
+		//SDL_BlitSurface(backgroundSurface, &srcSurfaceRect, fullScreenSurface, NULL);
 		// reset the LY and current scanline
 		scanline = 0;
 		cpu.wByte(LY, scanline);

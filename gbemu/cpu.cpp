@@ -14,8 +14,8 @@ const int clockTimes[256] =
 	4, 4, 4, 4, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 9, 4,
 	4, 4, 4, 4, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 9, 4,
 	4, 4, 4, 4, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 9, 4,
-	8, 12, 12, 16, 12, 16, 8, 16, 8, 16, 12, 12, 12, 24, 8, 16,
-	8, 12, 12, 0, 12, 16, 8, 16, 8, 16, 12, 0, 12, 0, 8, 16,
+	8, 12, 12, 12, 12, 16, 8, 16, 8, 4, 12, 12, 12, 12, 8, 16,
+	8, 12, 12, 0, 12, 16, 8, 16, 8, 4, 12, 0, 12, 0, 8, 16,
 	12, 12, 8, 0, 0, 16, 8, 16, 16, 4, 16, 0, 0, 0, 8, 16,
 	12, 12, 8, 4, 0, 16, 8, 16, 12, 8, 16, 4, 0, 0, 8, 16,
 };
@@ -322,6 +322,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		//updateZero(val);
 		//mem[static_cast<addr16>(HL())] = val;
 		rlc(mem[static_cast<addr16>(HL())]);
+		clockCycles += 8;
 		break;
 	}
 	case 0x07: // rlc a
@@ -361,15 +362,8 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	}
 	case 0x0E: // rrc (hl)
 	{
-		//char val = mem[static_cast<addr16>(HL())];
-		//val >>= 1;
-		//resetCarry();
-		//F |= val & b0;
-		//val |= val & b0;
-		//resetN();
-		//updateZero(val);
-		//mem[static_cast<addr16>(HL())] = val;
 		rrc(mem[static_cast<addr16>(HL())]);
+		clockCycles += 8;
 		break;
 	}
 	case 0x0F: // rrc a
@@ -409,16 +403,8 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	}
 	case 0x16: // rl (hl)
 	{
-		//char val = mem[static_cast<addr16>(HL())];
-		//val <<= 1;
-		//val |= static_cast<byte>(carry());
-		//F |= val & b7;
-		//updateCarry(val);
-		//resetN();
-		//resetHC();
-		//updateZero(val);
-		//mem[static_cast<addr16>(HL())] = val;
 		rl(mem[static_cast<addr16>(HL())]);
+		clockCycles += 8;
 		break;
 	}
 	case 0x17: // rl a
@@ -458,16 +444,8 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	}
 	case 0x1E: // rr (hl)
 	{
-		//char val = mem[static_cast<addr16>(HL())];
-		//val >>= 1;
-		//val &= F & 0x80;
-		//F |= val & 0x1;
-		//updateCarry(val);
-		//resetN();
-		//resetHC();
-		//updateZero(val);
-		//mem[static_cast<addr16>(HL())] = val;
 		rr(mem[static_cast<addr16>(HL())]);
+		clockCycles += 8;
 		break;
 	}
 	case 0x1F: // rr a
@@ -507,15 +485,8 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	}
 	case 0x26: // sla (hl)
 	{
-		//byte val = mem[(reg16)HL()];
-		//val <<= 1;
-		//F |= val & 0x80;
-		//val &= 0xFE;
-		//updateCarry(val);
-		//resetN();
-		//updateZero(val);
-		//mem[(reg16)HL()] = val;
 		sla(mem[static_cast<addr16>(HL())]);
+		clockCycles += 8;
 		break;
 	}
 	case 0x27: // sla a
@@ -555,14 +526,8 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	}
 	case 0x2E: // sra (hl)
 	{
-		//byte val = mem[static_cast<addr16>(HL())];
-		//val >>= 1;
-		//F |= val & 0x1;
-		//updateCarry(val);
-		//resetN();
-		//updateZero(val);
-		//mem[static_cast<addr16>(HL())] = val;
 		sra(mem[static_cast<addr16>(HL())]);
+		clockCycles += 8;
 		break;
 	}
 	case 0x2F: // sra a
@@ -625,15 +590,8 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	}
 	case 0x3E: // srl (hl)
 	{
-		//byte val = mem[static_cast<addr16>(HL())];
-		//val >>= 1;
-		//F |= val & 0x1;
-		//val &= 0xF7;
-		//updateCarry(val);
-		//resetN();
-		//resetHC();
-		//updateZero(val);
 		srl(mem[static_cast<addr16>(HL())]);
+		clockCycles += 8;
 		break;
 	}
 	case 0x3F: // srl a
@@ -674,6 +632,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	case 0x46: // bit 0, (hl)
 	{
 		bit(mem[static_cast<addr16>(HL())], b0);
+		clockCycles += 8;
 		break;
 	}
 	case 0x47: // bit 0, a
@@ -714,6 +673,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	case 0x4E: // bit 1, (hl)
 	{
 		bit(mem[static_cast<addr16>(HL())], b1);
+		clockCycles += 8;
 		break;
 	}
 	case 0x4F: // bit 1, a
@@ -754,6 +714,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	case 0x56: // bit 2, (hl)
 	{
 		bit(mem[static_cast<addr16>(HL())], b2);
+		clockCycles += 8;
 		break;
 	}
 	case 0x57: // bit 2, a
@@ -794,6 +755,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	case 0x5E: // bit 3, (hl)
 	{
 		bit(mem[static_cast<addr16>(HL())], b3);
+		clockCycles += 8;
 		break;
 	}
 	case 0x5F: // bit 3, a
@@ -834,6 +796,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	case 0x66: // bit 4, (hl)
 	{
 		bit(mem[static_cast<addr16>(HL())], b3);
+		clockCycles += 8;
 		break;
 	}
 	case 0x67: // bit 4, a
@@ -874,6 +837,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	case 0x6E: // bit 5, (hl)
 	{
 		bit(mem[static_cast<addr16>(HL())], b5);
+		clockCycles += 8;
 		break;
 	}
 	case 0x6F: // bit 5, a
@@ -914,6 +878,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	case 0x76: // bit 6, (hl)
 	{
 		bit(mem[static_cast<addr16>(HL())], b6);
+		clockCycles += 8;
 		break;
 	}
 	case 0x77: // bit 6, a
@@ -954,6 +919,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	case 0x7E: // bit 7, (hl)
 	{
 		bit(mem[static_cast<addr16>(HL())], b7);
+		clockCycles += 8;
 		break;
 	}
 	case 0x7F: // bit 7, a
@@ -996,6 +962,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		byte val = mem[static_cast<addr16>(HL())];
 		val &= ~b0;
 		mem[static_cast<addr16>(HL())] = val;
+		clockCycles += 8;
 		break;
 	}
 	case 0x87: // res 0, a
@@ -1038,6 +1005,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		byte val = mem[static_cast<addr16>(HL())];
 		val &= ~b1;
 		mem[static_cast<addr16>(HL())] = val;
+		clockCycles += 8;
 		break;
 	}
 	case 0x8F: // res 1, a
@@ -1080,6 +1048,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		byte val = mem[static_cast<addr16>(HL())];
 		val &= ~b2;
 		mem[static_cast<addr16>(HL())] = val;
+		clockCycles += 8;
 		break;
 	}
 	case 0x97: // res 2, a
@@ -1122,6 +1091,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		byte val = mem[static_cast<addr16>(HL())];
 		val &= ~b3;
 		mem[static_cast<addr16>(HL())] = val;
+		clockCycles += 8;
 		break;
 	}
 	case 0x9F: // res 3, a
@@ -1164,6 +1134,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		byte val = mem[static_cast<addr16>(HL())];
 		val &= ~b4;
 		mem[static_cast<addr16>(HL())] = val;
+		clockCycles += 8;
 		break;
 	}
 	case 0xA7: //res 4, a
@@ -1206,6 +1177,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		byte val = mem[static_cast<addr16>(HL())];
 		val &= ~b5;
 		mem[static_cast<addr16>(HL())] = val;
+		clockCycles += 8;
 		break;
 	}
 	case 0xAF: // res 5, a
@@ -1248,6 +1220,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		byte val = mem[static_cast<addr16>(HL())];
 		val &= ~b6;
 		mem[static_cast<addr16>(HL())] = val;
+		clockCycles += 8;
 		break;
 	}
 	case 0xB7: // res 6, a
@@ -1290,6 +1263,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		byte val = mem[static_cast<addr16>(HL())];
 		val &= ~b7;
 		mem[static_cast<addr16>(HL())] = val;
+		clockCycles += 8;
 		break;
 	}
 	case 0xBF: // res 7, a
@@ -1332,6 +1306,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		byte val = mem[static_cast<addr16>(HL())];
 		val |= b0;
 		mem[static_cast<addr16>(HL())] = val;
+		clockCycles += 8;
 		break;
 	}
 	case 0xC7: // set 0, a
@@ -1374,6 +1349,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		byte val = mem[static_cast<addr16>(HL())];
 		val |= b1;
 		mem[static_cast<addr16>(HL())] = val;
+		clockCycles += 8;
 		break;
 	}
 	case 0xCF: // set 1, a
@@ -1416,6 +1392,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		byte val = mem[static_cast<addr16>(HL())];
 		val |= b2;
 		mem[static_cast<addr16>(HL())] = val;
+		clockCycles += 8;
 		break;
 	}
 	case 0xD7: // set 2, a
@@ -1458,6 +1435,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		byte val = mem[static_cast<addr16>(HL())];
 		val |= b3;
 		mem[static_cast<addr16>(HL())] = val;
+		clockCycles += 8;
 		break;
 	}
 	case 0xDF: // set 3, a
@@ -1500,6 +1478,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		byte val = mem[static_cast<addr16>(HL())];
 		val |= b4;
 		mem[static_cast<addr16>(HL())] = val;
+		clockCycles += 8;
 		break;
 	}
 	case 0xE7: // set 4, a
@@ -1542,6 +1521,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		byte val = mem[static_cast<addr16>(HL())];
 		val |= b5;
 		mem[static_cast<addr16>(HL())] = val;
+		clockCycles += 8;
 		break;
 	}
 	case 0xEF: // set 5, a
@@ -1584,6 +1564,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		byte val = mem[static_cast<addr16>(HL())];
 		val |= b6;
 		mem[static_cast<addr16>(HL())] = val;
+		clockCycles += 8;
 		break;
 	}
 	case 0xF7: // set 6, a
@@ -1626,6 +1607,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		byte val = mem[static_cast<addr16>(HL())];
 		val |= b7;
 		mem[static_cast<addr16>(HL())] = val;
+		clockCycles += 8;
 		break;
 	}
 	case 0xFF: // set 7, a
@@ -1756,13 +1738,13 @@ const addr16 CPU::getNextWord()
 void CPU::halt()
 {
 	halted = true;
-	std::cout << "Halted" << std::endl; // for debugging 
+	//std::cout << "Halted" << std::endl; // for debugging 
 }
 
 void CPU::stop()
 {
 	stopped = true;
-	std::cout << "Stopped" << std::endl; // for debugging 
+	//std::cout << "Stopped" << std::endl; // for debugging 
 }
 
 bool interrupted = false;
@@ -1784,21 +1766,12 @@ void CPU::call(bool cond)
 {
 	if (cond)
 	{
-		addr16 pccpy = PC;
 		SP--;
 		mem[SP] = (PC + 3) & 0xFF; // + 3 is for jumping past the 3 bytes for the opcode and dest
 		SP--;
 		mem[SP] = (((PC + 3) >> 8) & 0xFF);
 		PC = getNextWord();
 		clockCycles += 12;
-#ifdef DEBUG
-		if (PC == 0x24ac)
-		{
-			std::cout << "callllll" << std::endl;
-			std::cout << toHex(pccpy) << std::endl;
-			//system("pause");
-		}
-#endif // DEBUG
 	}
 	else
 	{
@@ -2380,11 +2353,6 @@ void CPU::emulateCycle()
 		}
 		case 0x38: // jr c, *
 		{
-#ifdef DEBUG
-			std::cout << "carry matters FIX IT" << std::endl;
-			std::cout << toHex(opcode) << std::endl;
-#endif // DEBUG
-
 			jr(carry(), mem[PC + 1], 2);
 			break;
 		}
@@ -3209,7 +3177,6 @@ void CPU::emulateCycle()
 		case 0xC9: // ret
 		{
 			ret(true);
-			clockCycles -= 4; // adjust clock cycles
 			break;
 		}
 		case 0xCA: // jp z, **
@@ -3230,7 +3197,6 @@ void CPU::emulateCycle()
 		case 0xCD: // call **
 		{
 			call(true);
-			clockCycles -= 7; // adjust clock cycles down (always true - no cycles added for testing)
 			break;
 		}
 		case 0xCE: // adc a, *
@@ -3265,10 +3231,6 @@ void CPU::emulateCycle()
 		}
 		case 0xD2: // jp nc, **
 		{
-#ifdef DEBUG
-			std::cout << "carry matters FIX IT" << std::endl;
-			std::cout << toHex(opcode) << std::endl;
-#endif // DEBUG
 			jp(!carry(), getNextWord(), 3);
 			break;
 		}
@@ -3279,11 +3241,6 @@ void CPU::emulateCycle()
 		}
 		case 0xD4: // call nc, **
 		{
-#ifdef DEBUG
-			std::cout << "carry matters FIX IT" << std::endl;
-			std::cout << toHex(opcode) << std::endl;
-#endif // DEBUG
-
 			call(!carry());
 			break;
 		}
@@ -3314,11 +3271,6 @@ void CPU::emulateCycle()
 		}
 		case 0xD8: // ret c
 		{
-#ifdef DEBUG
-			std::cout << "carry matters FIX IT" << std::endl;
-			std::cout << toHex(opcode) << std::endl;
-#endif // DEBUG
-
 			ret(carry());
 			break;
 		}
@@ -3331,11 +3283,6 @@ void CPU::emulateCycle()
 		}
 		case 0xDA: // jp c, **
 		{
-#ifdef DEBUG
-			std::cout << "carry matters FIX IT" << std::endl;
-			std::cout << toHex(opcode) << std::endl;
-#endif // DEBUG
-
 			jp(carry(), getNextWord(), 3);
 			break;
 		}
@@ -3349,11 +3296,6 @@ void CPU::emulateCycle()
 		}
 		case 0xDC: // call c, **
 		{
-#ifdef DEBUG
-			std::cout << "carry matters FIX IT" << std::endl;
-			std::cout << toHex(opcode) << std::endl;
-#endif // DEBUG
-
 			call(carry());
 			break;
 		}
@@ -3621,8 +3563,9 @@ void CPU::emulateCycle()
 		}
 		case 0xFD: // ~!GB
 		{
+			// da2f
 #ifdef DEBUG
-			std::cout << "Opcode not supported by Gameboy: " << toHex((int16_t)opcode) << " at " << toHex(PC) << std::endl;
+			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
 #endif // DEBUG
 			break;

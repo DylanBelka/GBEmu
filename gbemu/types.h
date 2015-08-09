@@ -11,7 +11,7 @@ typedef int8_t reg; // register
 
 typedef int8_t byte; // 8-bit for when sign is unspecified
 typedef uint8_t ubyte;
-typedef int8_t sbyte;
+typedef signed char sbyte;
 
 typedef int16_t word;
 typedef uint16_t uword;

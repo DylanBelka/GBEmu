@@ -9,8 +9,11 @@
 #ifdef DEBUG
 
 //#define DEBUG_CPU
-
 #define DEBUG_GFX
+#else
+#ifndef RELEASE
+#define DEBUG_GFX
+#endif
 
 #endif // DEBUG
 
@@ -21,7 +24,7 @@
 #define DEFAULT_ERROR -1
 
 int main(int argc, char **argv)
-{
+{	
 #ifdef DEBUG_CPU
 	CPU cpu;
 	cpu.test();
@@ -58,7 +61,7 @@ int main(int argc, char **argv)
 	else 
 	{
 #ifdef DEBUG_GFX
-		if (gb.init("apocnow.gb") != EXIT_SUCCESS)
+		if (gb.init("opus5.gb") != EXIT_SUCCESS)
 		{
 			std::cout << "rom not found" << std::endl;
 			system("pause");
