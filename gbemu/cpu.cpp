@@ -23,7 +23,7 @@ const int clockTimes[256] =
 CPU::CPU() 
 	: mem(MEM_SIZE)
 {
-	keyInfo = { { 0xFF, 0xFF }, 0x30 };
+	keyInfo = { { 0x0F, 0x0F }, 0x0 };
 	reset();
 }
 
@@ -156,82 +156,81 @@ void CPU::setZero()
 #pragma region OpFuncs
 
 void CPU::decodeExtendedInstruction(byte opcode)
-{
-
-	PC += 2; // all 0xCB instructions are 2 bytes long
-
-	//std::cout << toHex(opcode) << std::endl;
-
+{	
 	typedef std::function<void(reg&)> XREGFUNC; // extended register modifying function
 	typedef std::function<void(reg&, ubyte)> REGBITMODFUNC; // register modifying function by a single bit
 	XREGFUNC rlc = [this](reg& val) -> void
 	{
+		byte bit7 = ((val & b7) >> 7) & b0;
 		val <<= 1;
-		resetCarry();
-		F |= val & b7;
-		val |= val & b7;
-		updateCarry(val);
+		F |= bit7;
+		val |= bit7;
 		resetN();
-		updateZero(val);
 		resetHC();
+		updateZero(val);
 	};
 	XREGFUNC rrc = [this](reg& val) -> void
 	{
+		byte bit0 = val & b0;
 		val >>= 1;
-		resetCarry();
-		F |= val & b0;
-		val |= val & b0;
-		resetN();
+		F |= bit0;
+		val |= (bit0 << 7);
 		updateZero(val);
+		resetHC();
+		resetN();
 	};
 	XREGFUNC rl = [this](reg& val) -> void
 	{
+		byte bit7 = ((val & b7) >> 7) & b0;
+		byte carryCpy = F & b0;
 		val <<= 1;
-		val |= F & b0;
-		F |= val & b7;
-		updateCarry(val);
-		resetN();
-		resetHC();
+		F |= bit7;
+		val |= carryCpy;
 		updateZero(val);
+		resetHC();
+		resetN();
 	};
 	XREGFUNC rr = [this](reg& val) -> void
 	{
+		byte bit0 = val & b0;
+		byte carryCpy = F & b0;
 		val >>= 1;
-		val &= F & b7;
-		F |= val & b0;
-		updateCarry(val);
-		resetN();
-		resetHC();
+		F |= bit0;
+		val &= ~b7;
+		val |= carryCpy;
 		updateZero(val);
+		resetHC();
+		resetN();
 	};
 	XREGFUNC sla = [this](reg& val) -> void
 	{
+		byte bit7 = ((val & b7) >> 7) & b0;
 		val <<= 1;
-		F |= val & b7;
-		val &= ~b0;
-		updateCarry(val);
-		resetN();
+		F |= bit7;
 		updateZero(val);
+		resetN();
+		resetHC();
 	};
 	XREGFUNC sra = [this](reg& val) -> void
 	{
+		byte bit0 = val & b0;
 		val >>= 1;
-		F |= val & b0;
-		updateCarry(val);
+		F |= bit0;
+		updateZero(val);
 		resetN();
 		resetHC();
-		updateZero(val);
 	};
 	XREGFUNC srl = [this](reg& val) -> void
 	{
+		byte bit0 = val & b0;
 		val >>= 1;
-		F |= val & b0;
-		val &= ~b3;
-		updateCarry(val);
+		F |= bit0;
+		val &= ~b7;
+		updateZero(val);
 		resetN();
 		resetHC();
-		updateZero(val);
 	};
+
 	XREGFUNC swapNibble = [this](reg& val) -> void
 	{
 		val = ((val & 0x0F) << 4 | (val & 0xF0) >> 4);
@@ -239,10 +238,18 @@ void CPU::decodeExtendedInstruction(byte opcode)
 
 	std::function<void(reg, ubyte)> bit = [this](reg r, ubyte bit)
 	{
-		updateZero(!(r & bit));
+		if (r & bit)
+		{
+			resetZero();
+		}
+		else
+		{
+			setZero();
+		}
 		setHC();
 		resetN();
 	};
+
 	REGBITMODFUNC res = [this](reg& r, ubyte bit)
 	{
 		r &= ~bit;
@@ -286,14 +293,15 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	}
 	case 0x06: // rlc (hl)
 	{
-		char val = mem[static_cast<addr16>(HL())];
-		val <<= 1;
-		resetCarry();
-		F |= val & b7;
-		val |= val & b7;
-		resetN();
-		updateZero(val);
-		mem[static_cast<addr16>(HL())] = val;
+		//char val = mem[static_cast<addr16>(HL())];
+		//val <<= 1;
+		//resetCarry();
+		//F |= val & b7;
+		//val |= val & b7;
+		//resetN();
+		//updateZero(val);
+		//mem[static_cast<addr16>(HL())] = val;
+		rlc(mem[static_cast<addr16>(HL())]);
 		break;
 	}
 	case 0x07: // rlc a
@@ -333,14 +341,15 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	}
 	case 0x0E: // rrc (hl)
 	{
-		char val = mem[static_cast<addr16>(HL())];
-		val >>= 1;
-		resetCarry();
-		F |= val & b0;
-		val |= val & b0;
-		resetN();
-		updateZero(val);
-		mem[static_cast<addr16>(HL())] = val;
+		//char val = mem[static_cast<addr16>(HL())];
+		//val >>= 1;
+		//resetCarry();
+		//F |= val & b0;
+		//val |= val & b0;
+		//resetN();
+		//updateZero(val);
+		//mem[static_cast<addr16>(HL())] = val;
+		rrc(mem[static_cast<addr16>(HL())]);
 		break;
 	}
 	case 0x0F: // rrc a
@@ -380,15 +389,16 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	}
 	case 0x16: // rl (hl)
 	{
-		char val = mem[static_cast<addr16>(HL())];
-		val <<= 1;
-		val |= static_cast<byte>(carry());
-		F |= val & b7;
-		updateCarry(val);
-		resetN();
-		resetHC();
-		updateZero(val);
-		mem[static_cast<addr16>(HL())] = val;
+		//char val = mem[static_cast<addr16>(HL())];
+		//val <<= 1;
+		//val |= static_cast<byte>(carry());
+		//F |= val & b7;
+		//updateCarry(val);
+		//resetN();
+		//resetHC();
+		//updateZero(val);
+		//mem[static_cast<addr16>(HL())] = val;
+		rl(mem[static_cast<addr16>(HL())]);
 		break;
 	}
 	case 0x17: // rl a
@@ -428,15 +438,16 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	}
 	case 0x1E: // rr (hl)
 	{
-		char val = mem[static_cast<addr16>(HL())];
-		val >>= 1;
-		val &= F & 0x80;
-		F |= val & 0x1;
-		updateCarry(val);
-		resetN();
-		resetHC();
-		updateZero(val);
-		mem[static_cast<addr16>(HL())] = val;
+		//char val = mem[static_cast<addr16>(HL())];
+		//val >>= 1;
+		//val &= F & 0x80;
+		//F |= val & 0x1;
+		//updateCarry(val);
+		//resetN();
+		//resetHC();
+		//updateZero(val);
+		//mem[static_cast<addr16>(HL())] = val;
+		rr(mem[static_cast<addr16>(HL())]);
 		break;
 	}
 	case 0x1F: // rr a
@@ -476,14 +487,15 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	}
 	case 0x26: // sla (hl)
 	{
-		byte val = mem[(reg16)HL()];
-		val <<= 1;
-		F |= val & 0x80;
-		val &= 0xFE;
-		updateCarry(val);
-		resetN();
-		updateZero(val);
-		mem[(reg16)HL()] = val;
+		//byte val = mem[(reg16)HL()];
+		//val <<= 1;
+		//F |= val & 0x80;
+		//val &= 0xFE;
+		//updateCarry(val);
+		//resetN();
+		//updateZero(val);
+		//mem[(reg16)HL()] = val;
+		sla(mem[static_cast<addr16>(HL())]);
 		break;
 	}
 	case 0x27: // sla a
@@ -523,13 +535,14 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	}
 	case 0x2E: // sra (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
-		val >>= 1;
-		F |= val & 0x1;
-		updateCarry(val);
-		resetN();
-		updateZero(val);
-		mem[static_cast<addr16>(HL())] = val;
+		//byte val = mem[static_cast<addr16>(HL())];
+		//val >>= 1;
+		//F |= val & 0x1;
+		//updateCarry(val);
+		//resetN();
+		//updateZero(val);
+		//mem[static_cast<addr16>(HL())] = val;
+		sra(mem[static_cast<addr16>(HL())]);
 		break;
 	}
 	case 0x2F: // sra a
@@ -592,14 +605,15 @@ void CPU::decodeExtendedInstruction(byte opcode)
 	}
 	case 0x3E: // srl (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
-		val >>= 1;
-		F |= val & 0x1;
-		val &= 0xF7;
-		updateCarry(val);
-		resetN();
-		resetHC();
-		updateZero(val);
+		//byte val = mem[static_cast<addr16>(HL())];
+		//val >>= 1;
+		//F |= val & 0x1;
+		//val &= 0xF7;
+		//updateCarry(val);
+		//resetN();
+		//resetHC();
+		//updateZero(val);
+		srl(mem[static_cast<addr16>(HL())]);
 		break;
 	}
 	case 0x3F: // srl a
@@ -1606,6 +1620,7 @@ void CPU::decodeExtendedInstruction(byte opcode)
 		break;
 	}
 	}
+	PC += 2; // all 0xCB instructions are 2 bytes long
 }
 
 void CPU::cmp(const byte val)
@@ -1908,29 +1923,30 @@ void CPU::wWord(addr16 addr, word val)
 #ifdef DEBUG
 void CPU::test()
 {
-	A = 0x30;
-	F = 0x10;
-	std::cout << toHex(AF()) << std::endl;
-	int x = rByte(0x0000);
-	x *= 3;
-
-	loadROM("test.bin");
-	PC = 0x0;
-	for (int i = 0; i < 0x10; i++)
-	{
-		emulateCycle();
-	}
-	std::cout << std::endl;
-	std::cout << "A: " << toHex((byte)A) << std::endl;
-	std::cout << "B: " << toHex((byte)B) << std::endl;
-	std::cout << "C: " << toHex((byte)C) << std::endl;
-	std::cout << "D: " << toHex((byte)D) << std::endl;
-	std::cout << "E: " << toHex((byte)E) << std::endl;
-	std::cout << "F: " << toHex((byte)F) << std::endl;
-	std::cout << "AF: " << toHex(AF()) << std::endl;
-	std::cout << "BC: " << toHex(BC()) << std::endl;
-	std::cout << "DE: " << toHex(DE()) << std::endl;
-	std::cout << "HL: " << toHex(HL()) << std::endl;
+	decodeExtendedInstruction(00);
+	//A = 0x30;
+	//F = 0x10;
+	//std::cout << toHex(AF()) << std::endl;
+	//int x = rByte(0x0000);
+	//x *= 3;
+	//
+	//loadROM("test.bin");
+	//PC = 0x0;
+	//for (int i = 0; i < 0x10; i++)
+	//{
+	//	emulateCycle();
+	//}
+	//std::cout << std::endl;
+	//std::cout << "A: " << toHex((byte)A) << std::endl;
+	//std::cout << "B: " << toHex((byte)B) << std::endl;
+	//std::cout << "C: " << toHex((byte)C) << std::endl;
+	//std::cout << "D: " << toHex((byte)D) << std::endl;
+	//std::cout << "E: " << toHex((byte)E) << std::endl;
+	//std::cout << "F: " << toHex((byte)F) << std::endl;
+	//std::cout << "AF: " << toHex(AF()) << std::endl;
+	//std::cout << "BC: " << toHex(BC()) << std::endl;
+	//std::cout << "DE: " << toHex(DE()) << std::endl;
+	//std::cout << "HL: " << toHex(HL()) << std::endl;
 }
 
 static bool y = false;
@@ -2714,13 +2730,6 @@ void CPU::emulateCycle()
 		case 0x77: // ld (hl), a
 		{
 			mem[static_cast<addr16>(HL())] = A;
-#ifdef DEBUG
-			if (A == 0x2F)
-			{
-				std::cout << "A = 0x2f" << std::endl;
-				//system("pause");
-			}
-#endif // DEBUG
 			PC++;
 			break;
 		}
@@ -2766,7 +2775,7 @@ void CPU::emulateCycle()
 			PC++;
 			break;
 		}
-		case 0x7F: // ld a, a &&&
+		case 0x7F: // ld a, a
 		{
 			PC++;
 			break;
@@ -3339,11 +3348,9 @@ void CPU::emulateCycle()
 			{
 				dma();
 			}
-			else if (addr == JOYPAD) // joypad write
+			else if (low == 0x00) // joypad write
 			{
 				keyInfo.colID = A;
-				keyInfo.keys[p14] = 0xFF;
-				keyInfo.keys[p15] = 0xFF;
 			}
 			PC += 2;
 			break;
@@ -3469,37 +3476,19 @@ void CPU::emulateCycle()
 			//std::cout << "col: " << toHex(keyInfo.colID) << "\n" << std::endl;
 			const ubyte low = static_cast<ubyte>(mem[PC + 1]); // low byte
 			const addr16 addr = 0xFF00 + low; // high byte always 0xFF00
+
 			A = mem[addr];
-			if (addr == JOYPAD) // joypad read
+			if (low == 0x00) // joypad read
 			{
-				A = 0xFF;
-				//std::cout << toHex(rByte(addr)) << std::endl;
-
-				//A = 0xFF;
-				//std::cout << "joy = " << toHex(mem[addr]) << std::endl;
-				//
-				//if (!(keyInfo.colID & b4)) // bit4 low = p15
-				//{
-				//	A = keyInfo.keys[p15]; // set the upper (unused) bits with 0xC0
-				//}
-				//else if (!(keyInfo.colID & b5))
-				//{
-				//	A = keyInfo.keys[p14];
-				//}
-				//int x = A & 0xFF;
-				//if (x != 0xFF)
-				//{
-				//	//std::cout << toHex(x) << std::endl;
-				//}
-				//else
-				//{
-				//	//std::cout << "------" << std::endl;
-				//}
-				//std::cout << "A = " << toHex(A) << std::endl;
+				if (keyInfo.colID == b4)
+				{
+					A = keyInfo.keys[p15] | keyInfo.colID | 0xC0; // set the upper (unused) bits with 0xC0
+				}
+				else if (keyInfo.colID == b5)
+				{
+					A = keyInfo.keys[p14] | keyInfo.colID | 0xC0;
+				}
 			}
-			//4a9 check/ operate on input
-			//if right key is pressed jump to 502
-
 			PC += 2;
 			break;
 		}
