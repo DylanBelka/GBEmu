@@ -194,18 +194,10 @@ void Gameboy::drawSpriteSlice(const byte b1, const byte b2, unsigned& x, unsigne
 
 void Gameboy::drawBG(const std::vector<byte>& mem)
 {
-
-	/// TODO: fix operator precedence bug such as (lcdc & 0x40 != 0x0)
-	/// != has a higher precedence than & so it always evaluates to true
-	/// simply fixing this does not work
-	/// both tetris and apocnow use map0 
-//	std:SDL_GameControllerGetStringForAxis
-//########################READTHIS &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&h43h423jkl12341
-
 	unsigned x = 0;
 	unsigned y = 0;
 	const int lcdc = mem[LCDC];
-	if (lcdc & 0x40 != 0x0) // 0 = bg0, 1 = bg1
+	if ((lcdc & 0x40) != 0x0) // 0 = bg0, 1 = bg1
 	{
 		// bg0, draw all of the 8x8 tiles
 		for (int i = BG_MAP_0; i < BG_MAP_0_END; i++)
@@ -213,7 +205,7 @@ void Gameboy::drawBG(const std::vector<byte>& mem)
 			// draw the 8x8 tile
 			// first get the location in memory of the tile
 			addr16 chrLocStart;
-			if (lcdc & 0x10 != 0x0) // unsigned characters
+			if ((lcdc & 0x10) != 0x0) // unsigned characters
 			{
 				chrLocStart = static_cast<ubyte>(mem[i]) * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 			}
@@ -241,7 +233,7 @@ void Gameboy::drawBG(const std::vector<byte>& mem)
 		{
 			// draw the 8x8 tile
 			addr16 chrLocStart;
-			if (lcdc & 0x10 != 0x0) // unsigned characters
+			if ((lcdc & 0x10) != 0x0) // unsigned characters
 			{
 				chrLocStart = static_cast<ubyte>(mem[i]) * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
 			}
@@ -275,8 +267,8 @@ void Gameboy::drawSprites(const std::vector<byte>& mem)
 			/* sprite are offset on the Gameboy hardware by (-8, -16) 
 			 * so a sprite at (0, 0) is offscreen and actually at (-8, -16)
 			 */
-			unsigned int y = (mem[i] & 0xFF) - 16;	// emulate that offset here
-			unsigned int x = (mem[i + 1] & 0xFF) - 8;; // ... 
+			unsigned int y = (mem[i] & 0xFF) - 16; // emulate that offset here
+			unsigned int x = (mem[i + 1] & 0xFF) - 8; // ... 
 			// sprites are always unsigned
 			// draw the upper 8x8 tile
 			addr16 chrLocStartUp = static_cast<ubyte>(mem[i + 2]) * 0x10 + CHR_MAP_UNSIGNED; // get the location of the first tile slice in memory
@@ -381,7 +373,7 @@ bool Gameboy::handleEvents()
 	SDL_Event e;
 	int eventR;
 	bool validKeyPressed = false; // is a valid (Gameboy) key pressed?
-	while (eventR = SDL_PollEvent(&e))
+	while (SDL_PollEvent(&e))
 	{
 		if (e.type == SDL_QUIT)
 		{
@@ -390,8 +382,6 @@ bool Gameboy::handleEvents()
 		if (e.type == SDL_KEYDOWN)
 		{
 			SDL_Keycode key = e.key.keysym.sym;
-#ifdef DEBUG
-			std::cout << "key presssed:\t" << key << std::endl;
 			if (key == SDLK_9)
 			{
 				__T = true;
@@ -399,13 +389,6 @@ bool Gameboy::handleEvents()
 			if (key == SDLK_ESCAPE)
 			{
 				running = false;
-			}
-			if (key == SDLK_g)
-			{
-				static int checkCount = 0;
-				std::cout << "still running" << std::endl;
-				std::cout << checkCount << std::endl;
-				checkCount++;
 			}
 			if (key == SDLK_1)
 			{
@@ -415,116 +398,85 @@ bool Gameboy::handleEvents()
 			{
 				cpu._test = false;
 			}
-#endif // DEBUG
-			if ((cpu.rByte(JOYPAD) & b4) == 0)
+			if (key == SDLK_UP) // up
 			{
-				if (key == SDLK_UP) // up
-				{
-					cpu.keyInfo.keys[p14] &= ~keyUp;
-					cpu.clrBit(JOYPAD, keyUp);
-					validKeyPressed = true;
-				}
-				if (key == SDLK_DOWN) // down
-				{
-					cpu.keyInfo.keys[p14] &= ~keyDown;
-					cpu.clrBit(JOYPAD, keyDown);
-					validKeyPressed = true;
-				}
-				if (key == SDLK_LEFT) // left
-				{
-					cpu.keyInfo.keys[p14] &= ~keyLeft;
-					cpu.clrBit(JOYPAD, keyLeft);
-					validKeyPressed = true;
-				}
-				if (key == SDLK_RIGHT) // right
-				{
-					cpu.keyInfo.keys[p14] &= ~keyRight;
-					cpu.clrBit(JOYPAD, keyRight);
-					validKeyPressed = true;
-				}
+				cpu.keyInfo.keys[p14] &= ~keyUp;
+				cpu.wByte(0xFFA6, 0);
+				validKeyPressed = true;
 			}
-			else if ((cpu.rByte(JOYPAD) & b5) == 0)
+			if (key == SDLK_DOWN) // down
 			{
-				if (key == SDLK_z) // a
-				{
-					cpu.keyInfo.keys[p15] &= ~keyA;
-					cpu.clrBit(JOYPAD, keyA);
-					validKeyPressed = true;
-				}
-				if (key == SDLK_x) // b
-				{
-					cpu.keyInfo.keys[p15] &= ~keyB;
-					cpu.clrBit(JOYPAD, keyB);
-					validKeyPressed = true;
-				}
-				if (key == SDLK_RETURN) // start
-				{
-					cpu.keyInfo.keys[p15] &= ~keyStart;
-					cpu.clrBit(JOYPAD, keyStart);
-					validKeyPressed = true;
-				}
-				if (key == SDLK_BACKSPACE) // select
-				{
-					cpu.keyInfo.keys[p15] &= ~keySelect;
-					cpu.clrBit(JOYPAD, keySelect);
-					validKeyPressed = true;
-				}
+				cpu.keyInfo.keys[p14] &= ~keyDown;
+				validKeyPressed = true;
 			}
-			else
+			if (key == SDLK_LEFT) // left
 			{
-				cpu.wByte(JOYPAD, 0xFF);
+				cpu.keyInfo.keys[p14] &= ~keyLeft;
+				validKeyPressed = true;
+			}
+			if (key == SDLK_RIGHT) // right
+			{
+				cpu.keyInfo.keys[p14] &= ~keyRight;
+				validKeyPressed = true;
+			}
+			if (key == SDLK_z) // a
+			{
+				cpu.keyInfo.keys[p15] &= ~keyA;
+				validKeyPressed = true;
+			}
+			if (key == SDLK_x) // b
+			{
+				cpu.keyInfo.keys[p15] &= ~keyB;
+				validKeyPressed = true;
+			}
+			if (key == SDLK_RETURN) // start
+			{
+				cpu.keyInfo.keys[p15] &= ~keyStart;
+				validKeyPressed = true;
+			}
+			if (key == SDLK_BACKSPACE) // select
+			{
+				cpu.keyInfo.keys[p15] &= ~keySelect;
+				validKeyPressed = true;
 			}
 		}
 		else if (e.type == SDL_KEYUP)
 		{
 			SDL_Keycode key = e.key.keysym.sym;
-			std::cout << "key up:\t\t" << key << std::endl;
+			const byte joypadState = cpu.rByte(JOYPAD);
 			if (key == SDLK_UP) // up
 			{
-				cpu.orByte(JOYPAD, keyUp);
 				cpu.keyInfo.keys[p14] |= keyUp;
 			}
 			if (key == SDLK_DOWN) // down
 			{
-				cpu.orByte(JOYPAD, keyDown);
 				cpu.keyInfo.keys[p14] |= keyDown;
 			}
 			if (key == SDLK_LEFT) // left
 			{
-				cpu.orByte(JOYPAD, keyLeft);
 				cpu.keyInfo.keys[p14] |= keyLeft;
 			}
 			if (key == SDLK_RIGHT) // right
 			{
-				cpu.orByte(JOYPAD, keyRight);
 				cpu.keyInfo.keys[p14] |= keyRight;
 			}
 			if (key == SDLK_z) // a
 			{
-				cpu.orByte(JOYPAD, keyA);
 				cpu.keyInfo.keys[p15] |= keyA;
 			}
 			if (key == SDLK_x) // b
 			{
-				cpu.orByte(JOYPAD, keyB);
 				cpu.keyInfo.keys[p15] |= keyB;
 			}
 			if (key == SDLK_RETURN) // start
 			{
-				cpu.orByte(JOYPAD, keyStart);
 				cpu.keyInfo.keys[p15] |= keyStart;
 			}
 			if (key == SDLK_BACKSPACE) // select
 			{
-				cpu.orByte(JOYPAD, keySelect);
 				cpu.keyInfo.keys[p15] |= keySelect;
 			}
 		}
-	}
-	if (eventR == 0)
-	{
-		//std::cout << "no event " << std::endl;
-		cpu.wByte(JOYPAD, 0x0F);
 	}
 	return validKeyPressed;
 }
