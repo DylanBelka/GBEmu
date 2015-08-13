@@ -307,7 +307,7 @@ void Gameboy::renderFull()
 	clear(backgroundSurface);
 	clear(fullScreenSurface);
 	const byte lcdc = cpu.rByte(LCDC); // get the current state of the lcd status register
-	if ((lcdc & b7) != 0x0) // LCD is enabled, do drawing
+ 	if ((lcdc & b7) != 0x0) // LCD is enabled, do drawing
 	{
 		// get a dump of the cpu's memory (gfx data is stored in this memory)
 		const std::vector<byte> mem = *cpu.dumpMem();
@@ -335,7 +335,7 @@ void Gameboy::renderFull()
 		}
 		// copy the screen buffer (the background) to the actual screen
 		SDL_BlitSurface(backgroundSurface, &srcSurfaceRect, fullScreenSurface, NULL);
-		// draw sprites on top of background
+		// draw sprites on top of background 
 		if ((lcdc & b1) != 0x0) // draw sprites?
 		{
 			drawSprites(mem);
@@ -401,7 +401,6 @@ bool Gameboy::handleEvents()
 			if (key == SDLK_UP) // up
 			{
 				cpu.keyInfo.keys[p14] &= ~keyUp;
-				cpu.wByte(0xFFA6, 0);
 				validKeyPressed = true;
 			}
 			if (key == SDLK_DOWN) // down
@@ -443,7 +442,6 @@ bool Gameboy::handleEvents()
 		else if (e.type == SDL_KEYUP)
 		{
 			SDL_Keycode key = e.key.keysym.sym;
-			const byte joypadState = cpu.rByte(JOYPAD);
 			if (key == SDLK_UP) // up
 			{
 				cpu.keyInfo.keys[p14] |= keyUp;

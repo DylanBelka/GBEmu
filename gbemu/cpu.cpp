@@ -284,6 +284,15 @@ void CPU::set(reg& r, ubyte bit)
 	r |= bit;
 }
 
+void CPU::swap(reg& r)
+{
+	r = ((r & 0x0F) << 4 | (r & 0xF0) >> 4);
+	updateZero(r);
+	resetN();
+	resetHC();
+	resetCarry();
+}
+
 void CPU::emulateExtendedInstruction(byte opcode)
 {
 	switch (opcode & 0xFF)
@@ -320,14 +329,6 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x06: // rlc (hl)
 	{
-		//char val = mem[static_cast<addr16>(HL())];
-		//val <<= 1;
-		//resetCarry();
-		//F |= val & b7;
-		//val |= val & b7;
-		//resetN();
-		//updateZero(val);
-		//mem[static_cast<addr16>(HL())] = val;
 		rlc(mem[static_cast<addr16>(HL())]);
 		clockCycles += 8;
 		break;
@@ -542,27 +543,45 @@ void CPU::emulateExtendedInstruction(byte opcode)
 		sra(A);
 		break;
 	}
-	/**
-	No instructions 0x30 - 0x36
-	These are here to allow the compiler to easily tell if there are misspelled cases and counting the number of breaks
-	**/
-	case 0x30:
+	case 0x30: // swap b
+	{
+		swap(B);
 		break;
-	case 0x31:
+	}
+	case 0x31: // swap c
+	{
+		swap(C);
 		break;
-	case 0x32:
+	}
+	case 0x32: // swap d
+	{
+		swap(D);
 		break;
-	case 0x33:
+	}
+	case 0x33: // swap e
+	{
+		swap(E);
 		break;
-	case 0x34:
+	}
+	case 0x34: // swap h
+	{
+		swap(H);
 		break;
-	case 0x35:
+	}
+	case 0x35: // swap l
+	{
+		swap(L);
 		break;
-	case 0x36:
+	}
+	case 0x36: // swap (hl)
+	{
+		swap(mem[static_cast<addr16>(HL())]);
+		clockCycles += 8;
 		break;
+	}
 	case 0x37: // swap a
 	{
-		A = ((A & 0x0F) << 4 | (A & 0xF0) >> 4);
+		swap(A);
 		break;
 	}
 	case 0x38: // srl b
@@ -1959,8 +1978,6 @@ static int c = 0;
 
 addr16 shadowPC;
 
-unsigned ticks = SDL_GetTicks();
-
 #endif // DEBUG
 
 void CPU::emulateCycle()
@@ -1968,11 +1985,6 @@ void CPU::emulateCycle()
 	handleInterrupts();
 	unsigned char opcode = mem[PC]; // get next opcode
 	clockCycles += clockTimes[opcode];
-	//std::cout << toHex(opcode) << std::endl;
-
-#ifdef DEBUG
-
-#endif // DEBUG
 
 	/// emulate the opcode 
 	switch (opcode & 0xFF)

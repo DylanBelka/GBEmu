@@ -4,7 +4,6 @@
 #include <SDL.h>
 #include <iostream>
 #include <string>
-#include <cstdint>
 
 #include "cpu.h"
 #include "memdefs.h"

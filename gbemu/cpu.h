@@ -6,18 +6,11 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <string>
-#include <iomanip>
 #include <vector>
-#include <functional>
 
 #include "memdefs.h"
 #include "input.h"
 #include "types.h"
-
-#ifdef DEBUG
-#include <SDL.h> // SDL only used in debug in CPU for timing
-#endif // DEBUG
 
 /**
 Resources:
@@ -172,6 +165,7 @@ private:
 	void bit(reg r, ubyte bit);
 	void res(reg& r, ubyte bit);
 	void set(reg& r, ubyte bit);
+	inline void swap(reg& r);
 
 	void emulateExtendedInstruction(byte opcode);
 
