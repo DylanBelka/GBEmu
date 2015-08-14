@@ -1,5 +1,5 @@
 #include <iostream>
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 #undef main // fixes incompatibilities with some of MSVC2015's C function signitures with what SDL expects
 
