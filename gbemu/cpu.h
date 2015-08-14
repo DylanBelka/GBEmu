@@ -95,7 +95,7 @@ private:
 	inline const bool carry()		const { return F & 0x1; }
 
 	// 16 bit "registers"
-	inline reg16 AF() { return ((A << 8) | (F & 0xFF)); } // can remove the masking
+	inline reg16 AF() { return ((A << 8) | (F & 0xFF)); }
 	inline reg16 BC() { return ((B << 8) | (C & 0xFF)); }
 	inline reg16 DE() { return ((D << 8) | (E & 0xFF)); }
 	inline reg16 HL() { return ((H << 8) | (L & 0xFF)); }
@@ -105,12 +105,12 @@ private:
 	inline void DE(word val) { D = ((val >> 0x8) & 0xFF); E = val & 0xFF; }
 	inline void HL(word val) { H = ((val >> 0x8) & 0xFF); L = val & 0xFF; }
 
-	addr16 PC;				// program counter register
-	addr16 SP;				// stack pointer
+	addr16 PC;		// program counter register
+	addr16 SP;		// stack pointer
 
 	std::vector<byte> mem;	// cpu memory (0x10000 bytes in size)
 
-	bool IME = true;		// interrupt master enable
+	bool IME = true;	// interrupt master enable
 
 	bool halted = false;	// HALT(ed)?
 	bool stopped = false;	// STOP(ed)?
