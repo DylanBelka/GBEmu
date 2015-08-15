@@ -3560,14 +3560,13 @@ void CPU::emulateCycle()
 		case 0xF2: // ld a, (C)
 		{
 			const addr16 addr = static_cast<ubyte>(C) + 0xFF00;
-			A = rByte(PC + 1);
+			A = rByte(addr);
 			PC++;
 			break;
 		}
 		case 0xF3: // di
 		{
 			IME = false;
-			std::cout << "di at: " << toHex(PC) << std::endl;
 			PC++;
 			break;
 		}
@@ -3624,7 +3623,6 @@ void CPU::emulateCycle()
 		case 0xFB: // ei
 		{
 			IME = true;
-			std::cout << "ie at: " << toHex(PC) << std::endl;
 			PC++;
 			break;
 		}
@@ -3707,8 +3705,7 @@ int CPU::loadROM(const std::string& fileName)
 	//{
 	//	system("pause");
 	//}
+
 	delete[] ROMstr;
 	return EXIT_SUCCESS; // ROM load completed succesfully
 }
-
-
