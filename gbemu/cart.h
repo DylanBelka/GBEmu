@@ -3,11 +3,11 @@
 
 #include <iostream>
 #include <vector>
+#include <array>
+
 #include "memdefs.h"
 #include "types.h"
-#include <iomanip>
 #include <string>
-#include <sstream>
 
 #include "toHex.h"
 
@@ -21,18 +21,28 @@ constexpr int MBitToByte(int mbit)
 	return mbit * 131072;
 }
 
+const int banksize = 0x4000; // bytes
+
 class Cart
 {
 public:
 	void init(const char* romStr, int filesize);
-	const byte rByte(const addr16 addr) const;
+	const byte rByte(addr16 addr) const;
 	void wByte(const addr16 addr, byte val);
 
 	void wWord(const addr16 addr, word val);
 
 private:
-	std::vector<byte> rom;
+	std::vector<byte> fixedrom;
 	std::vector<byte> ram;
+
+	std::vector<std::array<byte, banksize>> bankedROM;
+	int currentrombank;
+
+	std::vector<std::vector<byte>> bankedRAM;
+	int currentrambank;
+	bool rambankenabled = false;
+	int memmode;
 
 	// cart info
 	int isGBC;
@@ -41,7 +51,7 @@ private:
 	int ramsize;
 	int type;
 
-	void loadROM(const char* ROMstr, int filesize);
+	void initROM(const char* ROMstr, int filesize);
 	void initRAM();
 	void setupMBC(const char* ROMstr);
 };
@@ -52,6 +62,13 @@ int getRAMSize(const char size);
 bool isCartRAM(const addr16 addr);
 inline bool isInternalMem(const addr16 addr);
 bool isCartROM(const addr16 addr);
+bool isBankedROM(const addr16 addr);
+
+enum memmodes
+{
+	_16_8 = 0,
+	_4_32,
+};
 
 enum carttypes
 {
