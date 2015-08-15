@@ -3,6 +3,10 @@
 
 #include <string>
 #include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <string>
+
 #include "types.h"
 
 template<typename T>
