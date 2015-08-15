@@ -3669,20 +3669,38 @@ int CPU::loadROM(const std::string& fileName)
 		return 1; // file load fail
 	}
 	// make sure the ROM fits within the memory
+	#ifdef DEBUG
+	bool isROMTooBig = false;
+	#endif
 	if (size > MAX_ROM_SIZE)
 	{
-		delete[] fileStr;
-		return 2; // ROM too big
+		std::cout << "ROM size greater than " << MAX_ROM_SIZE << std::endl;
+		isROMTooBig = true;	
+		//delete[] fileStr;
+		//return 2; // ROM too big
 	}
 	if (fileStr == nullptr)
 	{
 		delete[] fileStr;
 		return 3; // mem alloc failure
 	}
-	// load the rom into memory starting at 0x00
-	for (unsigned i = 0; i < size; i++)
+	
+	const char* romTitle = &fileStr[TITLE];
+        std::cout << "ROM <" << romTitle << "> loaded succesfuly" << std::endl;
+        std::cout << "Cart type: " << toHex(fileStr[CART_TYPE]) << std::endl;  
+        std::cout << "Cart ROM size: " << toHex(fileStr[CART_ROM_SIZE]) << std::endl;
+        std::cout << "Cart RAM size: " << toHex(fileStr[CART_RAM_SIZE]) << std::endl;
+	if (!isROMTooBig)
 	{
-		mem[i] = fileStr[i];
+		// load the rom into memory starting at 0x00
+		for (unsigned i = 0; i < size; i++)
+		{
+			mem[i] = fileStr[i];
+		}
+	}
+	else
+	{
+		std::cin.ignore();
 	}
 	delete[] fileStr;
 	return EXIT_SUCCESS; // ROM load completed succesfully
