@@ -51,17 +51,16 @@ public:
 	void dumpCPU();
 #endif // DEBUG
 
-	std::vector<byte>* dumpMem() { return &mem; }
+	std::vector<byte>* dumpMem() { return &internalmem; }
 
 // CPU status getting/ setting functions
 public:
 	void wByte(addr16 addr, byte val);
-	inline byte rByte(addr16 addr) const { return mem[addr]; } // read byte
-	void orByte(addr16 addr, byte val) { mem[addr] |= val; } // or byte
-	void clrBit(addr16 addr, byte bit) { mem[addr] &= ~bit; } // clear bit in memory
+	byte rByte(addr16 addr) const; // read byte
+	inline void clrBit(byte& val, byte bit) { val &= ~bit; }
 
 	void wWord(addr16 addr, word val);
-	inline word rWord(addr16 addr) const { return ((mem[addr + 1] << 8) | (mem[addr] & 0xFF)); } // read word
+	inline word rWord(addr16 addr) const { return ((rByte(addr + 1) << 8) | (rByte(addr) & 0xFF)); } // read word
 
 	bool isHalted()	 const { return halted; }
 	bool isStopped() const { return stopped; }
@@ -113,7 +112,7 @@ private:
 	addr16 PC;		// program counter register
 	addr16 SP;		// stack pointer
 
-	std::vector<byte> mem;	// cpu memory (0x10000 bytes in size)
+	std::vector<byte> internalmem;
 
 	bool IME = true;	// interrupt master enable
 
@@ -179,7 +178,7 @@ private:
 	void push(reg16 val);
 	reg16 pop();
 
-	inline const uint16_t getNextWord();
+	inline const uint16_t getNextWord() { return rWord(PC + 1); }
 
 	void halt();
 	void stop();

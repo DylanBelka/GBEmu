@@ -196,7 +196,7 @@ void Gameboy::drawBG(const std::vector<byte>& mem)
 {
 	unsigned x = 0;
 	unsigned y = 0;
-	const int lcdc = mem[LCDC];
+	const int lcdc = cpu.rByte(LCDC);
 	if (lcdc & 0x40 != 0x0) // 0 = bg0, 1 = bg1
 	{
 		// bg0, draw all of the 8x8 tiles

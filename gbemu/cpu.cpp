@@ -21,7 +21,7 @@ const int clockTimes[256] =
 };
 
 CPU::CPU() 
-	: mem(MEM_SIZE)
+	: internalmem(MEM_SIZE)
 {
 	keyInfo = { { 0x0F, 0x0F }, 0x0 };
 	reset();
@@ -37,7 +37,7 @@ void CPU::reset()
 	// initialize all mem to 0
 	for (int i = 0; i < MEM_SIZE; i++)
 	{
-		mem[i] = 0;
+		internalmem[i] = 0;
 	}
 	// some known starting values of registers
 	F = 0xB0;
@@ -47,38 +47,38 @@ void CPU::reset()
 	SP = 0xFFFE;
 	PC = 0x100;
 	// set memory registers to their known starting values
-	mem[TIMA] = 0x00;
-	mem[TMA] = 0x00;
-	mem[TAC] = 0x00;
-	mem[NR10] = 0x80;
-	mem[NR11] = 0xBF;
-	mem[NR12] = 0xF3;
-	mem[NR14] = 0xBF;
-	mem[NR21] = 0x3F;
-	mem[NR22] = 0x00;
-	mem[NR24] = 0xBF;
-	mem[NR30] = 0x7F;
-	mem[NR31] = 0xFF;
-	mem[NR32] = 0x9F;
-	mem[NR33] = 0xBF;
-	mem[NR41] = 0xFF;
-	mem[NR42] = 0x00;
-	mem[NR43] = 0x00;
-	mem[NR30] = 0xBF;
-	mem[NR50] = 0x77;
-	mem[NR51] = 0xF3;
-	mem[NR52] = 0xF1;
-	mem[LCDC] = 0x91;
-	mem[SCY] = 0x00;
-	mem[SCX] = 0x00;
-	mem[LYC] = 0x00;
-	mem[BGP] = 0xFC;
-	mem[OBP0] = 0xFC;
-	mem[OBP1] = 0xFF;
-	mem[WY] = 0x00;
-	mem[WX] = 0x00;
-	mem[IE] = 0x00;
-	mem[LY] = 0x94;
+	internalmem[TIMA] = 0x00;
+	internalmem[TMA] = 0x00;
+	internalmem[TAC] = 0x00;
+	internalmem[NR10] = 0x80;
+	internalmem[NR11] = 0xBF;
+	internalmem[NR12] = 0xF3;
+	internalmem[NR14] = 0xBF;
+	internalmem[NR21] = 0x3F;
+	internalmem[NR22] = 0x00;
+	internalmem[NR24] = 0xBF;
+	internalmem[NR30] = 0x7F;
+	internalmem[NR31] = 0xFF;
+	internalmem[NR32] = 0x9F;
+	internalmem[NR33] = 0xBF;
+	internalmem[NR41] = 0xFF;
+	internalmem[NR42] = 0x00;
+	internalmem[NR43] = 0x00;
+	internalmem[NR30] = 0xBF;
+	internalmem[NR50] = 0x77;
+	internalmem[NR51] = 0xF3;
+	internalmem[NR52] = 0xF1;
+	internalmem[LCDC] = 0x91;
+	internalmem[SCY] = 0x00;
+	internalmem[SCX] = 0x00;
+	internalmem[LYC] = 0x00;
+	internalmem[BGP] = 0xFC;
+	internalmem[OBP0] = 0xFC;
+	internalmem[OBP1] = 0xFF;
+	internalmem[WY] = 0x00;
+	internalmem[WX] = 0x00;
+	internalmem[IE] = 0x00;
+	internalmem[LY] = 0x94;
 }
 
 #pragma region FlagFuncs
@@ -329,7 +329,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x06: // rlc (hl)
 	{
-		rlc(mem[static_cast<addr16>(HL())]);
+		byte val = rByte(static_cast<addr16>(HL()));
+		rlc(val);
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -370,7 +372,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x0E: // rrc (hl)
 	{
-		rrc(mem[static_cast<addr16>(HL())]);
+		byte val = rByte(static_cast<addr16>(HL()));
+		rrc(val);
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -411,7 +415,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x16: // rl (hl)
 	{
-		rl(mem[static_cast<addr16>(HL())]);
+		byte val = rByte(static_cast<addr16>(HL()));
+		rl(val);
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -452,7 +458,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x1E: // rr (hl)
 	{
-		rr(mem[static_cast<addr16>(HL())]);
+		byte val = static_cast<addr16>(HL());
+		rr(val);
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -493,7 +501,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x26: // sla (hl)
 	{
-		sla(mem[static_cast<addr16>(HL())]);
+		byte val = static_cast<addr16>(HL());
+		sla(val);
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -534,7 +544,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x2E: // sra (hl)
 	{
-		sra(mem[static_cast<addr16>(HL())]);
+		byte val = static_cast<addr16>(HL());
+		sra(val);
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -575,7 +587,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x36: // swap (hl)
 	{
-		swap(mem[static_cast<addr16>(HL())]);
+		byte val = rByte(static_cast<addr16>(HL()));
+		swap(val);
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -616,7 +630,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x3E: // srl (hl)
 	{
-		srl(mem[static_cast<addr16>(HL())]);
+		byte val = rByte(static_cast<addr16>(HL()));
+		srl(val);
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -657,7 +673,7 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x46: // bit 0, (hl)
 	{
-		bit(mem[static_cast<addr16>(HL())], b0);
+		bit(rByte(static_cast<addr16>(HL())), b0);
 		clockCycles += 8;
 		break;
 	}
@@ -698,7 +714,7 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x4E: // bit 1, (hl)
 	{
-		bit(mem[static_cast<addr16>(HL())], b1);
+		bit(rByte(static_cast<addr16>(HL())), b1);
 		clockCycles += 8;
 		break;
 	}
@@ -739,7 +755,7 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x56: // bit 2, (hl)
 	{
-		bit(mem[static_cast<addr16>(HL())], b2);
+		bit(rByte(static_cast<addr16>(HL())), b2);
 		clockCycles += 8;
 		break;
 	}
@@ -780,7 +796,7 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x5E: // bit 3, (hl)
 	{
-		bit(mem[static_cast<addr16>(HL())], b3);
+		bit(rByte(static_cast<addr16>(HL())), b3);
 		clockCycles += 8;
 		break;
 	}
@@ -821,7 +837,7 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x66: // bit 4, (hl)
 	{
-		bit(mem[static_cast<addr16>(HL())], b3);
+		bit(rByte(static_cast<addr16>(HL())), b3);
 		clockCycles += 8;
 		break;
 	}
@@ -862,7 +878,7 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x6E: // bit 5, (hl)
 	{
-		bit(mem[static_cast<addr16>(HL())], b5);
+		bit(rByte(static_cast<addr16>(HL())), b5);
 		clockCycles += 8;
 		break;
 	}
@@ -903,7 +919,7 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x76: // bit 6, (hl)
 	{
-		bit(mem[static_cast<addr16>(HL())], b6);
+		bit(rByte(static_cast<addr16>(HL())), b6);
 		clockCycles += 8;
 		break;
 	}
@@ -944,7 +960,7 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x7E: // bit 7, (hl)
 	{
-		bit(mem[static_cast<addr16>(HL())], b7);
+		bit(rByte(static_cast<addr16>(HL())), b7);
 		clockCycles += 8;
 		break;
 	}
@@ -985,9 +1001,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x86: // res 0, (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
+		byte val = rByte(static_cast<addr16>(HL()));
 		val &= ~b0;
-		mem[static_cast<addr16>(HL())] = val;
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -1028,9 +1044,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x8E: // res 1, (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
+		byte val = rByte(static_cast<addr16>(HL()));
 		val &= ~b1;
-		mem[static_cast<addr16>(HL())] = val;
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -1071,9 +1087,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x96: // res 2, (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
+		byte val = rByte(static_cast<addr16>(HL()));
 		val &= ~b2;
-		mem[static_cast<addr16>(HL())] = val;
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -1114,9 +1130,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0x9E: // res 3, (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
+		byte val = rByte(static_cast<addr16>(HL()));
 		val &= ~b3;
-		mem[static_cast<addr16>(HL())] = val;
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -1157,9 +1173,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0xA6: // res 4, (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
+		byte val = rByte(static_cast<addr16>(HL()));
 		val &= ~b4;
-		mem[static_cast<addr16>(HL())] = val;
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -1200,9 +1216,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0xAE: // res 5, (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
+		byte val = rByte(static_cast<addr16>(HL()));
 		val &= ~b5;
-		mem[static_cast<addr16>(HL())] = val;
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -1243,9 +1259,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0xB6: // res 6, (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
+		byte val = rByte(static_cast<addr16>(HL()));
 		val &= ~b6;
-		mem[static_cast<addr16>(HL())] = val;
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -1286,9 +1302,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0xBE: // res 7, (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
+		byte val = rByte(static_cast<addr16>(HL()));
 		val &= ~b7;
-		mem[static_cast<addr16>(HL())] = val;
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -1329,9 +1345,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0xC6: // set 0, (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
+		byte val = rByte(static_cast<addr16>(HL()));
 		val |= b0;
-		mem[static_cast<addr16>(HL())] = val;
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -1372,9 +1388,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0xCE: // set 1, (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
+		byte val = rByte(static_cast<addr16>(HL()));
 		val |= b1;
-		mem[static_cast<addr16>(HL())] = val;
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -1415,9 +1431,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0xD6: // set 2, (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
+		byte val = rByte(static_cast<addr16>(HL()));
 		val |= b2;
-		mem[static_cast<addr16>(HL())] = val;
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -1458,9 +1474,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0xDE: // set 3, (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
+		byte val = rByte(static_cast<addr16>(HL()));
 		val |= b3;
-		mem[static_cast<addr16>(HL())] = val;
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -1501,9 +1517,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0xE6: // set 4, (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
+		byte val = rByte(static_cast<addr16>(HL()));
 		val |= b4;
-		mem[static_cast<addr16>(HL())] = val;
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -1544,9 +1560,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0xEE: // set 5, (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
+		byte val = rByte(static_cast<addr16>(HL()));
 		val |= b5;
-		mem[static_cast<addr16>(HL())] = val;
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -1587,9 +1603,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0xF6: // set 6, (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
+		byte val = rByte(static_cast<addr16>(HL()));
 		val |= b6;
-		mem[static_cast<addr16>(HL())] = val;
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -1630,9 +1646,9 @@ void CPU::emulateExtendedInstruction(byte opcode)
 	}
 	case 0xFE: // set 7, (hl)
 	{
-		byte val = mem[static_cast<addr16>(HL())];
+		byte val = rByte(static_cast<addr16>(HL()));
 		val |= b7;
-		mem[static_cast<addr16>(HL())] = val;
+		wByte(static_cast<addr16>(HL()), val);
 		clockCycles += 8;
 		break;
 	}
@@ -1753,11 +1769,6 @@ void CPU::orr(byte val)
 	PC++;
 }
 
-const addr16 CPU::getNextWord()
-{
-	return ((mem[PC + 2] << 8) | (mem[PC + 1] & 0xFF));
-}
-
 // set halted flag
 void CPU::halt()
 {
@@ -1791,9 +1802,11 @@ void CPU::call(bool cond)
 	if (cond)
 	{
 		SP--;
-		mem[SP] = (PC + 3) & 0xFF; // + 3 is for jumping past the 3 bytes for the opcode and dest
+		//internalmem[SP] = (PC + 3) & 0xFF; // + 3 is for jumping past the 3 bytes for the opcode and dest
+		wByte(SP, ((PC + 3) & 0xFF));
 		SP--;
-		mem[SP] = (((PC + 3) >> 8) & 0xFF);
+		//internalmem[SP] = (((PC + 3) >> 8) & 0xFF);
+		wByte(SP, (((PC + 3) >> 8) & 0xFF));
 		PC = getNextWord();
 		clockCycles += 12;
 	}
@@ -1806,17 +1819,19 @@ void CPU::call(bool cond)
 void CPU::push(reg16 val)
 {
 	SP--;
-	mem[SP] = val & 0xFF;
+	wByte(SP, val & 0xFF);
+	//internalmem[SP] = val & 0xFF;
 	SP--;
-	mem[SP] = val >> 0x8;
+	//internalmem[SP] = val >> 0x8;
+	wByte(SP, val >> 0x8);
 }
 
 reg16 CPU::pop()
 {
 	reg16 ret = 0;
-	ret = mem[SP] << 8;
+	ret = (rByte(SP) & 0xFF) << 8;
 	SP++;
-	ret |= mem[SP] & 0xFF;
+	ret |= rByte(SP) & 0xFF;
 	SP++;
 	return ret;
 }
@@ -1888,7 +1903,7 @@ void CPU::dma()
 	const addr16 dmaStart = A << 0x8; // get the location that the DMA will be copying from
 	for (int i = 0; i < 0x8C; i++) // copy the 0x8C bytes from dmaStart to the OAM
 	{
-		mem[OAM + i] = mem[dmaStart + i];
+		internalmem[OAM + i] = rByte(dmaStart + i);
 	}
 }
 
@@ -1898,15 +1913,16 @@ void CPU::interrupt(const byte loc)
 	PC = loc; // jump to the interrupt location
 	interrupted = true;
 	IME = false; // disable interrupts
-	mem[IF] = 0x0;
+	wByte(IF, 0x0);
 }
 
 static bool x = false;
+static bool u = false;
 
 void CPU::handleInterrupts()
 {
-	const byte intEnable = mem[IE];
-	const byte intFlag = mem[IF];
+	const byte intEnable = rByte(IE);
+	const byte intFlag = rByte(IF);
 	if (IME) // are interrupts enabled?
 	{
 		if ((intEnable & 0x1) && (intFlag & 0x1)) // vblank
@@ -1917,30 +1933,41 @@ void CPU::handleInterrupts()
 	}
 }
 
+byte CPU::rByte(addr16 addr) const
+{
+	if (isInternalMem(addr)) 
+	{
+		return internalmem[addr]; 
+	}
+	else
+	{ 
+		return cart.rByte(addr);
+	}
+}
+
+
 void CPU::wByte(addr16 addr, byte val)
 {
-	if (addr > MAX_ROM_SIZE)
+	if (isInternalMem(addr))
 	{
-		mem[addr] = val;
+		internalmem[addr] = val;
 	}
 	else
 	{
-		std::cout << "Illegal access of ROM\nMemory mappers not yet supported" << std::endl;
-		std::cout << "val = " << toHex(val) << "\tat" << toHex(PC) << std::endl;
+		cart.wByte(addr, val);
 	}
 }
 
 void CPU::wWord(addr16 addr, word val)
 {
-	if (addr > MAX_ROM_SIZE)
+	if (isInternalMem(addr))
 	{
-		mem[addr] = val & 0x00FF; // lower byte
-		mem[addr + 1] = ((val & 0xFF00) >> 8) & 0xFF; // upper byte
+		internalmem[addr] = val & 0x00FF; // lower byte
+		internalmem[addr + 1] = ((val & 0xFF00) >> 8) & 0xFF; // upper byte
 	}
 	else
 	{
-		std::cout << "Illegal access of ROM\nMemory mappers not yet supported" << std::endl;
-		std::cout << "val = " << toHex(val) << "addr = " << toHex(addr) << "\tat " << toHex(PC) << std::endl;
+		cart.wWord(addr, val);
 	}
 }
 
@@ -1980,12 +2007,14 @@ addr16 shadowPC;
 
 #endif // DEBUG
 
+static bool ii = false;
+static int k = 0;
+
 void CPU::emulateCycle()
 {
 	handleInterrupts();
-	unsigned char opcode = mem[PC]; // get next opcode
+	unsigned char opcode = rByte(PC); // get next opcode
 	clockCycles += clockTimes[opcode];
-	//std::cout << toHex(opcode) << "\tat " << toHex(PC) << std::endl;
 
 	/// emulate the opcode 
 	switch (opcode & 0xFF)
@@ -2003,7 +2032,8 @@ void CPU::emulateCycle()
 		}
 		case 0x02: // ld (BC), a
 		{
-			mem[static_cast<addr16>(BC())] = A;
+			wByte(static_cast<addr16>(BC()), A);
+			//mem[static_cast<addr16>(BC())] = A;
 			PC++;
 			break;
 		}
@@ -2026,7 +2056,7 @@ void CPU::emulateCycle()
 		}
 		case 0x06: // ld b, *
 		{
-			B = mem[PC + 1];
+			B = rByte(PC + 1);
 			PC += 2;
 			break;
 		}
@@ -2058,7 +2088,7 @@ void CPU::emulateCycle()
 		}
 		case 0x0A: // ld a, (BC)
 		{
-			A = mem[static_cast<addr16>(BC())];
+			A = rByte(static_cast<addr16>(BC()));
 			PC++;
 			break;
 		}
@@ -2081,7 +2111,7 @@ void CPU::emulateCycle()
 		}
 		case 0x0E: // ld c, *
 		{
-			C = mem[PC + 1];
+			C = rByte(PC + 1);
 			PC += 2;
 			break;
 		}
@@ -2109,7 +2139,8 @@ void CPU::emulateCycle()
 		}
 		case 0x12: // ld (de), a
 		{
-			mem[static_cast<addr16>(DE())] = A;
+			wByte(static_cast<addr16>(DE()), A);
+			//mem[] = A;
 			PC++;
 			break;
 		}
@@ -2132,7 +2163,7 @@ void CPU::emulateCycle()
 		}
 		case 0x16: // ld d, *
 		{
-			D = mem[PC + 1];
+			D = rByte(PC + 1);
 			PC += 2;
 			break;
 		}
@@ -2148,7 +2179,7 @@ void CPU::emulateCycle()
 		}
 		case 0x18: // jr *
 		{
-			jr(true, mem[PC + 1], 2);
+			jr(true, rByte(PC + 1), 2);
 			clockCycles -= 5;
 			break;
 		}
@@ -2164,7 +2195,7 @@ void CPU::emulateCycle()
 		}
 		case 0x1A: // ld a, (de)
 		{
-			A = mem[static_cast<addr16>(DE())];
+			A = rByte(static_cast<addr16>(DE()));
 			PC++;
 			break;
 		}
@@ -2187,7 +2218,7 @@ void CPU::emulateCycle()
 		}
 		case 0x1E: // ld e, *
 		{
-			E = mem[PC + 1];
+			E = rByte(PC + 1);
 			PC += 2;
 			break;
 		}
@@ -2203,7 +2234,7 @@ void CPU::emulateCycle()
 		}
 		case 0x20: // jr nz, *
 		{
-			jr(!zero(), mem[PC + 1], 2);
+			jr(!zero(), rByte(PC + 1), 2);
 			break;
 		}
 		case 0x21: // ld hl, **
@@ -2214,7 +2245,8 @@ void CPU::emulateCycle()
 		}
 		case 0x22: // ldi (hl), a   or   ld (hl+), a
 		{
-			mem[static_cast<addr16>(HL())] = A;
+			wByte(static_cast<addr16>(HL()), A);
+			//rByte(static_cast<addr16>(HL())) = A;
 			const reg16 hl = HL();
 			HL(hl + 1);
 			PC++;
@@ -2239,7 +2271,7 @@ void CPU::emulateCycle()
 		}
 		case 0x26: // ld h, *
 		{
-			H = mem[PC + 1];
+			H = rByte(PC + 1);
 			PC += 2;
 			break;
 		}
@@ -2284,7 +2316,7 @@ void CPU::emulateCycle()
 		}
 		case 0x28: // jr z, *
 		{
-			jr(zero(), mem[PC + 1], 2);
+			jr(zero(), rByte(PC + 1), 2);
 			break;
 		}
 		case 0x29: // add hl, hl
@@ -2299,7 +2331,7 @@ void CPU::emulateCycle()
 		}
 		case 0x2A: // ldi a, (hl) 
 		{
-			A = mem[static_cast<addr16>(HL())];
+			A = rByte(static_cast<addr16>(HL()));
 			const reg16 hl = HL();
 			HL(hl + 1);
 			PC++;
@@ -2324,7 +2356,7 @@ void CPU::emulateCycle()
 		}
 		case 0x2E: // ld l, *
 		{
-			L = mem[PC + 1];
+			L = rByte(PC + 1);
 			PC += 2;
 			break;
 		}
@@ -2336,7 +2368,7 @@ void CPU::emulateCycle()
 		}
 		case 0x30: // jr nc, *
 		{
-			jr(!carry(), mem[PC + 1], 2);
+			jr(!carry(), rByte(PC + 1), 2);
 			break;
 		}
 		case 0x31: // ld sp, **
@@ -2347,7 +2379,7 @@ void CPU::emulateCycle()
 		}
 		case 0x32: // ldd (hl), a
 		{
-			mem[static_cast<addr16>(HL())] = A;
+			wByte(static_cast<addr16>(HL()), A);
 			const reg16 hl = HL();
 			HL(hl - 1);
 			PC++;
@@ -2361,17 +2393,21 @@ void CPU::emulateCycle()
 		}
 		case 0x34: // inc (hl) 
 		{
-			inc(mem[static_cast<addr16>(HL())]);
+			byte val = rByte(static_cast<addr16>(HL()));
+			inc(val);
+			wByte(static_cast<addr16>(HL()), val);
 			break;
 		}
 		case 0x35: // dec (hl)
 		{
-			dec(mem[static_cast<addr16>(HL())]);
+			byte val = rByte(static_cast<addr16>(HL()));
+			dec(val);
+			wByte(static_cast<addr16>(HL()), val);
 			break;
 		}
 		case 0x36: // ld (hl), *
 		{
-			mem[static_cast<addr16>(HL())] = mem[PC + 1];
+			wByte(static_cast<addr16>(HL()), rByte(PC + 1));
 			PC += 2;
 			break;
 		}
@@ -2385,7 +2421,7 @@ void CPU::emulateCycle()
 		}
 		case 0x38: // jr c, *
 		{
-			jr(carry(), mem[PC + 1], 2);
+			jr(carry(), rByte(PC + 1), 2);
 			break;
 		}
 		case 0x39: // add hl, sp
@@ -2400,7 +2436,7 @@ void CPU::emulateCycle()
 		}
 		case 0x3A: // ldd a, (hl)
 		{
-			A = mem[static_cast<addr16>(HL())];
+			A = rByte(static_cast<addr16>(HL()));
 			const reg16 hl = HL();
 			HL(hl - 1);
 			PC++;
@@ -2424,7 +2460,7 @@ void CPU::emulateCycle()
 		}
 		case 0x3E: // ld a, *
 		{
-			A = mem[PC + 1];
+			A = rByte(PC + 1);
 			PC += 2;
 			break;
 		}
@@ -2478,7 +2514,7 @@ void CPU::emulateCycle()
 		}
 		case 0x46: // ld b, (hl)
 		{
-			B = mem[static_cast<addr16>(HL())];
+			B = rByte(static_cast<addr16>(HL()));
 			PC++;
 			break;
 		}
@@ -2525,7 +2561,7 @@ void CPU::emulateCycle()
 		}
 		case 0x4E: // ld c, (hl)
 		{
-			C = mem[static_cast<addr16>(HL())];
+			C = rByte(static_cast<addr16>(HL()));
 			PC++;
 			break;
 		}
@@ -2572,7 +2608,7 @@ void CPU::emulateCycle()
 		}
 		case 0x56: // ld d, (hl)
 		{
-			D = mem[static_cast<addr16>(HL())];
+			D = rByte(static_cast<addr16>(HL()));
 			PC++;
 			break;
 		}
@@ -2619,7 +2655,7 @@ void CPU::emulateCycle()
 		}
 		case 0x5E: // ld e, (hl)
 		{
-			E = mem[static_cast<addr16>(HL())];
+			E = rByte(static_cast<addr16>(HL()));
 			PC++;
 			break;
 		}
@@ -2666,7 +2702,7 @@ void CPU::emulateCycle()
 		}
 		case 0x66: // ld h, (hl)
 		{
-			H = mem[static_cast<addr16>(HL())];
+			H = rByte(static_cast<addr16>(HL()));
 			PC++;
 			break;
 		}
@@ -2713,7 +2749,7 @@ void CPU::emulateCycle()
 		}
 		case 0x6E: // ld l, (hl)
 		{
-			L = mem[static_cast<addr16>(HL())];
+			L = rByte(static_cast<addr16>(HL()));
 			PC++;
 			break;
 		}
@@ -2725,37 +2761,37 @@ void CPU::emulateCycle()
 		}
 		case 0x70: // ld (hl), b
 		{
-			mem[static_cast<addr16>(HL())] = B;
+			wByte(static_cast<addr16>(HL()), B);
 			PC++;
 			break;
 		}
 		case 0x71: // ld (hl), c
 		{
-			mem[static_cast<addr16>(HL())] = C;
+			wByte(static_cast<addr16>(HL()), C);
 			PC++;
 			break;
 		}
 		case 0x72: // ld (hl), d
 		{
-			mem[static_cast<addr16>(HL())] = D;
+			wByte(static_cast<addr16>(HL()), D);
 			PC++;
 			break;
 		}
 		case 0x73: // ld (hl), e
 		{
-			mem[static_cast<addr16>(HL())] = E;
+			wByte(static_cast<addr16>(HL()), E);
 			PC++;
 			break;
 		}
 		case 0x74: // ld (hl), h
 		{
-			mem[static_cast<addr16>(HL())] = H;
+			wByte(static_cast<addr16>(HL()), H);
 			PC++;
 			break;
 		}
 		case 0x75: // ld (hl), l
 		{
-			mem[static_cast<addr16>(HL())] = L;
+			wByte(static_cast<addr16>(HL()), L);
 			PC++;
 			break;
 		}
@@ -2767,7 +2803,7 @@ void CPU::emulateCycle()
 		}
 		case 0x77: // ld (hl), a
 		{
-			mem[static_cast<addr16>(HL())] = A;
+			wByte(static_cast<addr16>(HL()), A);
 			PC++;
 			break;
 		}
@@ -2809,7 +2845,7 @@ void CPU::emulateCycle()
 		}
 		case 0x7E: // ld a, (hl)
 		{
-			A = mem[static_cast<addr16>(HL())];
+			A = rByte(static_cast<addr16>(HL()));
 			PC++;
 			break;
 		}
@@ -2850,7 +2886,7 @@ void CPU::emulateCycle()
 		}
 		case 0x86: // add a, (hl)
 		{
-			add(mem[static_cast<addr16>(HL())]);
+			add(rByte(static_cast<addr16>(HL())));
 			break;
 		}
 		case 0x87: // add a, a
@@ -2890,7 +2926,7 @@ void CPU::emulateCycle()
 		}
 		case 0x8E: // adc a, (hl)
 		{
-			adc(mem[static_cast<addr16>(HL())]);
+			adc(rByte(static_cast<addr16>(HL())));
 			break;
 		}
 		case 0x8F: // adc a, a
@@ -2930,7 +2966,7 @@ void CPU::emulateCycle()
 		}
 		case 0x96: // sub (hl)
 		{
-			sub(mem[static_cast<addr16>(HL())]);
+			sub(rByte(static_cast<addr16>(HL())));
 			break;
 		}
 		case 0x97: // sub a 
@@ -2970,7 +3006,7 @@ void CPU::emulateCycle()
 		}
 		case 0x9E: // sbc a, (hl)
 		{
-			sbc(mem[static_cast<addr16>(HL())]);
+			sbc(rByte(static_cast<addr16>(HL())));
 			break;
 		}
 		case 0x9F: // sbc a, a
@@ -3010,7 +3046,7 @@ void CPU::emulateCycle()
 		}
 		case 0xA6: // and (hl)
 		{
-			andr(mem[static_cast<addr16>(HL())]);
+			andr(rByte(static_cast<addr16>(HL())));
 			break;
 		}
 		case 0xA7: // and a
@@ -3050,7 +3086,7 @@ void CPU::emulateCycle()
 		}
 		case 0xAE: // xor (hl)
 		{
-			xorr(mem[static_cast<addr16>(HL())]);
+			xorr(rByte(static_cast<addr16>(HL())));
 			break;
 		}
 		case 0xAF: // xor a
@@ -3090,7 +3126,7 @@ void CPU::emulateCycle()
 		}
 		case 0xB6: // or (hl)
 		{
-			orr(mem[static_cast<addr16>(HL())]);
+			orr(rByte(static_cast<addr16>(HL())));
 			break;
 		}
 		case 0xB7: // or a
@@ -3136,7 +3172,7 @@ void CPU::emulateCycle()
 		}
 		case 0xBE: // cp (hl)
 		{
-			cmp(mem[static_cast<addr16>(HL())]);
+			cmp(rByte(static_cast<addr16>(HL())));
 			PC++;
 			break;
 		}
@@ -3153,9 +3189,9 @@ void CPU::emulateCycle()
 		}
 		case 0xC1: // pop bc
 		{
-			B = mem[SP];
+			B = rByte(SP);
 			SP++;
-			C = mem[SP];
+			C = rByte(SP);
 			SP++;
 			PC++;
 			break;
@@ -3178,16 +3214,18 @@ void CPU::emulateCycle()
 		case 0xC5: // push bc
 		{
 			SP--;
-			mem[SP] = C;
+			wByte(SP, C);
+			//internalmem[SP] = C;
 			SP--;
-			mem[SP] = B;
+			//internalmem[SP] = B;
+			wByte(SP, B);
 			PC++;
 			break;
 		}
 		case 0xC6: // add a, *
 		{
 			const reg before = A;
-			A += mem[PC + 1];
+			A += rByte(PC + 1);
 			updateCarry(before, A);
 			updateN(ADD);
 			updateHC(before, A);
@@ -3217,7 +3255,7 @@ void CPU::emulateCycle()
 		}
 		case 0xCB: // EXTENDED INSTRUCTIONS
 		{
-			emulateExtendedInstruction(mem[PC + 1]);
+			emulateExtendedInstruction(rByte(PC + 1));
 			break;
 		}
 		case 0xCC: // call z, **
@@ -3233,7 +3271,7 @@ void CPU::emulateCycle()
 		case 0xCE: // adc a, *
 		{
 			const reg before = A;
-			A += mem[PC + 1] + carry();
+			A += rByte(PC + 1) + carry();
 			updateCarry(before, A);
 			updateN(ADD);
 			updateHC(before, A);
@@ -3253,9 +3291,9 @@ void CPU::emulateCycle()
 		}
 		case 0xD1: // pop de
 		{
-			D = mem[SP];
+			D = rByte(SP);
 			SP++;
-			E = mem[SP];
+			E = rByte(SP);
 			SP++;
 			PC++;
 			break;
@@ -3278,16 +3316,18 @@ void CPU::emulateCycle()
 		case 0xD5: // push de
 		{
 			SP--;
-			mem[SP] = E;
+			wByte(SP, E);
+			//internalmem[SP] = E;
 			SP--;
-			mem[SP] = D;
+			//internalmem[SP] = D;
+			wByte(SP, D);
 			PC++;
 			break;
 		}
 		case 0xD6: // sub *
 		{
 			const reg before = A;
-			A -= mem[PC + 1];
+			A -= rByte(PC + 1);
 			updateCarry(before, A);
 			updateN(SUB);
 			updateHC(before, A);
@@ -3341,7 +3381,7 @@ void CPU::emulateCycle()
 		case 0xDE: // sbc a, *
 		{
 			const reg before = A;
-			A -= (mem[PC + 1] + carry());
+			A -= (rByte(PC + 1) + carry());
 			updateCarry(before, A);
 			updateN(SUB);
 			updateHC(before, A);
@@ -3356,9 +3396,9 @@ void CPU::emulateCycle()
 		}
 		case 0xE0: //ld (0xFF00 + n), a
 		{
-			const ubyte low = static_cast<ubyte>(mem[PC + 1]) & 0xFF;
+			const ubyte low = static_cast<ubyte>(rByte(PC + 1)) & 0xFF;
 			const addr16 addr = 0xFF00 + low;
-			mem[addr] = A;
+			wByte(addr, A);
 
 			if (low == 0x46) // dma
 			{
@@ -3373,9 +3413,9 @@ void CPU::emulateCycle()
 		}
 		case 0xE1: // pop hl
 		{
-			H = mem[SP];
+			H = rByte(SP);
 			SP++;
-			L = mem[SP];
+			L = rByte(SP);
 			SP++;
 			PC++;
 			break;
@@ -3383,7 +3423,7 @@ void CPU::emulateCycle()
 		case 0xE2: // ld (C), a
 		{
 			const addr16 addr = static_cast<ubyte>(C) + 0xFF00;
-			mem[addr] = A;
+			wByte(addr, A);
 			PC++;
 			break;
 		}
@@ -3404,15 +3444,17 @@ void CPU::emulateCycle()
 		case 0xE5: // push hl
 		{
 			SP--;
-			mem[SP] = L;
+			//internalmem[SP] = L;
+			wByte(SP, L);
 			SP--;
-			mem[SP] = H;
+			//internalmem[SP] = H;
+			wByte(SP, H);
 			PC++;
 			break;
 		}
 		case 0xE6: // and *
 		{
-			A &= mem[PC + 1];
+			A &= rByte(PC + 1);
 			resetCarry();
 			resetN();
 			setHC();
@@ -3428,7 +3470,7 @@ void CPU::emulateCycle()
 		case 0xE8: // add sp, *
 		{
 			const addr16 before = SP;
-			SP += mem[PC + 1];
+			SP += rByte(PC + 1);
 			resetZero();
 			resetN();
 			updateHC(before, SP);
@@ -3473,7 +3515,7 @@ void CPU::emulateCycle()
 		}
 		case 0xEE: // xor *
 		{
-			A ^= mem[PC + 1];
+			A ^= rByte(PC + 1);
 			resetCarry();
 			resetN();
 			resetHC();
@@ -3488,10 +3530,10 @@ void CPU::emulateCycle()
 		}
 		case 0xF0 : //ld a, (0xFF00 + n) or ldh, (*)
 		{
-			const ubyte low = static_cast<ubyte>(mem[PC + 1]); // low byte
+			const ubyte low = static_cast<ubyte>(rByte(PC + 1)); // low byte
 			const addr16 addr = 0xFF00 + low; // high byte always 0xFF00
 
-			A = mem[addr];
+			A = rByte(addr);
 			if (low == 0x00) // joypad read
 			{
 				if (keyInfo.colID == b4)
@@ -3508,9 +3550,9 @@ void CPU::emulateCycle()
 		}
 		case 0xF1: // pop af
 		{
-			A = mem[SP];
+			A = rByte(SP);
 			SP++;
-			F = mem[SP];
+			F = rByte(SP);
 			SP++;
 			PC++;
 			break;
@@ -3518,13 +3560,14 @@ void CPU::emulateCycle()
 		case 0xF2: // ld a, (C)
 		{
 			const addr16 addr = static_cast<ubyte>(C) + 0xFF00;
-			A = mem[addr];
+			A = rByte(PC + 1);
 			PC++;
 			break;
 		}
 		case 0xF3: // di
 		{
 			IME = false;
+			std::cout << "di at: " << toHex(PC) << std::endl;
 			PC++;
 			break;
 		}
@@ -3539,15 +3582,15 @@ void CPU::emulateCycle()
 		case 0xF5: // push af
 		{
 			SP--;
-			mem[SP] = F;
+			wByte(SP, F);
 			SP--;
-			mem[SP] = A;
+			wByte(SP, A);
 			PC++;
 			break;
 		}
 		case 0xF6: // or *
 		{
-			A |= mem[PC + 1];
+			A |= rByte(PC + 1);
 			resetCarry();
 			resetN();
 			resetHC();
@@ -3574,13 +3617,14 @@ void CPU::emulateCycle()
 		}
 		case 0xFA: // ld a, (**)
 		{
-			A = mem[getNextWord()];
+			A = rByte(getNextWord());
 			PC += 3;
 			break;
 		}
 		case 0xFB: // ei
 		{
 			IME = true;
+			std::cout << "ie at: " << toHex(PC) << std::endl;
 			PC++;
 			break;
 		}
@@ -3603,7 +3647,7 @@ void CPU::emulateCycle()
 		}
 		case 0xFE: // cp *
 		{
-			cmp(mem[PC + 1]);
+			cmp(rByte(PC + 1));
 			PC += 2;
 			break;
 		}
@@ -3643,19 +3687,6 @@ int CPU::loadROM(const std::string& fileName)
 	{
 		return 1; // file load fail
 	}
-	// make sure the ROM fits within the memory
-#ifdef DEBUG
-	bool isROMTooBig = false;
-#endif
-	if (size > MAX_ROM_SIZE)
-	{
-		std::cout << "ROM size greater than " << MAX_ROM_SIZE << std::endl;
-		isROMTooBig = true;	
-#ifndef DEBUG
-		delete[] ROMstr;
-		return 2; // ROM too big
-#endif
-	}
 	if (ROMstr == nullptr)
 	{
 		delete[] ROMstr;
@@ -3664,18 +3695,18 @@ int CPU::loadROM(const std::string& fileName)
 	
 	cart.init(ROMstr, size);
 
-	if (!isROMTooBig)
-	{
-		// load the rom into memory starting at 0x00
-		for (unsigned i = 0; i < size; i++)
-		{
-			mem[i] = ROMstr[i];
-		}
-	}
-	else
-	{
-		system("pause");
-	}
+	//if (!isROMTooBig)
+	//{
+	//	// load the rom into memory starting at 0x00
+	//	for (unsigned i = 0; i < size; i++)
+	//	{
+	//		mem[i] = ROMstr[i];
+	//	}
+	//}
+	//else
+	//{
+	//	system("pause");
+	//}
 	delete[] ROMstr;
 	return EXIT_SUCCESS; // ROM load completed succesfully
 }

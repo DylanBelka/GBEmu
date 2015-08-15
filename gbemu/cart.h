@@ -25,6 +25,10 @@ class Cart
 {
 public:
 	void init(const char* romStr, int filesize);
+	const byte rByte(const addr16 addr) const;
+	void wByte(const addr16 addr, byte val);
+
+	void wWord(const addr16 addr, word val);
 
 private:
 	std::vector<byte> rom;
@@ -44,6 +48,10 @@ private:
 
 int getROMSize(const char size);
 int getRAMSize(const char size);
+
+bool isCartRAM(const addr16 addr);
+inline bool isInternalMem(const addr16 addr);
+bool isCartROM(const addr16 addr);
 
 enum carttypes
 {

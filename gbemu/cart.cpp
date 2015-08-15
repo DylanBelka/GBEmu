@@ -7,6 +7,73 @@ void Cart::init(const char* ROMstr, int filesize)
 	initRAM();
 }
 
+inline bool isInternalMem(const addr16 addr)
+{
+	return (addr >= INTERNAL_MEM);
+}
+
+bool isCartROM(const addr16 addr)
+{
+	if (!isInternalMem(addr) && addr >= ROM_BANK_N && addr <= ROM_BANK_N_END ||
+		addr >= ROM_BANK_0 && addr <= ROM_BANK_0_END ||
+		addr <= ROM_BANK_0)
+	{
+		return true;
+	}
+	return false;
+}
+
+bool isCartRAM(const addr16 addr)
+{
+	if (!isInternalMem(addr) && addr >= 0xA000 && addr <= 0xCFFF)
+	{
+		return true;
+	}
+	return false;
+}
+
+const byte Cart::rByte(const addr16 addr) const
+{
+	//std::cout << "rByte addr = " << toHex(addr) << std::endl;
+	if (isCartROM(addr))
+	{
+		return rom[addr];
+	}
+	else
+	{
+		return ram[addr];
+	}
+}
+
+void Cart::wByte(const addr16 addr, byte val)
+{
+	if (isCartROM(addr))
+	{
+		// TODO: bank switching done here
+		std::cout << "bank switching" << std::endl;
+		system("pause");
+	}
+	else
+	{
+		ram[addr] = val;
+	}
+}
+
+void Cart::wWord(const addr16 addr, word val)
+{
+	if (isCartRAM(addr))
+	{
+		ram[addr] = val & 0x00FF; // lower byte
+		ram[addr + 1] = ((val & 0xFF00) >> 8) & 0xFF; // upper byte
+	}
+	else
+	{
+		std::cout << "attempting to write word to cart ROM" << std::endl;
+		std::cout << "addr = " << toHex(addr) << "\tval = " << toHex(val) << std::endl;
+		system("pause");
+	}
+}
+
 void Cart::setupMBC(const char* ROMstr)
 {
 	const char* romTitle = &ROMstr[TITLE];
@@ -28,23 +95,16 @@ void Cart::setupMBC(const char* ROMstr)
 
 void Cart::loadROM(const char* ROMstr, int filesize)
 {
-	switch (type)
+	rom.resize(romsize);
+	for (unsigned i = 0; i < filesize; i++)
 	{
-		case ROM_ONLY:
-		{
-			rom.resize(romsize);
-			for (unsigned i = 0; i < filesize; i++)
-			{
-				rom[i] = ROMstr[i];
-			}
-			break;
-		}
+		rom[i] = ROMstr[i];
 	}
 }
 
 void Cart::initRAM()
 {
-
+	ram.resize(ramsize);
 }
 
 int getROMSize(const char size)

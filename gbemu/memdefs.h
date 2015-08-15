@@ -52,6 +52,9 @@
 #define ROM_BANK_N 0x4000
 #define ROM_BANK_N_END 0x07FFF
 
+#define INTERNAL_MEM 0x8000
+#define INTERNAL_MEM_END 0x10000
+
 // $8000-$97FF - Character RAM (tile RAM)
 #define CHARACTER_RAM 0x8000
 #define CHARACTER_RAM_END 0x97FF
