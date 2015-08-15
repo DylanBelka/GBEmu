@@ -10,6 +10,10 @@
 #include "input.h"
 #include "types.h"
 
+#ifdef DEBUG
+#include "toHex.h"
+#endif
+
 #define WINDOW_WIDTH 160
 #define WINDOW_HEIGHT 144
 
@@ -105,17 +109,5 @@ private:
 
 /// Clears an SDL_Surface to white
 void clear(SDL_Surface*);
-
-#ifdef DEBUG
-/// TODO: remove this
-template<typename T>
-const std::string toHex(const T val)
-{
-	std::stringstream stream;
-	stream << std::hex << val;
-	std::string result(stream.str());
-	return "0x" + result;
-}
-#endif // DEBUG
 
 #endif // GB_GAMEBOY_H

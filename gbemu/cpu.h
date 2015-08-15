@@ -11,6 +11,11 @@
 #include "memdefs.h"
 #include "input.h"
 #include "types.h"
+#include "cart.h"
+
+#ifdef DEBUG
+#include "toHex.h"
+#endif
 
 /**
 Resources:
@@ -117,6 +122,8 @@ private:
 
 	uint16_t clockCycles = 0;
 
+	Cart cart;
+
 // Flag helper functions
 private:
 	inline void updateZero(reg16 reg);
@@ -193,12 +200,5 @@ enum Bits
 	b6 = 0x40,
 	b7 = 0x80,
 };
-
-#ifdef DEBUG
-template<typename T> const std::string toHex(T);
-template<> const std::string toHex(sbyte);
-template<> const std::string toHex(ubyte);
-template<> const std::string toHex(char);
-#endif // debug
 
 #endif

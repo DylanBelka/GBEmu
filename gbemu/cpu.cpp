@@ -1985,6 +1985,7 @@ void CPU::emulateCycle()
 	handleInterrupts();
 	unsigned char opcode = mem[PC]; // get next opcode
 	clockCycles += clockTimes[opcode];
+	//std::cout << toHex(opcode) << "\tat " << toHex(PC) << std::endl;
 
 	/// emulate the opcode 
 	switch (opcode & 0xFF)
@@ -3624,44 +3625,18 @@ void CPU::emulateCycle()
 	}
 }
 
-#ifdef DEBUG
-template<typename T>
-const std::string toHex(const T val)
-{
-	std::stringstream stream;
-	stream << std::hex << val;
-	std::string result(stream.str());
-	return "0x" + result;
-}
-
-template<> const std::string toHex(sbyte val)
-{
-	return toHex(static_cast<unsigned short>(val));
-}
-
-template<> const std::string toHex(ubyte val)
-{
-	return toHex(static_cast<unsigned short>(val));
-}
-
-template<> const std::string toHex(char val)
-{
-	return toHex(static_cast<unsigned short>(val));
-}
-#endif // DEBUG
-
 int CPU::loadROM(const std::string& fileName)
 {
 	std::ifstream file(fileName, std::ios::in | std::ios::binary | std::ios::ate);
-	char* fileStr;
+	char* ROMstr;
 	std::streampos size;
 	if (file.is_open())
 	{
 		size = file.tellg();
-		fileStr = new char[size]; // get rom size
+		ROMstr = new char[size]; // get rom size
 		std::cout << "Seek size: " << size << std::endl;
 		file.seekg(0, std::ios::beg);
-		file.read(fileStr, size); // load the rom file into the file
+		file.read(ROMstr, size); // load the rom file into the file
 		file.close();
 	}
 	else
@@ -3669,39 +3644,40 @@ int CPU::loadROM(const std::string& fileName)
 		return 1; // file load fail
 	}
 	// make sure the ROM fits within the memory
-	#ifdef DEBUG
+#ifdef DEBUG
 	bool isROMTooBig = false;
-	#endif
+#endif
 	if (size > MAX_ROM_SIZE)
 	{
 		std::cout << "ROM size greater than " << MAX_ROM_SIZE << std::endl;
 		isROMTooBig = true;	
-		//delete[] fileStr;
-		//return 2; // ROM too big
+#ifndef DEBUG
+		delete[] ROMstr;
+		return 2; // ROM too big
+#endif
 	}
-	if (fileStr == nullptr)
+	if (ROMstr == nullptr)
 	{
-		delete[] fileStr;
+		delete[] ROMstr;
 		return 3; // mem alloc failure
 	}
 	
-	const char* romTitle = &fileStr[TITLE];
-        std::cout << "ROM <" << romTitle << "> loaded succesfuly" << std::endl;
-        std::cout << "Cart type: " << toHex(fileStr[CART_TYPE]) << std::endl;  
-        std::cout << "Cart ROM size: " << toHex(fileStr[CART_ROM_SIZE]) << std::endl;
-        std::cout << "Cart RAM size: " << toHex(fileStr[CART_RAM_SIZE]) << std::endl;
+	cart.init(ROMstr, size);
+
 	if (!isROMTooBig)
 	{
 		// load the rom into memory starting at 0x00
 		for (unsigned i = 0; i < size; i++)
 		{
-			mem[i] = fileStr[i];
+			mem[i] = ROMstr[i];
 		}
 	}
 	else
 	{
-		std::cin.ignore();
+		system("pause");
 	}
-	delete[] fileStr;
+	delete[] ROMstr;
 	return EXIT_SUCCESS; // ROM load completed succesfully
 }
+
+
