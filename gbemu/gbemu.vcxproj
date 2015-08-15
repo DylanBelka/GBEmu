@@ -22,8 +22,11 @@
     <ClCompile Include="cpu.cpp" />
     <ClCompile Include="Gameboy.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="cart.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cart.h" />
+    <ClInclude Include="toHex.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="cpu.h" />
     <ClInclude Include="Gameboy.h" />

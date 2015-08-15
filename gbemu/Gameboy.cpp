@@ -382,6 +382,7 @@ bool Gameboy::handleEvents()
 		if (e.type == SDL_KEYDOWN)
 		{
 			SDL_Keycode key = e.key.keysym.sym;
+#ifdef DEBUG
 			if (key == SDLK_9)
 			{
 				__T = true;
@@ -398,6 +399,13 @@ bool Gameboy::handleEvents()
 			{
 				cpu._test = false;
 			}
+			if (key == SDLK_g)
+			{
+				static int numChecks = 0;
+				std::cout << "still running: " << numChecks << std::endl;
+				numChecks++;
+			}
+#endif
 			if (key == SDLK_UP) // up
 			{
 				cpu.keyInfo.keys[p14] &= ~keyUp;
