@@ -113,7 +113,7 @@ private:
 	addr16 PC;		// program counter register
 	addr16 SP;		// stack pointer
 
-	std::vector<byte> mem;	// cpu memory (0x10000 bytes in size)
+	//std::vector<byte> mem;	// cpu memory (0x10000 bytes in size)
 
 	bool IME = true;	// interrupt master enable
 
