@@ -1947,7 +1947,7 @@ void CPU::wByte(addr16 addr, byte val)
 	if (isInternalMem(addr))
 	{
 		internalmem[addr] = val;
-		if (addr >= 0xC000 && addr <= 0xE000 ||
+		if (addr >= 0xC000 && addr <= 0xDE00 ||
 			addr >= 0xE000 && addr <= 0xFE00) // echo RAM
 		{
 			internalmem[addr + 0x2000] = val; // emulate mirroring of RAM
