@@ -1933,7 +1933,7 @@ byte CPU::rByte(addr16 addr) const
 {
 	if (isInternalMem(addr)) 
 	{
-		return internalmem[addr]; 
+		return internalmem[addr];
 	}
 	else
 	{ 
@@ -1947,6 +1947,11 @@ void CPU::wByte(addr16 addr, byte val)
 	if (isInternalMem(addr))
 	{
 		internalmem[addr] = val;
+		if (addr >= 0xC000 && addr <= 0xE000 ||
+			addr >= 0xE000 && addr <= 0xFE00) // echo RAM
+		{
+			internalmem[addr + 0x2000] = val; // emulate mirroring of RAM
+		}
 	}
 	else
 	{
