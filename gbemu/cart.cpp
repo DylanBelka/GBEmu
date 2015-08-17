@@ -50,19 +50,19 @@ const byte Cart::rByte(addr16 addr) const
 		{
 			const addr16 cpy = addr;
 			addr -= banksize; // calculate the actual address in the banked rom
-			return bankedROM[currentrombank][addr];
+			return bankedROM[currentROMBank][addr];
 		}
 		else
 		{
-			return fixedrom[addr];
+			return fixedROM[addr];
 		}
 	}
-	else
+	else if (RAMBankEnabled)
 	{
 		std::cout << "reading from ram" << std::endl;
 		std::cout << "addr = " << toHex(addr) << std::endl;
 		system("pause");
-		return ram[addr];
+		return bankedRAM[currentRAMBank][addr];
 	}
 }
 
@@ -80,46 +80,57 @@ void Cart::wByte(const addr16 addr, byte val)
 				{
 					// switch memory mode
 					std::cout << "switching memory mode" << std::endl;
+					std::cout << "previous memory mode = " << toHex(memMode) << std::endl;
 					if (val == 0x00)
 					{
-						memmode = memmodes::_16_8;
+						memMode = memmodes::ROM_BANK;
 					}
 					else
 					{
-						memmode = memmodes::_4_32;
+						memMode = memmodes::RAM_BANK;
 					}
+					std::cout << "new memory mode = " << toHex(memMode) << std::endl;
 				}
 				if (addr >= 0x2000 && addr <= 0x3FFF)
 				{
-					currentrombank = val & 0xFF;
-					if ((val & 0xFF) == 0 || (val & 0xFF) == 1)
+					currentROMBank = val & 0x1F;
+					if ((val & 0x1F) == 0 || (val & 0x1F) == 1)
 					{
-						currentrombank = 1;
+						currentROMBank = 1;
 					}
-					std::cout << "Switched to rom bank #" << currentrombank << std::endl;
+					if (memMode == memmodes::ROM_BANK)
+					{
+						currentROMBank |= upperROMBankBits;
+					}
+					std::cout << "Switched to rom bank #" << currentROMBank << std::endl;
+					system("pause");
 				}
-				if (memmode == memmodes::_4_32)
+				if (memMode == memmodes::RAM_BANK)
 				{
 					if (addr >= 0x4000 && addr <= 0x5FFF)
 					{
-						currentrambank = val;
+						if (memMode == memmodes::RAM_BANK)
+						{
+							currentRAMBank = val & 0x3;
+						}
 					}
 					if (addr >= 0x0000 && addr <= 0x1FFF)
 					{
 						if ((val & 0xA) == 0xA)
 						{
-							rambankenabled = true;
+							RAMBankEnabled = true;
 						}
 						else
 						{
-							rambankenabled = false;
+							RAMBankEnabled = false;
 						}
 					}
 				}
-				else if (memmode == memmodes::_16_8)
+				else if (memMode == memmodes::ROM_BANK)
 				{
 					if (addr >= 0x4000 && addr <= 0x5FFF)
 					{
+						upperROMBankBits = ((val & 0x3) << 5) & 0x60;
 						std::cout << "setting ROM address lines with: " << toHex(val) << std::endl;
 						system("pause");
 					}
@@ -132,18 +143,18 @@ void Cart::wByte(const addr16 addr, byte val)
 		//std::cout << "writing value: " << toHex(val) << "\tto " << toHex(addr) << std::endl;
 		//system("pause");
 	}
-	else
+	else if (RAMBankEnabled)
 	{
-		ram[addr] = val;
+		bankedRAM[currentRAMBank][addr] = val;
 	}
 }
 
 void Cart::wWord(const addr16 addr, word val)
 {
-	if (isCartRAM(addr))
+	if (isCartRAM(addr) && RAMBankEnabled)
 	{
-		ram[addr] = val & 0x00FF; // lower byte
-		ram[addr + 1] = ((val & 0xFF00) >> 8) & 0xFF; // upper byte
+		bankedRAM[currentRAMBank][addr] = val & 0x00FF; // lower byte
+		bankedRAM[currentRAMBank][addr + 1] = ((val & 0xFF00) >> 8) & 0xFF; // upper byte
 	}
 	else
 	{
@@ -174,8 +185,8 @@ void Cart::setupMBC(const char* ROMstr)
 
 void Cart::initROM(const char* ROMstr, int filesize)
 {
-	fixedrom.resize(banksize);
-	currentrombank = 0;
+	fixedROM.resize(banksize);
+	currentROMBank = 0;
 	const char sizeinfo = ROMstr[CART_ROM_SIZE];
 	int numBanks = 0;
 
@@ -221,7 +232,7 @@ void Cart::initROM(const char* ROMstr, int filesize)
 	int filepos = 0;
 	for (rompos = 0; rompos < banksize; rompos++, filepos++)
 	{
-		fixedrom[rompos] = ROMstr[filepos];
+		fixedROM[rompos] = ROMstr[filepos];
 	}
 
 	for (int i = 0; i < numBanks; i++) // 1 bank is fixed
@@ -229,7 +240,7 @@ void Cart::initROM(const char* ROMstr, int filesize)
 		for (rompos = 0; rompos < banksize; rompos++, filepos++)
 		{
 			bankedROM[i][rompos] = ROMstr[filepos];
-			currentrombank = 0;
+			currentROMBank = 0;
 		}
 	}
 }

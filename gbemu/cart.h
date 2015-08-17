@@ -33,16 +33,16 @@ public:
 	void wWord(const addr16 addr, word val);
 
 private:
-	std::vector<byte> fixedrom;
-	std::vector<byte> ram;
+	std::vector<byte> fixedROM;
 
 	std::vector<std::array<byte, banksize>> bankedROM;
-	int currentrombank;
+	int currentROMBank;
+	byte upperROMBankBits;
 
 	std::vector<std::vector<byte>> bankedRAM;
-	int currentrambank;
-	bool rambankenabled = false;
-	int memmode;
+	int currentRAMBank;
+	bool RAMBankEnabled = false;
+	int memMode;
 
 	// cart info
 	int isGBC;
@@ -66,8 +66,8 @@ bool isBankedROM(const addr16 addr);
 
 enum memmodes
 {
-	_16_8 = 0,
-	_4_32,
+	ROM_BANK = 0,
+	RAM_BANK,
 };
 
 enum carttypes
