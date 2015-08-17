@@ -1802,10 +1802,8 @@ void CPU::call(bool cond)
 	if (cond)
 	{
 		SP--;
-		//internalmem[SP] = (PC + 3) & 0xFF; // + 3 is for jumping past the 3 bytes for the opcode and dest
 		wByte(SP, ((PC + 3) & 0xFF));
 		SP--;
-		//internalmem[SP] = (((PC + 3) >> 8) & 0xFF);
 		wByte(SP, (((PC + 3) >> 8) & 0xFF));
 		PC = getNextWord();
 		clockCycles += 12;
@@ -1820,9 +1818,7 @@ void CPU::push(reg16 val)
 {
 	SP--;
 	wByte(SP, val & 0xFF);
-	//internalmem[SP] = val & 0xFF;
 	SP--;
-	//internalmem[SP] = val >> 0x8;
 	wByte(SP, val >> 0x8);
 }
 
@@ -1954,6 +1950,7 @@ void CPU::wByte(addr16 addr, byte val)
 	}
 	else
 	{
+		std::cout << "wbyte PC = " << toHex(PC) << std::endl;
 		cart.wByte(addr, val);
 	}
 }
@@ -2072,6 +2069,9 @@ void CPU::emulateCycle()
 		}
 		case 0x08: // ld (**), sp
 		{
+			std::cout << "asfsaffsdaf453" << std::endl;
+			std::cout << toHex(PC) << std::endl;
+			system("pause");
 			wWord(getNextWord(), SP);
 			PC += 3;
 			break;
@@ -3604,8 +3604,8 @@ void CPU::emulateCycle()
 		}
 		case 0xF8: // ld hl, sp
 		{
-			HL(SP);
-			PC++;
+			HL(SP + rByte(PC + 1));
+			PC += 2;
 			break;
 		}
 		case 0xF9: // ld sp, hl
