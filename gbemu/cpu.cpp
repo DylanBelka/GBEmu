@@ -40,6 +40,7 @@ void CPU::reset()
 		internalmem[i] = 0;
 	}
 	// some known starting values of registers
+	A = 0x01;
 	F = 0xB0;
 	BC(0x13);
 	DE(0xD8);
@@ -1947,10 +1948,13 @@ void CPU::wByte(addr16 addr, byte val)
 	if (isInternalMem(addr))
 	{
 		internalmem[addr] = val;
-		if (addr >= 0xC000 && addr <= 0xDE00 ||
-			addr >= 0xE000 && addr <= 0xFE00) // echo RAM
+		if (addr >= 0xC000 && addr <= 0xDE00)
 		{
 			internalmem[addr + 0x2000] = val; // emulate mirroring of RAM
+		}
+		else if (addr >= 0xE000 && addr <= 0xFE00)
+		{
+			internalmem[addr - 0x2000] = val; // emulate mirroring of RAM
 		}
 	}
 	else
