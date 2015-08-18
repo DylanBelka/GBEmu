@@ -84,22 +84,9 @@ void CPU::reset()
 
 #pragma region FlagFuncs
 
-void CPU::updateCarry(byte prevVal, byte newVal)
+void CPU::updateCarry(uint16_t newVal)
 {
-	if ((prevVal & b7) != (newVal & b7))
-	{
-		setCarry();
-	}
-	else
-	{
-		resetCarry();
-	}
-}
-
-void CPU::updateCarry16(word prevVal, word newVal)
-{
-	const word b15 = 0x8000;
-	if ((prevVal & b15) != (newVal & b15))
+	if (newVal & 0x1000)
 	{
 		setCarry();
 	}
@@ -1670,7 +1657,7 @@ void CPU::emulateExtendedInstruction(byte opcode)
 
 void CPU::cmp(const byte val)
 {
-	updateCarry(A, A - val);
+	updateCarry(A - val);
 	updateN(SUB);
 	updateHC(A, A - val);
 	updateZero(A - val);
@@ -1699,8 +1686,8 @@ void CPU::inc(byte& b)
 void CPU::add(byte val)
 {
 	const byte before = A;
+	updateCarry(A + val);
 	A += val;
-	updateCarry(before, A);
 	updateN(ADD);
 	updateHC(before, A);
 	updateZero(A);
@@ -1710,8 +1697,8 @@ void CPU::add(byte val)
 void CPU::adc(byte val)
 {
 	const byte before = A;
+	updateCarry(A + val + carry());
 	A += val + carry();
-	updateCarry(before, A);
 	updateN(ADD);
 	updateHC(before, A);
 	updateZero(A);
@@ -1721,8 +1708,8 @@ void CPU::adc(byte val)
 void CPU::sub(byte val)
 {
 	const byte before = A;
+	updateCarry(A - val);
 	A -= val;
-	updateCarry(before, A);
 	updateN(SUB);
 	updateHC(before, A);
 	updateZero(A);
@@ -1732,8 +1719,8 @@ void CPU::sub(byte val)
 void CPU::sbc(byte val)
 {
 	const byte before = A;
+	updateCarry(A - (val + carry()));
 	A -= (val + carry());
-	updateCarry(before, A);
 	updateN(SUB);
 	updateHC(before, A);
 	updateZero(A);
@@ -1872,10 +1859,9 @@ void CPU::jp(bool cond, addr16 to, uint8_t opsize)
 #ifdef DEBUG
 void printMem(CPU* cpu, int start, int end)
 {
-	const std::vector<byte> mem = *cpu->dumpMem();
 	for (int i = start; i <= end; i++)
 	{
-		std::cout << toHex((byte)mem[i]) << "\tat" << toHex(i) << "\n";
+		std::cout << toHex(cpu->rByte(i)) << "\tat" << toHex(i) << "\n";
 	}
 	std::cout << "\n\n";
 }
@@ -2006,21 +1992,32 @@ void CPU::test()
 	//std::cout << "HL: " << toHex(HL()) << std::endl;
 }
 
-static bool y = false;
-static int c = 0;
-
-addr16 shadowPC;
+static int ii = 0;
+static bool p = 0;
 
 #endif // DEBUG
-
-static bool ii = false;
-static int k = 0;
 
 void CPU::emulateCycle()
 {
 	handleInterrupts();
 	unsigned char opcode = rByte(PC); // get next opcode
 	clockCycles += clockTimes[opcode];
+
+	//if (PC == 0x2075)
+	//{
+	//	p = true;
+	//}
+	//
+	//if (p && ii < 100)
+	//{
+	//	std::cout << toHex(opcode) << "\tat " << toHex(PC) << "\n";
+	//	ii++;
+	//}
+	//else if (p)
+	//{
+	//	//system("pause");
+	//	ii = 0;
+	//}
 
 	/// emulate the opcode 
 	switch (opcode & 0xFF)
@@ -2039,7 +2036,6 @@ void CPU::emulateCycle()
 		case 0x02: // ld (BC), a
 		{
 			wByte(static_cast<addr16>(BC()), A);
-			//mem[static_cast<addr16>(BC())] = A;
 			PC++;
 			break;
 		}
@@ -2069,8 +2065,8 @@ void CPU::emulateCycle()
 		case 0x07: // rlca
 		{
 			const byte before = A;
+			updateCarry(A << 1);
 			A <<= 1;
-			updateCarry(before, A);
 			resetN();
 			resetHC();
 			PC++;
@@ -2089,7 +2085,7 @@ void CPU::emulateCycle()
 		{
 			const reg16 hl = HL();
 			HL(BC() + hl);
-			updateCarry(hl, HL());
+			updateCarry(HL());
 			updateN(ADD);
 			updateHC(hl, HL());
 			PC++;
@@ -2127,8 +2123,8 @@ void CPU::emulateCycle()
 		case 0x0F: // rrca
 		{
 			const byte before = A;
+			updateCarry(A >> 1);
 			A >>= 1;
-			updateCarry(before, A);
 			resetN();
 			resetHC();
 			PC++;
@@ -2179,8 +2175,8 @@ void CPU::emulateCycle()
 		case 0x17: // rla
 		{
 			const byte before = A;
+			updateCarry(A << 1);
 			A <<= 1;
-			updateCarry(before, A);
 			resetN();
 			resetHC();
 			PC++;
@@ -2196,7 +2192,7 @@ void CPU::emulateCycle()
 		{
 			const reg16 hl = HL();
 			HL(hl + DE());
-			updateCarry(hl, HL());
+			updateCarry(HL());
 			updateN(ADD);
 			updateHC(hl, HL());
 			PC++;
@@ -2234,8 +2230,8 @@ void CPU::emulateCycle()
 		case 0x1F: // rra
 		{
 			const reg before = A;
+			updateCarry(A >> 1);
 			A >>= 1;
-			updateCarry(before, A);
 			resetN();
 			resetHC();
 			PC++;
@@ -2255,7 +2251,6 @@ void CPU::emulateCycle()
 		case 0x22: // ldi (hl), a   or   ld (hl+), a
 		{
 			wByte(static_cast<addr16>(HL()), A);
-			//rByte(static_cast<addr16>(HL())) = A;
 			const reg16 hl = HL();
 			HL(hl + 1);
 			PC++;
@@ -2332,7 +2327,7 @@ void CPU::emulateCycle()
 		{
 			const reg16 hl = HL();
 			HL(hl + hl);
-			updateCarry(hl, HL());
+			updateCarry(HL());
 			updateN(ADD);
 			updateHC(hl, HL());
 			PC++;
@@ -2437,7 +2432,7 @@ void CPU::emulateCycle()
 		{
 			const reg16 hl = HL();
 			HL(hl + SP);
-			updateCarry(hl, HL());
+			updateCarry(HL());
 			updateN(ADD);
 			updateHC(hl, HL());
 			PC++;
@@ -3233,13 +3228,8 @@ void CPU::emulateCycle()
 		}
 		case 0xC6: // add a, *
 		{
-			const reg before = A;
-			A += rByte(PC + 1);
-			updateCarry(before, A);
-			updateN(ADD);
-			updateHC(before, A);
-			updateZero(A);
-			PC += 2;
+			add(rByte(PC + 1));
+			PC++; // 2 byte opcode
 			break;
 		}
 		case 0xC7: // rst 0x00
@@ -3279,13 +3269,8 @@ void CPU::emulateCycle()
 		}
 		case 0xCE: // adc a, *
 		{
-			const reg before = A;
-			A += rByte(PC + 1) + carry();
-			updateCarry(before, A);
-			updateN(ADD);
-			updateHC(before, A);
-			updateZero(A);
-			PC += 2;
+			adc(rByte(PC + 1));
+			PC++;
 			break;
 		}
 		case 0xCF: // rst 0x08
@@ -3326,22 +3311,15 @@ void CPU::emulateCycle()
 		{
 			SP--;
 			wByte(SP, E);
-			//internalmem[SP] = E;
 			SP--;
-			//internalmem[SP] = D;
 			wByte(SP, D);
 			PC++;
 			break;
 		}
 		case 0xD6: // sub *
 		{
-			const reg before = A;
-			A -= rByte(PC + 1);
-			updateCarry(before, A);
-			updateN(SUB);
-			updateHC(before, A);
-			updateZero(A);
-			PC += 2;
+			sub(rByte(PC + 1));
+			PC++;
 			break;
 		}
 		case 0xD7: // rst 0x10
@@ -3389,13 +3367,7 @@ void CPU::emulateCycle()
 		}
 		case 0xDE: // sbc a, *
 		{
-			const reg before = A;
-			A -= (rByte(PC + 1) + carry());
-			updateCarry(before, A);
-			updateN(SUB);
-			updateHC(before, A);
-			updateZero(A);
-			PC += 2;
+			sbc(rByte(PC + 1));
 			break;
 		}
 		case 0xDF: // rst 0x18
@@ -3483,7 +3455,7 @@ void CPU::emulateCycle()
 			resetZero();
 			resetN();
 			updateHC(before, SP);
-			updateCarry(before, SP);
+			updateCarry(SP);
 			PC += 2;
 			break;
 		}
