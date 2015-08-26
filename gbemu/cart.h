@@ -28,6 +28,7 @@ class Cart
 public:
 	void init(const char* romStr, int filesize);
 	const byte rByte(addr16 addr) const;
+	byte* gByte(addr16);
 	void wByte(const addr16 addr, byte val);
 
 	void wWord(const addr16 addr, word val);

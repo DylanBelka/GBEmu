@@ -66,6 +66,30 @@ const byte Cart::rByte(addr16 addr) const
 	}
 }
 
+byte* Cart::gByte(addr16 addr)
+{
+	if (isCartROM(addr))
+	{
+		if (isBankedROM(addr))
+		{
+			const addr16 cpy = addr;
+			addr -= banksize; // calculate the actual address in the banked rom
+			return &bankedROM[currentROMBank][addr];
+		}
+		else
+		{
+			return &fixedROM[addr];
+		}
+	}
+	else if (RAMBankEnabled)
+	{
+		std::cout << "reading from ram" << std::endl;
+		std::cout << "addr = " << toHex(addr) << std::endl;
+		system("pause");
+		return &bankedRAM[currentRAMBank][addr];
+	}
+}
+
 void Cart::wByte(const addr16 addr, byte val)
 {
 	if (isCartROM(addr))
