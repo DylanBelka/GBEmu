@@ -7,6 +7,8 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <functional>
+#include <array>
 
 #include "memdefs.h"
 #include "input.h"
@@ -57,6 +59,7 @@ public:
 public:
 	void wByte(addr16 addr, byte val);
 	byte rByte(addr16 addr) const; // read byte
+	byte* gByte(addr16 addr);
 	inline void clrBit(byte& val, byte bit) { val &= ~bit; }
 
 	void wWord(addr16 addr, word val);
@@ -91,7 +94,7 @@ private:
 	reg L;
 
 	unsigned char F;		// flag register
-
+	
 	// decode flag register bits
 	inline const bool zero()		const { return F & 0x40; }
 	inline const bool half_carry()	const { return F & 0x10; }
@@ -128,15 +131,15 @@ private:
 	inline void updateZero(reg16 reg);
 	inline void resetZero();
 	inline void setZero();
-
+	
 	inline void updateHC(byte prevVal, byte newVal);
 	inline void resetHC();
 	inline void setHC();
-
+	
 	inline void updateN(bool add);
 	inline void resetN();
 	inline void setN();
-
+	
 	void updateCarry(uint16_t newVal);
 	inline void resetCarry();
 	inline void setCarry();
@@ -171,6 +174,12 @@ private:
 	void res(reg& r, ubyte bit);
 	void set(reg& r, ubyte bit);
 	inline void swap(reg& r);
+
+	template<bool memread = false>
+	inline void ld8(reg& dst, reg src);
+
+	template<bool memread = false>
+	inline void ld16(reg& hi, reg& lo, reg16 src);
 
 	void emulateExtendedInstruction(byte opcode);
 

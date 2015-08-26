@@ -106,7 +106,7 @@ void CPU::setCarry()
 	F |= 0x1;
 }
 
-void CPU::updateHC(byte prevVal, byte newVal) 
+void CPU::updateHC(byte prevVal, byte newVal)
 {
 	if ((prevVal & b3) != (newVal & b4) && (newVal & b4))
 	{
@@ -283,1374 +283,126 @@ void CPU::swap(reg& r)
 
 void CPU::emulateExtendedInstruction(byte opcode)
 {
-	switch (opcode & 0xFF)
-	{
-	case 0x00: // rlc b
-	{
-		rlc(B);
-		break;
-	}
-	case 0x01: // rlc c
-	{
-		rlc(C);
-		break;
-	}
-	case 0x02: // rlc d
-	{
-		rlc(D);
-		break;
-	}
-	case 0x03: // rlc e
-	{
-		rlc(E);
-		break;
-	}
-	case 0x04: // rlc h
-	{
-		rlc(H);
-		break;
-	}
-	case 0x05: // rlc l
-	{
-		rlc(L);
-		break;
-	}
-	case 0x06: // rlc (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		rlc(val);
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0x07: // rlc a
-	{
-		rlc(A);
-		break;
-	}
-	case 0x08: // rrc b
-	{
-		rrc(B);
-		break;
-	}
-	case 0x09: // rrc c
-	{
-		rrc(C);
-		break;
-	}
-	case 0x0A: // rrc d
-	{
-		rrc(D);
-		break;
-	}
-	case 0x0B: // rrc e
-	{
-		rrc(E);
-		break;
-	}
-	case 0x0C: // rrc h
-	{
-		rrc(H);
-		break;
-	}
-	case 0x0D: // rrc l
-	{
-		rrc(L);
-		break;
-	}
-	case 0x0E: // rrc (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		rrc(val);
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0x0F: // rrc a
-	{
-		rrc(A);
-		break;
-	}
-	case 0x10: // rl b
-	{
-		rl(B);
-		break;
-	}
-	case 0x11: // rl c
-	{
-		rl(C);
-		break;
-	}
-	case 0x12: // rl d
-	{
-		rl(D);
-		break;
-	}
-	case 0x13: // rl e
-	{
-		rl(E);
-		break;
-	}
-	case 0x14: // rl h
-	{
-		rl(H);
-		break;
-	}
-	case 0x15: // rl l
-	{
-		rl(L);
-		break;
-	}
-	case 0x16: // rl (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		rl(val);
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0x17: // rl a
-	{
-		rl(A);
-		break;
-	}
-	case 0x18: // rr b
-	{
-		rr(B);
-		break;
-	}
-	case 0x19: // rr c
-	{
-		rr(C);
-		break;
-	}
-	case 0x1A: // rr d
-	{
-		rr(D);
-		break;
-	}
-	case 0x1B: // rr e
-	{
-		rr(E);
-		break;
-	}
-	case 0x1C: // rr h
-	{
-		rr(H);
-		break;
-	}
-	case 0x1D: // rr l
-	{
-		rr(L);
-		break;
-	}
-	case 0x1E: // rr (hl)
-	{
-		byte val = static_cast<addr16>(HL());
-		rr(val);
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0x1F: // rr a
-	{
-		rr(A);
-		break;
-	}
-	case 0x20: // sla b
-	{
-		sla(B);
-		break;
-	}
-	case 0x21: // sla c
-	{
-		sla(C);
-		break;
-	}
-	case 0x22: // sla d
-	{
-		sla(D);
-		break;
-	}
-	case 0x23: // sla e
-	{
-		sla(E);
-		break;
-	}
-	case 0x24: // sla h
-	{
-		sla(H);
-		break;
-	}
-	case 0x25: // sla l 
-	{
-		sla(L);
-		break;
-	}
-	case 0x26: // sla (hl)
-	{
-		byte val = static_cast<addr16>(HL());
-		sla(val);
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0x27: // sla a
-	{
-		sla(A);
-		break;
-	}
-	case 0x28: // sra b
-	{
-		sra(B);
-		break;
-	}
-	case 0x29: // sra c
-	{
-		sra(C);
-		break;
-	}
-	case 0x2A: // sra d
-	{
-		sra(D);
-		break;
-	}
-	case 0x2B: // sra e
-	{
-		sra(E);
-		break;
-	}
-	case 0x2C: // sra h
-	{
-		sra(H);
-		break;
-	}
-	case 0x2D: // sra l
-	{
-		sra(L);
-		break;
-	}
-	case 0x2E: // sra (hl)
-	{
-		byte val = static_cast<addr16>(HL());
-		sra(val);
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0x2F: // sra a
-	{
-		sra(A);
-		break;
-	}
-	case 0x30: // swap b
-	{
-		swap(B);
-		break;
-	}
-	case 0x31: // swap c
-	{
-		swap(C);
-		break;
-	}
-	case 0x32: // swap d
-	{
-		swap(D);
-		break;
-	}
-	case 0x33: // swap e
-	{
-		swap(E);
-		break;
-	}
-	case 0x34: // swap h
-	{
-		swap(H);
-		break;
-	}
-	case 0x35: // swap l
-	{
-		swap(L);
-		break;
-	}
-	case 0x36: // swap (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		swap(val);
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0x37: // swap a
-	{
-		swap(A);
-		break;
-	}
-	case 0x38: // srl b
-	{
-		srl(B);
-		break;
-	}
-	case 0x39: // srl c
-	{
-		srl(C);
-		break;
-	}
-	case 0x3A: // srl d
-	{
-		srl(D);
-		break;
-	}
-	case 0x3B: // srl e
-	{
-		srl(E);
-		break;
-	}
-	case 0x3C: // srl h
-	{
-		srl(H);
-		break;
-	}
-	case 0x3D: // srl l
-	{
-		srl(L);
-		break;
-	}
-	case 0x3E: // srl (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		srl(val);
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0x3F: // srl a
-	{
-		srl(A);
-		break;
-	}
-	case 0x40: // bit 0, b
-	{
-		bit(B, b0);
-		break;
-	}
-	case 0x41: // bit 0, c
-	{
-		bit(C, b0);
-		break;
-	}
-	case 0x42: // bit 0, d
-	{
-		bit(D, b0);
-		break;
-	}
-	case 0x43: // bit 0, e
-	{
-		bit(E, b0);
-		break;
-	}
-	case 0x44: // bit 0, h
-	{
-		bit(H, b0);
-		break;
-	}
-	case 0x45: // bit 0, l
-	{
-		bit(L, b0);
-		break;
-	}
-	case 0x46: // bit 0, (hl)
-	{
-		bit(rByte(static_cast<addr16>(HL())), b0);
-		clockCycles += 8;
-		break;
-	}
-	case 0x47: // bit 0, a
-	{
-		bit(A, b0);
-		break;
-	}
-	case 0x48: // bit 1, b
-	{
-		bit(B, b1);
-		break;
-	}
-	case 0x49: // bit 1, c
-	{
-		bit(C, b1);
-		break;
-	}
-	case 0x4A: // bit 1, d
-	{
-		bit(D, b1);
-		break;
-	}
-	case 0x4B: // bit 1, e
-	{
-		bit(E, b1);
-		break;
-	}
-	case 0x4C: // bit 1, h
-	{
-		bit(H, b1);
-		break;
-	}
-	case 0x4D: // bit 1, l
-	{
-		bit(L, b1);
-		break;
-	}
-	case 0x4E: // bit 1, (hl)
-	{
-		bit(rByte(static_cast<addr16>(HL())), b1);
-		clockCycles += 8;
-		break;
-	}
-	case 0x4F: // bit 1, a
-	{
-		bit(A, b1);
-		break;
-	}
-	case 0x50: // bit 2, b
-	{
-		bit(B, b2);
-		break;
-	}
-	case 0x51: // bit 2, c
-	{
-		bit(C, b2);
-		break;
-	}
-	case 0x52: // bit 2, d
-	{
-		bit(D, b2);
-		break;
-	}
-	case 0x53: // bit 2, e
-	{
-		bit(E, b2);
-		break;
-	}
-	case 0x54: // bit 2, h
-	{
-		bit(H, b2);
-		break;
-	}
-	case 0x55: // bit 2, l
-	{
-		bit(L, b2);
-		break;
-	}
-	case 0x56: // bit 2, (hl)
-	{
-		bit(rByte(static_cast<addr16>(HL())), b2);
-		clockCycles += 8;
-		break;
-	}
-	case 0x57: // bit 2, a
-	{
-		bit(A, b2);
-		break;
-	}
-	case 0x58: // bit 3, b
-	{
-		bit(B, b3);
-		break;
-	}
-	case 0x59: // bit 3, c
-	{
-		bit(C, b3);
-		break;
-	}
-	case 0x5A: // bit 3, d
-	{
-		bit(D, b3);
-		break;
-	}
-	case 0x5B: // bit 3, e
-	{
-		bit(E, b3);
-		break;
-	}
-	case 0x5C: // bit 3, h
-	{
-		bit(H, b3);
-		break;
-	}
-	case 0x5D: // bit 3, l
-	{
-		bit(L, b3);
-		break;
-	}
-	case 0x5E: // bit 3, (hl)
-	{
-		bit(rByte(static_cast<addr16>(HL())), b3);
-		clockCycles += 8;
-		break;
-	}
-	case 0x5F: // bit 3, a
-	{
-		bit(A, b3);
-		break;
-	}
-	case 0x60: // bit 4, b
-	{
-		bit(B, b4);
-		break;
-	}
-	case 0x61: // bit 4, c
-	{
-		bit(C, b4);
-		break;
-	}
-	case 0x62: // bit 4, d
-	{
-		bit(D, b4);
-		break;
-	}
-	case 0x63: // bit 4, e
-	{
-		bit(E, b4);
-		break;
-	}
-	case 0x64: // bit 4, h
-	{
-		bit(H, b4);
-		break;
-	}
-	case 0x65: // bit 4, l
-	{
-		bit(L, b4);
-		break;
-	}
-	case 0x66: // bit 4, (hl)
-	{
-		bit(rByte(static_cast<addr16>(HL())), b3);
-		clockCycles += 8;
-		break;
-	}
-	case 0x67: // bit 4, a
-	{
-		bit(A, b4);
-		break;
-	}
-	case 0x68: // bit 5, b
-	{
-		bit(B, b5);
-		break;
-	}
-	case 0x69: // bit 5, c
-	{
-		bit(C, b5);
-		break;
-	}
-	case 0x6A: // bit 5, d
-	{
-		bit(D, b5);
-		break;
-	}
-	case 0x6B: // bit 5, e
-	{
-		bit(E, b5);
-		break;
-	}
-	case 0x6C: // bit 5, h
-	{
-		bit(H, b5);
-		break;
-	}
-	case 0x6D: // bit 5, l
-	{
-		bit(L, b5);
-		break;
-	}
-	case 0x6E: // bit 5, (hl)
-	{
-		bit(rByte(static_cast<addr16>(HL())), b5);
-		clockCycles += 8;
-		break;
-	}
-	case 0x6F: // bit 5, a
-	{
-		bit(A, b5);
-		break;
-	}
-	case 0x70: // bit 6, b
-	{
-		bit(B, b6);
-		break;
-	}
-	case 0x71: // bit 6, c
-	{
-		bit(C, b6);
-		break;
-	}
-	case 0x72: // bit 6, d
-	{
-		bit(D, b6);
-		break;
-	}
-	case 0x73: // bit 6, e
-	{
-		bit(E, b6);
-		break;
-	}
-	case 0x74: // bit 6, h
-	{
-		bit(H, b6);
-		break;
-	}
-	case 0x75: // bit 6, l
-	{
-		bit(L, b6);
-		break;
-	}
-	case 0x76: // bit 6, (hl)
-	{
-		bit(rByte(static_cast<addr16>(HL())), b6);
-		clockCycles += 8;
-		break;
-	}
-	case 0x77: // bit 6, a
-	{
-		bit(A, b6);
-		break;
-	}
-	case 0x78: // bit 7, b
-	{
-		bit(B, b7);
-		break;
-	}
-	case 0x79: // bit 7, c
-	{
-		bit(C, b7);
-		break;
-	}
-	case 0x7A: // bit 7, d
-	{
-		bit(D, b7);
-		break;
-	}
-	case 0x7B: // bit 7, e
-	{
-		bit(E, b7);
-		break;
-	}
-	case 0x7C: // bit 7, h
-	{
-		bit(H, b7);
-		break;
-	}
-	case 0x7D: // bit 7, l
-	{
-		bit(L, b7);
-		break;
-	}
-	case 0x7E: // bit 7, (hl)
-	{
-		bit(rByte(static_cast<addr16>(HL())), b7);
-		clockCycles += 8;
-		break;
-	}
-	case 0x7F: // bit 7, a
-	{
-		bit(A, b7);
-		break;
-	}
-	case 0x80: // res 0, b
-	{
-		res(B, b0);
-		break;
-	}
-	case 0x81: // res 0, c
-	{
-		res(C, b0);
-		break;
-	}
-	case 0x82: // res 0, d
-	{
-		res(D, b0);
-		break;
-	}
-	case 0x83: // res 0, e
-	{
-		res(E, b0);
-		break;
-	}
-	case 0x84: // res 0, h
-	{
-		res(H, b0);
-		break;
-	}
-	case 0x85: // res 0, l
-	{
-		res(L, b0);
-		break;
-	}
-	case 0x86: // res 0, (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		val &= ~b0;
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0x87: // res 0, a
-	{
-		res(A, b0);
-		break;
-	}
-	case 0x88: // res 1, b
-	{
-		res(B, b1);
-		break;
-	}
-	case 0x89: // res 1, c
-	{
-		res(C, b1);
-		break;
-	}
-	case 0x8A: // res 1, d
-	{
-		res(D, b1);
-		break;
-	}
-	case 0x8B: // res 1, e
-	{
-		res(E, b1);
-		break;
-	}
-	case 0x8C: // res 1, h
-	{
-		res(H, b1);
-		break;
-	}
-	case 0x8D: // res 1, l
-	{
-		res(L, b1);
-		break;
-	}
-	case 0x8E: // res 1, (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		val &= ~b1;
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0x8F: // res 1, a
-	{
-		res(A, b1);
-		break;
-	}
-	case 0x90: // res 2, b
-	{
-		res(B, b2);
-		break;
-	}
-	case 0x91: // res 2, c
-	{
-		res(C, b2);
-		break;
-	}
-	case 0x92: // res 2, d
-	{
-		res(D, b2);
-		break;
-	}
-	case 0x93: // res 2, e
-	{
-		res(E, b2);
-		break;
-	}
-	case 0x94: // res 2, h
-	{
-		res(H, b2);
-		break;
-	}
-	case 0x95: // res 2, l
-	{
-		res(L, b2);
-		break;
-	}
-	case 0x96: // res 2, (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		val &= ~b2;
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0x97: // res 2, a
-	{
-		res(A, b2);
-		break;
-	}
-	case 0x98: // res 3, b
-	{
-		res(B, b3);
-		break;
-	}
-	case 0x99: // res 3, c
-	{
-		res(C, b3);
-		break;
-	}
-	case 0x9A: // res 3, d
-	{
-		res(D, b3);
-		break;
-	}
-	case 0x9B: // res 3, e
-	{
-		res(E, b3);
-		break;
-	}
-	case 0x9C: // res 3, h
-	{
-		res(H, b3);
-		break;
-	}
-	case 0x9D: // res 3, l
-	{
-		res(L, b3);
-		break;
-	}
-	case 0x9E: // res 3, (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		val &= ~b3;
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0x9F: // res 3, a
-	{
-		res(A, b3);
-		break;
-	}
-	case 0xA0: // res 4, b
-	{
-		res(B, b4);
-		break;
-	}
-	case 0xA1: // res 4, c
-	{
-		res(C, b4);
-		break;
-	}
-	case 0xA2: // res 4, d
-	{
-		res(D, b4);
-		break;
-	}
-	case 0xA3: // res 4, e
-	{
-		res(E, b4);
-		break;
-	}
-	case 0xA4: // res 4, h
-	{
-		res(H, b4);
-		break;
-	}
-	case 0xA5: // res 4, l
-	{
-		res(L, b4);
-		break;
-	}
-	case 0xA6: // res 4, (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		val &= ~b4;
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0xA7: //res 4, a
-	{
-		res(A, b4);
-		break;
-	}
-	case 0xA8: //res 5, b
-	{
-		res(B, b5);
-		break;
-	}
-	case 0xA9: // res 5, c
-	{
-		res(C, b5);
-		break;
-	}
-	case 0xAA: // res 5, d
-	{
-		res(D, b5);
-		break;
-	}
-	case 0xAB: // res 5, e
-	{
-		res(E, b5);
-		break;
-	}
-	case 0xAC: // res 5, h
-	{
-		res(H, b5);
-		break;
-	}
-	case 0xAD: // res 5, l
-	{
-		res(L, b5);
-		break;
-	}
-	case 0xAE: // res 5, (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		val &= ~b5;
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0xAF: // res 5, a
-	{
-		res(A, b5);
-		break;
-	}
-	case 0xB0: // res 6, b
-	{
-		res(B, b6);
-		break;
-	}
-	case 0xB1: // res 6, c
-	{
-		res(C, b6);
-		break;
-	}
-	case 0xB2: // res 6, d
-	{
-		res(D, b6);
-		break;
-	}
-	case 0xB3: // res 6, e
-	{
-		res(E, b6);
-		break;
-	}
-	case 0xB4: // res 6, h
-	{
-		res(H, b6);
-		break;
-	}
-	case 0xB5: // res 6, l
-	{
-		res(L, b6);
-		break;
-	}
-	case 0xB6: // res 6, (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		val &= ~b6;
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0xB7: // res 6, a
-	{
-		res(A, b6);
-		break;
-	}
-	case 0xB8: // res 7, b
-	{
-		res(B, b7);
-		break;
-	}
-	case 0xB9: // res 7, c
-	{
-		res(C, b7);
-		break;
-	}
-	case 0xBA: // res 7, d
-	{
-		res(D, b7);
-		break;
-	}
-	case 0xBB: // res 7, e
-	{
-		res(E, b7);
-		break;
-	}
-	case 0xBC: // res 7, h
-	{
-		res(H, b7);
-		break;
-	}
-	case 0xBD: // res 7, l
-	{
-		res(L, b7);
-		break;
-	}
-	case 0xBE: // res 7, (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		val &= ~b7;
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0xBF: // res 7, a
-	{
-		res(A, b7);
-		break;
-	}
-	case 0xC0: // set 0, b
-	{
-		set(B, b0);
-		break;
-	}
-	case 0xC1: // set 0, c
-	{
-		set(C, b0);
-		break;
-	}
-	case 0xC2: // set 0, d
-	{
-		set(D, b0);
-		break;
-	}
-	case 0xC3: // set 0, e
-	{
-		set(E, b0);
-		break;
-	}
-	case 0xC4: // set 0, h
-	{
-		set(H, b0);
-		break;
-	}
-	case 0xC5: // set 0, l
-	{
-		set(L, b0);
-		break;
-	}
-	case 0xC6: // set 0, (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		val |= b0;
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0xC7: // set 0, a
-	{
-		set(A, b0);
-		break;
-	}
-	case 0xC8: // set 1, b
-	{
-		set(B, b1);
-		break;
-	}
-	case 0xC9: // set 1, c
-	{
-		set(C, b1);
-		break;
-	}
-	case 0xCA: // set 1, d
-	{
-		set(D, b1);
-		break;
-	}
-	case 0xCB: // set 1, e
-	{
-		set(E, b1);
-		break;
-	}
-	case 0xCC: // set 1, h
-	{
-		set(H, b1);
-		break;
-	}
-	case 0xCD: // set 1, l
-	{
-		set(L, b1);
-		break;
-	}
-	case 0xCE: // set 1, (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		val |= b1;
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0xCF: // set 1, a
-	{
-		set(A, b1);
-		break;
-	}
-	case 0xD0: // set 2, b
-	{
-		set(B, b2);
-		break;
-	}
-	case 0xD1: // set 2, c
-	{
-		set(C, b2);
-		break;
-	}
-	case 0xD2: // set 2, d
-	{
-		set(D, b2);
-		break;
-	}
-	case 0xD3: // set 2, e
-	{
-		set(E, b2);
-		break;
-	}
-	case 0xD4: // set 2, h
-	{
-		set(H, b2);
-		break;
-	}
-	case 0xD5: // set 2, l
-	{
-		set(L, b2);
-		break;
-	}
-	case 0xD6: // set 2, (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		val |= b2;
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0xD7: // set 2, a
-	{
-		set(A, b2);
-		break;
-	}
-	case 0xD8: // set 3, b
-	{
-		set(B, b3);
-		break;
-	}
-	case 0xD9: // set 3, c
-	{
-		set(C, b3);
-		break;
-	}
-	case 0xDA: // set 3, d
-	{
-		set(D, b3);
-		break;
-	}
-	case 0xDB: // set 3, e
-	{
-		set(E, b3);
-		break;
-	}
-	case 0xDC: // set 3, h
-	{
-		set(H, b3);
-		break;
-	}
-	case 0xDD: // set 3, l
-	{
-		set(L, b3);
-		break;
-	}
-	case 0xDE: // set 3, (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		val |= b3;
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0xDF: // set 3, a
-	{
-		set(A, b3);
-		break;
-	}
-	case 0xE0: // set 4, b
-	{
-		set(B, b4);
-		break;
-	}
-	case 0xE1: // set 4, c
-	{
-		set(C, b4);
-		break;
-	}
-	case 0xE2: // set 4, d
-	{
-		set(D, b4);
-		break;
-	}
-	case 0xE3: // set 4, e
-	{
-		set(E, b4);
-		break;
-	}
-	case 0xE4: // set 4, h
-	{
-		set(H, b4);
-		break;
-	}
-	case 0xE5: // set 4, l
-	{
-		set(L, b4);
-		break;
-	}
-	case 0xE6: // set 4, (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		val |= b4;
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0xE7: // set 4, a
-	{
-		set(A, b4);
-		break;
-	}
-	case 0xE8: // set 5, b
-	{
-		set(B, b5);
-		break;
-	}
-	case 0xE9: // set 5, c
-	{
-		set(C, b5);
-		break;
-	}
-	case 0xEA: // set 5, d
-	{
-		set(D, b5);
-		break;
-	}
-	case 0xEB: // set 5, e
-	{
-		set(E, b5);
-		break;
-	}
-	case 0xEC: // set 5, h
-	{
-		set(H, b5);
-		break;
-	}
-	case 0xED: // set 5, l
-	{
-		set(L, b5);
-		break;
-	}
-	case 0xEE: // set 5, (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		val |= b5;
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0xEF: // set 5, a
-	{
-		set(A, b5);
-		break;
-	}
-	case 0xF0: // set 6, b
-	{
-		set(B, b6);
-		break;
-	}
-	case 0xF1: // set 6, c
-	{
-		set(C, b6);
-		break;
-	}
-	case 0xF2: // set 6, d
-	{
-		set(D, b6);
-		break;
-	}
-	case 0xF3: // set 6, e
-	{
-		set(E, b6);
-		break;
-	}
-	case 0xF4: // set 6, h
-	{
-		set(H, b6);
-		break;
-	}
-	case 0xF5: // set 6, l
-	{
-		set(L, b6);
-		break;
-	}
-	case 0xF6: // set 6, (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		val |= b6;
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0xF7: // set 6, a
-	{
-		set(A, b6);
-		break;
-	}
-	case 0xF8: // set 7, b
-	{
-		set(B, b7);
-		break;
-	}
-	case 0xF9: // set 7, c
-	{
-		set(C, b7);
-		break;
-	}
-	case 0xFA: // set 7, d
-	{
-		set(D, b7);
-		break;
-	}
-	case 0xFB: // set 7, e
-	{
-		set(E, b7);
-		break;
-	}
-	case 0xFC: // set 7, h
-	{
-		set(H, b7);
-		break;
-	}
-	case 0xFD: // set 7, l
-	{
-		set(L, b7);
-		break;
-	}
-	case 0xFE: // set 7, (hl)
-	{
-		byte val = rByte(static_cast<addr16>(HL()));
-		val |= b7;
-		wByte(static_cast<addr16>(HL()), val);
-		clockCycles += 8;
-		break;
-	}
-	case 0xFF: // set 7, a
-	{
-		set(A, b7);
-		break;
-	}
-	default:
-	{
-		std::cout << "Unimplemented CB instruction: " << toHex(opcode) << std::endl;
-		std::cout << "At: " << toHex(PC + 1) << std::endl;
-		break;
-	}
+	typedef std::array<std::function<void(reg&)>, 2> funcArray;
+	reg* op1s[] = { &B, &C, &D, &E, &H, &L, gByte(static_cast<addr16>(HL())), &A, 
+					&B, &C, &D, &E, &H, &L, gByte(static_cast<addr16>(HL())), &A };
+	uint8_t op2;
+
+	if (opcode >= 0x40) // instructions from 0x40-0xFF have non register,
+	{					// constant operands
+		// those operands go in order from b0-b7 with two bits per 16 byte
+		// row in the instruction table
+		// first bit is low byte 0x00-0x07
+		uint8_t op2sLo[] = { b0, b2, b4, b6 };
+		// second bit is high byte 0x08-0x0F
+		uint8_t op2sHi[] = { b1, b3, b5, b7 };
+		const int op2Index = ((opcode >> 0x4) & 0x0F) - 4;
+		if ((opcode & 0x0F) < 0x8)
+		{
+			op2 = op2sLo[op2Index];
+		}
+		else
+		{
+			op2 = op2sHi[op2Index];
+		}
+	}
+
+	reg& op1 = *op1s[opcode & 0x0F];
+
+	switch (opcode & 0xF0)
+	{
+		case 0x00:
+		{
+			if ((opcode & 0x0F) < 0x8)
+				rlc(op1);
+			else
+				rrc(op1);
+			break;
+		}
+		case 0x10:
+		{
+			if ((opcode & 0x0F) < 0x8)
+				rl(op1);
+			else
+				rr(op1);
+			break;
+		}
+		case 0x20:
+		{
+			if ((opcode & 0x0F) < 0x8)
+				sla(op1);
+			else
+				sra(op1);
+			break;
+		}
+		case 0x30:
+		{
+			if ((opcode & 0x0F) < 0x8)
+				swap(op1);
+			else
+				srl(op1);
+			break;
+		}
+		case 0x40:
+		{
+			bit(op1, op2);
+			break;
+		}
+		case 0x50:
+		{
+			bit(op1, op2);
+			break;
+		}
+		case 0x60:
+		{
+			bit(op1, op2);
+			break;
+		}
+		case 0x70:
+		{
+			bit(op1, op2);
+			break;
+		}
+		case 0x80:
+		{
+			res(op1, op2);
+			break;
+		}
+		case 0x90:
+		{
+			res(op1, op2);
+			break;
+		}
+		case 0xA0:
+		{
+			res(op1, op2);
+			break;
+		}
+		case 0xB0:
+		{
+			res(op1, op2);
+			break;
+		}
+		case 0xC0:
+		{
+			set(op1, op2);
+			break;
+		}
+		case 0xD0:
+		{
+			set(op1, op2);
+			break;
+		}
+		case 0xE0:
+		{
+			set(op1, op2);
+			break;
+		}
+		case 0xF0:
+		{
+			set(op1, op2);
+			break;
+		}
 	}
 	PC += 2; // all 0xCB instructions are 2 bytes long
 }
@@ -1761,13 +513,11 @@ void CPU::orr(byte val)
 void CPU::halt()
 {
 	halted = true;
-	//std::cout << "Halted" << std::endl; // for debugging 
 }
 
 void CPU::stop()
 {
 	stopped = true;
-	//std::cout << "Stopped" << std::endl; // for debugging 
 }
 
 bool interrupted = false;
@@ -1854,6 +604,31 @@ void CPU::jp(bool cond, addr16 to, uint8_t opsize)
 	}
 }
 
+template<bool memread>
+void CPU::ld8(reg& dst, reg src)
+{
+	dst = src;
+	if (memread)
+	{
+		PC += 2;
+		return;
+	}
+	PC++;
+}
+
+template<bool memread>
+void CPU::ld16(reg& hi, reg& lo, reg16 src)
+{
+	hi = (src >> 0x8) & 0xFF;
+	lo = src & 0xFF;
+	if (memread)
+	{
+		PC += 3;
+		return;
+	}
+	PC++;
+}
+
 #pragma endregion
 
 #ifdef DEBUG
@@ -1928,6 +703,17 @@ byte CPU::rByte(addr16 addr) const
 	}
 }
 
+byte* CPU::gByte(addr16 addr)
+{
+	if (isInternalMem(addr))
+	{
+		return &internalmem[addr];
+	}
+	else
+	{
+		return cart.gByte(addr);
+	}
+}
 
 void CPU::wByte(addr16 addr, byte val)
 {
@@ -1966,6 +752,10 @@ void CPU::wWord(addr16 addr, word val)
 #ifdef DEBUG
 void CPU::test()
 {
+	setZero();
+	setCarry();
+	A = 0x30;
+	std::cout << toHex(AF()) << std::endl;
 	emulateExtendedInstruction(00);
 	//A = 0x30;
 	//F = 0x10;
@@ -2019,7 +809,7 @@ void CPU::emulateCycle()
 	//	ii = 0;
 	//}
 
-	/// emulate the opcode 
+	/// emulate the opcode
 	switch (opcode & 0xFF)
 	{
 		case 0x00: // NOP
@@ -2029,8 +819,7 @@ void CPU::emulateCycle()
 		}
 		case 0x01: // ld BC, **
 		{
-			BC(getNextWord());
-			PC += 3;
+			ld16<1>(B, C, getNextWord());
 			break;
 		}
 		case 0x02: // ld (BC), a
@@ -2145,7 +934,6 @@ void CPU::emulateCycle()
 		case 0x12: // ld (de), a
 		{
 			wByte(static_cast<addr16>(DE()), A);
-			//mem[] = A;
 			PC++;
 			break;
 		}
@@ -2813,20 +1601,23 @@ void CPU::emulateCycle()
 		}
 		case 0x78: // ld a, b
 		{
-			A = B;
-			PC++;
+			//A = B;
+			//PC++;
+			ld8(A, B);
 			break;
 		}
 		case 0x79: // ld a, c
 		{
-			A = C;
-			PC++;
+			//A = C;
+			//PC++;
+			ld8(A, C);
 			break;
 		}
 		case 0x7A: // ld a, d
 		{
-			A = D;
-			PC++;
+			//A = D;
+			//PC++;
+			ld8(A, D);
 			break;
 		}
 		case 0x7B: // ld a, e
@@ -3673,19 +2464,6 @@ int CPU::loadROM(const std::string& fileName)
 	}
 	
 	cart.init(ROMstr, size);
-
-	//if (!isROMTooBig)
-	//{
-	//	// load the rom into memory starting at 0x00
-	//	for (unsigned i = 0; i < size; i++)
-	//	{
-	//		mem[i] = ROMstr[i];
-	//	}
-	//}
-	//else
-	//{
-	//	system("pause");
-	//}
 
 	delete[] ROMstr;
 	return EXIT_SUCCESS; // ROM load completed succesfully
