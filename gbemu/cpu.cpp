@@ -283,7 +283,6 @@ void CPU::swap(reg& r)
 
 void CPU::emulateExtendedInstruction(byte opcode)
 {
-	typedef std::array<std::function<void(reg&)>, 2> funcArray;
 	reg* op1s[] = { &B, &C, &D, &E, &H, &L, gByte(static_cast<addr16>(HL())), &A, 
 					&B, &C, &D, &E, &H, &L, gByte(static_cast<addr16>(HL())), &A };
 	uint8_t op2;
