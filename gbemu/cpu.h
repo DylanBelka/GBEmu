@@ -181,7 +181,9 @@ private:
 	template<bool memread = false>
 	inline void ld16(reg& hi, reg& lo, reg16 src);
 
-	void emulateBitInstruction(byte opcode);
+	void updateInterrupts();
+	void emulateBitInstruction(ubyte opcode);
+	void emulateInstruction(ubyte opcode);
 
 	void push(reg16 val);
 	reg16 pop();

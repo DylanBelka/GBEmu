@@ -281,7 +281,7 @@ void CPU::swap(reg& r)
 	resetCarry();
 }
 
-void CPU::emulateBitInstruction(byte opcode)
+void CPU::emulateBitInstruction(ubyte opcode)
 {
 	reg* op1s[] = { &B, &C, &D, &E, &H, &L, gByte(static_cast<addr16>(HL())), &A, 
 					&B, &C, &D, &E, &H, &L, gByte(static_cast<addr16>(HL())), &A };
@@ -587,6 +587,7 @@ void CPU::ld16(reg& hi, reg& lo, reg16 src)
 #pragma endregion
 
 #ifdef DEBUG
+
 void printMem(CPU* cpu, int start, int end)
 {
 	for (int i = start; i <= end; i++)
@@ -595,7 +596,6 @@ void printMem(CPU* cpu, int start, int end)
 	}
 	std::cout << "\n\n";
 }
-#endif // DEBUG
 
 void CPU::dumpCPU()
 {
@@ -612,6 +612,8 @@ void CPU::dumpCPU()
 	std::cout << "PC: " << toHex(PC) << std::endl;
 	std::cout << "SP: " << toHex(SP) << std::endl;
 }
+
+#endif // DEBUG
 
 void CPU::dma()
 {
@@ -640,10 +642,30 @@ void CPU::handleInterrupts()
 	const byte intFlag = rByte(IF);
 	if (IME) // are interrupts enabled?
 	{
-		if ((intEnable & 0x1) && (intFlag & 0x1)) // vblank
+		if ((intEnable & b0) && (intFlag & b0)) // vblank DONE
 		{
-			const int vblank = 0x40;
-			interrupt(vblank);
+			const int vBlankInt = 0x40;
+			interrupt(vBlankInt);
+		}
+		else if ((intEnable & b1) && (intFlag & b1)) // LCDC (STAT) interrupt TODO
+		{
+			const int LCDStatInt = 0x48;
+			interrupt(LCDStatInt);
+		}
+		else if ((intEnable & b2) && (intFlag & b2)) // timer overflow TODO
+		{
+			const int timerOverflowInt = 0x50;
+			interrupt(timerOverflowInt);
+		}
+		else if ((intEnable & b3) && (intFlag & b3)) // serial I/O transfer complete TODO
+		{
+			const int serialInt = 0x58;
+			interrupt(serialInt);
+		}
+		else if ((intEnable & b4) && (intFlag & b4)) // Transition from High to Low of Pin number P10-P13 TODO
+		{
+			const int hiToLoP10_P13 = 0x60;
+			interrupt(hiToLoP10_P13);
 		}
 	}
 }
@@ -719,9 +741,15 @@ static bool p = 0;
 
 void CPU::emulateCycle()
 {
+	updateInterrupts();
 	handleInterrupts();
-	unsigned char opcode = rByte(PC); // get next opcode
+	ubyte opcode = rByte(PC); // get next opcode
 	clockCycles += clockTimes[opcode];
+	emulateInstruction(opcode);
+}
+
+void CPU::emulateInstruction(ubyte opcode)
+{
 
 	//if (PC == 0x2075)
 	//{
