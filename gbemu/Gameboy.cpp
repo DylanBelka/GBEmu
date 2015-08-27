@@ -103,6 +103,14 @@ void Gameboy::drawScanline()
 	SDL_BlitSurface(fullScreenSurface, &scanLineRect, windowSurface, &scanLineRect);
 
 	cpu.wByte(LY, scanline);
+	if (cpu.rByte(LY) == cpu.rByte(LYC))
+	{
+		cpu.wByte(STAT, cpu.rByte(STAT) | b2);
+	}
+	else
+	{
+		cpu.wByte(STAT, cpu.rByte(STAT) & ~b2);
+	}
 	scanline++;
 	if (scanline == WINDOW_HEIGHT)
 	{
@@ -414,7 +422,7 @@ bool Gameboy::handleEvents()
 			if (key == SDLK_DOWN) // down
 			{
 				cpu.keyInfo.keys[p14] &= ~keyDown;
-				validKeyPressed = true;
+				validKeyPressed = true ;
 			}
 			if (key == SDLK_LEFT) // left
 			{
