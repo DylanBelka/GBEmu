@@ -281,7 +281,7 @@ void CPU::swap(reg& r)
 	resetCarry();
 }
 
-void CPU::emulateExtendedInstruction(byte opcode)
+void CPU::emulateBitInstruction(byte opcode)
 {
 	reg* op1s[] = { &B, &C, &D, &E, &H, &L, gByte(static_cast<addr16>(HL())), &A, 
 					&B, &C, &D, &E, &H, &L, gByte(static_cast<addr16>(HL())), &A };
@@ -342,62 +342,17 @@ void CPU::emulateExtendedInstruction(byte opcode)
 				srl(op1);
 			break;
 		}
-		case 0x40:
+		case 0x40: case 0x50: case 0x60: case 0x70:
 		{
 			bit(op1, op2);
 			break;
 		}
-		case 0x50:
-		{
-			bit(op1, op2);
-			break;
-		}
-		case 0x60:
-		{
-			bit(op1, op2);
-			break;
-		}
-		case 0x70:
-		{
-			bit(op1, op2);
-			break;
-		}
-		case 0x80:
+		case 0x80: case 0x90: case 0xA0: case 0xB0:
 		{
 			res(op1, op2);
 			break;
 		}
-		case 0x90:
-		{
-			res(op1, op2);
-			break;
-		}
-		case 0xA0:
-		{
-			res(op1, op2);
-			break;
-		}
-		case 0xB0:
-		{
-			res(op1, op2);
-			break;
-		}
-		case 0xC0:
-		{
-			set(op1, op2);
-			break;
-		}
-		case 0xD0:
-		{
-			set(op1, op2);
-			break;
-		}
-		case 0xE0:
-		{
-			set(op1, op2);
-			break;
-		}
-		case 0xF0:
+		case 0xC0: case 0xD0: case 0xE0: case 0xF0:
 		{
 			set(op1, op2);
 			break;
@@ -789,6 +744,7 @@ void CPU::emulateCycle()
 		std::cout << toHex(opcode) << "\tat " << toHex(PC) << "\n";
 	}
 
+	/// emulate opcodes 0x40-0xBF (not including 0x76)
 	if ((opcode & 0xFF) >= 0x40 && (opcode & 0xFF) <= 0xBF && (opcode & 0xFF) != 0x76) // 0x76 is halt
 	{
 		reg srcs[] = { B, C, D, E, H, L, rByte(static_cast<addr16>(HL())), A,
@@ -821,55 +777,40 @@ void CPU::emulateCycle()
 			case 0x80:
 			{
 				if ((opcode & 0x0F) < 0x08) // add a, o8
-				{
 					add(src);
-				}
 				else // adc a, o8
-				{
 					adc(src);
-				}
 				break;
 			}
 			case 0x90:
 			{
 				if ((opcode & 0x0F) < 0x08) // sub o8
-				{
 					sub(src);
-				}
 				else // sbc a, o8
-				{
 					sub(src);
-				}
 				break;
 			}
 			case 0xA0:
 			{
 				if ((opcode & 0x0F) < 0x08) // and o8
-				{
 					andr(src);
-				}
 				else // xor o8
-				{
 					xorr(src);
-				}
 				break;
 			}
 			case 0xB0:
 			{
 				if ((opcode & 0x0F) < 0x08) // or o8
-				{
 					orr(src);
-				}
 				else // cp o8
-				{
 					cmp(src);
-				}
 				break;
 			}
 		}
 		return;
 	}
-	/// emulate the opcode
+
+	/// emulate all other opcodes
 	switch (opcode & 0xFF)
 	{
 		case 0x00: // NOP
@@ -1393,9 +1334,9 @@ void CPU::emulateCycle()
 			jp(zero(), getNextWord(), 3);
 			break;
 		}
-		case 0xCB: // EXTENDED INSTRUCTIONS
+		case 0xCB: // BIT INSTRUCTIONS
 		{
-			emulateExtendedInstruction(rByte(PC + 1));
+			emulateBitInstruction(rByte(PC + 1));
 			break;
 		}
 		case 0xCC: // call z, **

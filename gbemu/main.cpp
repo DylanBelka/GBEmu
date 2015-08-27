@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 	else 
 	{
 #ifdef DEBUG_GFX
-		if (gb.init("Metroid2.gb") != EXIT_SUCCESS)
+		if (gb.init("tetris.gb") != EXIT_SUCCESS)
 		{
 			std::cout << "rom not found" << std::endl;
 			system("pause");
