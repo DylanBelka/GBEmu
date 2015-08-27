@@ -1477,11 +1477,6 @@ void CPU::emulateCycle()
 		}
 		case 0xE2: // ld (C), a
 		{
-#ifdef DEBUG
-			std::cout << "ld (c), a" << std::endl;
-			dumpCPU();
-			system("pause");
-#endif
 			const addr16 addr = static_cast<ubyte>(C) + 0xFF00;
 			wByte(addr, A);
 			PC++;
@@ -1603,11 +1598,6 @@ void CPU::emulateCycle()
 		}
 		case 0xF2: // ld a, (C)
 		{
-#ifdef DEBUG
-			std::cout << "ld a, (c)" << std::endl;
-			dumpCPU();
-			system("pause");
-#endif
 			const addr16 addr = static_cast<ubyte>(C) + 0xFF00;
 			A = rByte(addr);
 			PC++;
