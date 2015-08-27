@@ -99,8 +99,8 @@
 
 // timer registers
 #define TIMA 0xFF05
-#define TMA 0xFF06
-#define TAC 0xFF07
+#define TMA	 0xFF06
+#define TAC  0xFF07
 
 // sound registers
 #define NR10 0xFF10
@@ -124,22 +124,22 @@
 // display control registers
 #define LCDC 0xFF40 // lcd control
 #define STAT 0xFF41 // lcd status
-#define SCY 0xFF42 // background scroll y
-#define SCX 0xFF43 // background scroll x
-#define LY 0xFF44 // lcd y coordinate, Values range from 0->153. 144->153 is the VBlank period.
-#define LYC 0xFF45 // ly compare
-#define DMA 0xFF46 // DMA transfer
-#define BGP 0xFF47 // palette data
+#define SCY	 0xFF42 // background scroll y
+#define SCX	 0xFF43 // background scroll x
+#define LY	 0xFF44 // lcd y coordinate, Values range from 0->153. 144->153 is the VBlank period.
+#define LYC	 0xFF45 // ly compare
+#define DMA	 0xFF46 // DMA transfer
+#define BGP	 0xFF47 // palette data
 #define OBP0 0xFF48 // object palette data 0
 #define OBP1 0xFF49 // object palette data 1
-#define WY 0xFF4A // window x position
-#define WX 0xFF4B // window y position
+#define WY	 0xFF4A // window x position
+#define WX	 0xFF4B // window y position
 
 #define IF 0xFF0F // interrupt flag
 #define IE 0xFFFF // interrupt enable
 
 // $FF80-$FFFE - High RAM Area
-#define HIGH_RAM 0xFF80
+#define HIGH_RAM	 0xFF80
 #define HIGH_RAM_END 0xFFFE
 
 // $FFFF - Interrupt Enable Register
