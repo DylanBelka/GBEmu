@@ -7,8 +7,6 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <functional>
-#include <array>
 
 #include "memdefs.h"
 #include "input.h"
@@ -182,6 +180,7 @@ private:
 	inline void ld16(reg& hi, reg& lo, reg16 src);
 
 	void updateInterrupts();
+	void updateTimer();
 	void emulateBitInstruction(ubyte opcode);
 	void emulateInstruction(ubyte opcode);
 

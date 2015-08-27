@@ -286,6 +286,7 @@ void CPU::emulateBitInstruction(ubyte opcode)
 	reg* op1s[] = { &B, &C, &D, &E, &H, &L, gByte(static_cast<addr16>(HL())), &A, 
 					&B, &C, &D, &E, &H, &L, gByte(static_cast<addr16>(HL())), &A };
 	uint8_t op2;
+	bool lower = (opcode & 0x0F) < 0x8;
 
 	if (opcode >= 0x40) // instructions from 0x40-0xFF have non register,
 	{					// constant operands
@@ -296,7 +297,7 @@ void CPU::emulateBitInstruction(ubyte opcode)
 		// second bit is high byte 0x08-0x0F
 		uint8_t op2sHi[] = { b1, b3, b5, b7 };
 		const int op2Index = ((opcode >> 0x4) & 0x0F) - 4;
-		if ((opcode & 0x0F) < 0x8)
+		if (lower)
 		{
 			op2 = op2sLo[op2Index];
 		}
@@ -307,12 +308,11 @@ void CPU::emulateBitInstruction(ubyte opcode)
 	}
 
 	reg& op1 = *op1s[opcode & 0x0F];
-
 	switch (opcode & 0xF0)
 	{
 		case 0x00:
 		{
-			if ((opcode & 0x0F) < 0x8)
+			if (lower)
 				rlc(op1);
 			else
 				rrc(op1);
@@ -320,7 +320,7 @@ void CPU::emulateBitInstruction(ubyte opcode)
 		}
 		case 0x10:
 		{
-			if ((opcode & 0x0F) < 0x8)
+			if (lower)
 				rl(op1);
 			else
 				rr(op1);
@@ -328,7 +328,7 @@ void CPU::emulateBitInstruction(ubyte opcode)
 		}
 		case 0x20:
 		{
-			if ((opcode & 0x0F) < 0x8)
+			if (lower)
 				sla(op1);
 			else
 				sra(op1);
@@ -336,7 +336,7 @@ void CPU::emulateBitInstruction(ubyte opcode)
 		}
 		case 0x30:
 		{
-			if ((opcode & 0x0F) < 0x8)
+			if (lower)
 				swap(op1);
 			else
 				srl(op1);
@@ -475,8 +475,6 @@ void CPU::stop()
 	stopped = true;
 }
 
-bool interrupted = false;
-
 void CPU::ret(bool cond)
 {
 	if (cond)
@@ -494,10 +492,7 @@ void CPU::call(bool cond)
 {
 	if (cond)
 	{
-		SP--;
-		wByte(SP, ((PC + 3) & 0xFF));
-		SP--;
-		wByte(SP, (((PC + 3) >> 8) & 0xFF));
+		push(PC + 3);
 		PC = getNextWord();
 		clockCycles += 12;
 	}
@@ -613,71 +608,26 @@ void CPU::dumpCPU()
 	std::cout << "SP: " << toHex(SP) << std::endl;
 }
 
+void CPU::test()
+{
+
+}
+
+static int ii = 0;
+static bool p = 0;
+
 #endif // DEBUG
 
-void CPU::dma()
-{
-	const addr16 dmaStart = A << 0x8; // get the location that the DMA will be copying from
-	for (int i = 0; i < 0x8C; i++) // copy the 0x8C bytes from dmaStart to the OAM
-	{
-		internalmem[OAM + i] = rByte(dmaStart + i);
-	}
-}
-
-void CPU::interrupt(const byte loc)
-{
-	push(PC); // push the program counter onto the stack
-	PC = loc; // jump to the interrupt location
-	interrupted = true;
-	IME = false; // disable interrupts
-	wByte(IF, 0x0);
-}
-
-static bool x = false;
-static bool u = false;
-
-void CPU::handleInterrupts()
-{
-	const byte intEnable = rByte(IE);
-	const byte intFlag = rByte(IF);
-	if (IME) // are interrupts enabled?
-	{
-		if ((intEnable & b0) && (intFlag & b0)) // vblank DONE
-		{
-			const int vBlankInt = 0x40;
-			interrupt(vBlankInt);
-		}
-		else if ((intEnable & b1) && (intFlag & b1)) // LCDC (STAT) interrupt TODO
-		{
-			const int LCDStatInt = 0x48;
-			interrupt(LCDStatInt);
-		}
-		else if ((intEnable & b2) && (intFlag & b2)) // timer overflow TODO
-		{
-			const int timerOverflowInt = 0x50;
-			interrupt(timerOverflowInt);
-		}
-		else if ((intEnable & b3) && (intFlag & b3)) // serial I/O transfer complete TODO
-		{
-			const int serialInt = 0x58;
-			interrupt(serialInt);
-		}
-		else if ((intEnable & b4) && (intFlag & b4)) // Transition from High to Low of Pin number P10-P13 TODO
-		{
-			const int hiToLoP10_P13 = 0x60;
-			interrupt(hiToLoP10_P13);
-		}
-	}
-}
+#pragma region memaccess
 
 byte CPU::rByte(addr16 addr) const
 {
-	if (isInternalMem(addr)) 
+	if (isInternalMem(addr))
 	{
 		return internalmem[addr];
 	}
 	else
-	{ 
+	{
 		return cart.rByte(addr);
 	}
 }
@@ -698,6 +648,14 @@ void CPU::wByte(addr16 addr, byte val)
 {
 	if (isInternalMem(addr))
 	{
+		if (addr == LYC)
+		{
+			std::cout << "write to LYC val = " << toHex(val) << std::endl;
+			std::cout << "LYC before = " << toHex(rByte(LYC)) << std::endl;
+			dumpCPU();
+			system("pause");
+		}
+
 		internalmem[addr] = val;
 		if (addr >= 0xC000 && addr <= 0xDE00)
 		{
@@ -728,48 +686,169 @@ void CPU::wWord(addr16 addr, word val)
 	}
 }
 
-#ifdef DEBUG
-void CPU::test()
-{
+#pragma endregion
 
+void CPU::dma()
+{
+	const addr16 dmaStart = A << 0x8; // get the location that the DMA will be copying from
+	for (int i = 0; i < 0x8C; i++) // copy the 0x8C bytes from dmaStart to the OAM
+	{
+		internalmem[OAM + i] = rByte(dmaStart + i);
+	}
 }
 
-static int ii = 0;
-static bool p = 0;
+void CPU::interrupt(const byte loc)
+{
+	push(PC); // push the program counter onto the stack
+	PC = loc; // jump to the interrupt location
+	IME = false; // disable interrupts
+	wByte(IF, 0x0);
+}
 
-#endif // DEBUG
+void CPU::handleInterrupts()
+{
+	const byte intEnable = rByte(IE);
+	const byte intFlag = rByte(IF);
+	if (IME) // are interrupts enabled?
+	{
+		if ((intEnable & b0) && (intFlag & b0)) // vblank DONE
+		{
+			const int vBlankInt = 0x40;
+			interrupt(vBlankInt);
+		}
+		else if ((intEnable & b1) && (intFlag & b1)) // LCDC (STAT) interrupt TODO
+		{
+			const int LCDStatInt = 0x48;
+			interrupt(LCDStatInt);
+		}
+		else if ((intEnable & b2) && (intFlag & b2)) // timer overflow TODO?
+		{
+			const int timerOverflowInt = 0x50;
+			interrupt(timerOverflowInt);
+		}
+		else if ((intEnable & b3) && (intFlag & b3)) // serial I/O transfer complete TODO
+		{
+			const int serialInt = 0x58;
+			interrupt(serialInt);
+		}
+		else if ((intEnable & b4) && (intFlag & b4)) // Transition from High to Low of Pin number P10-P13 TODO
+		{
+			const int hiToLoP10_P13 = 0x60;
+			interrupt(hiToLoP10_P13);
+		}
+	}
+}
+
+// 4194304 Hz
+// 4194304 cycles / second
+
+// 4096 Hz
+// 4096 interrupts / second
+
+void CPU::updateTimer()
+{
+	static unsigned startTime;
+	static bool timerAlreadyStarted = false;
+	byte timerControl = rByte(TAC);
+	// is timer started or stopped?
+	if (timerControl & b2) // started
+	{
+		if (!timerAlreadyStarted) // if timer has not already been started (if it has not been running)
+		{
+			startTime = NULL; // then restart the timer
+			timerAlreadyStarted = true;
+		}
+		else // timer already running and still should be running
+		{
+			// update timer
+			const unsigned numTicks = NULL - startTime;
+			// get clock select frequency
+			unsigned freq = 0;
+			switch (timerControl & 0x3) // only first 2 bits
+			{
+				case 0x00:
+					freq = 4.096; // kHZ
+					break;
+				case 0x01: 
+					freq = 262.144; // KHz
+					break;
+				case 0x02:
+					freq = 65.536; // KHZ
+					break;
+				case 0x03:
+					freq = 16.384; // KHz
+					break;
+			}
+			// convert freqency to ticks (milliseconds)
+			double freqAsTicks = std::pow(freq, -1);
+			const ubyte tima = rByte(TIMA);
+			if (numTicks > freqAsTicks) // increment counter
+			{
+				wByte(TIMA, tima + 1);
+			}
+			// check for overflow
+			static bool willOverflow = false;
+			if (willOverflow)
+			{
+				willOverflow = false;
+				ubyte timerModulo = rByte(TMA); // When the TIMA overflows, this data will be loaded
+				wByte(TIMA, timerModulo);
+
+				// set interrupt
+				byte intFlag = rByte(IF);
+				wByte(IF, intFlag | b2);
+
+				// reset the clock
+				startTime = NULL;
+			}
+			if ((tima & 0xFF) == 0xFF)
+			{
+				willOverflow = true;
+			}
+		}
+	}
+	else // timer stopped
+	{
+		timerAlreadyStarted = false;
+	}
+}
 
 void CPU::emulateCycle()
 {
-	updateInterrupts();
+	//updateTimer(); // todo: where should this go?
+
 	handleInterrupts();
+
 	ubyte opcode = rByte(PC); // get next opcode
 	clockCycles += clockTimes[opcode];
 	emulateInstruction(opcode);
 }
 
+static bool ss = false;
+static int cc = 0;
+
 void CPU::emulateInstruction(ubyte opcode)
 {
+	// amida returns from timer interrupt at 
+	// 0x2e10
+	// should return to 0x2c2c
+	// instead returns to 0xa
+	// then rst 0x38 loops forever
 
-	//if (PC == 0x2075)
-	//{
-	//	p = true;
-	//}
-	//
-	//if (p && ii < 100)
-	//{
-	//	std::cout << toHex(opcode) << "\tat " << toHex(PC) << "\n";
-	//	ii++;
-	//}
-	//else if (p)
-	//{
-	//	//system("pause");
-	//	ii = 0;
-	//}
+	if (PC == 0x2e10)
+	{
+		ss = true;
+	}
 
-	if (_test)
+	if (_test || ss && cc < 100)
 	{
 		std::cout << toHex(opcode) << "\tat " << toHex(PC) << "\n";
+		cc++;
+	}
+	else if (cc >= 100)
+	{
+		system("pause");
+		cc = 0;
 	}
 
 	/// emulate opcodes 0x40-0xBF (not including 0x76)
@@ -778,6 +857,8 @@ void CPU::emulateInstruction(ubyte opcode)
 		reg srcs[] = { B, C, D, E, H, L, rByte(static_cast<addr16>(HL())), A,
 					   B, C, D, E, H, L, rByte(static_cast<addr16>(HL())), A };
 		reg src = srcs[opcode & 0x0F];
+		const bool lower = (opcode & 0x0F) < 0x08;
+
 		switch (opcode & 0xF0)
 		{
 			case 0x40: case 0x50: case 0x60: case 0x70: // ld r8, o8
@@ -788,7 +869,7 @@ void CPU::emulateInstruction(ubyte opcode)
 
 				// in a single "row" of 16 instructions on an z80 instruction table
 				// there are 2 destinations, 1 in the first 8 and 1 in the second 8
-				if ((opcode & 0x0F) < 0x8) // low "row" operands are B, D, H, (HL)
+				if (lower) // low "row" operands are B, D, H, (HL)
 				{
 					reg* dstsLo[] = { &B, &D, &H, gByte(static_cast<addr16>(HL())) };
 					dst = dstsLo[dstIndex];
@@ -804,7 +885,7 @@ void CPU::emulateInstruction(ubyte opcode)
 			}
 			case 0x80:
 			{
-				if ((opcode & 0x0F) < 0x08) // add a, o8
+				if (lower) // add a, o8
 					add(src);
 				else // adc a, o8
 					adc(src);
@@ -812,7 +893,7 @@ void CPU::emulateInstruction(ubyte opcode)
 			}
 			case 0x90:
 			{
-				if ((opcode & 0x0F) < 0x08) // sub o8
+				if (lower) // sub o8
 					sub(src);
 				else // sbc a, o8
 					sub(src);
@@ -820,7 +901,7 @@ void CPU::emulateInstruction(ubyte opcode)
 			}
 			case 0xA0:
 			{
-				if ((opcode & 0x0F) < 0x08) // and o8
+				if (lower) // and o8
 					andr(src);
 				else // xor o8
 					xorr(src);
@@ -828,7 +909,7 @@ void CPU::emulateInstruction(ubyte opcode)
 			}
 			case 0xB0:
 			{
-				if ((opcode & 0x0F) < 0x08) // or o8
+				if (lower) // or o8
 					orr(src);
 				else // cp o8
 					cmp(src);
@@ -1065,7 +1146,7 @@ void CPU::emulateInstruction(ubyte opcode)
 			PC += 3;
 			break;
 		}
-		case 0x22: // ldi (hl), a   or   ld (hl+), a
+		case 0x22: // ldi (hl), a or ld (hl+), a
 		{
 			wByte(static_cast<addr16>(HL()), A);
 			const reg16 hl = HL();
@@ -1214,16 +1295,12 @@ void CPU::emulateInstruction(ubyte opcode)
 		}
 		case 0x34: // inc (hl) 
 		{
-			byte val = rByte(static_cast<addr16>(HL()));
-			inc(val);
-			wByte(static_cast<addr16>(HL()), val);
+			inc(*gByte(static_cast<addr16>(HL())));
 			break;
 		}
 		case 0x35: // dec (hl)
 		{
-			byte val = rByte(static_cast<addr16>(HL()));
-			dec(val);
-			wByte(static_cast<addr16>(HL()), val);
+			dec(*gByte(static_cast<addr16>(HL())));
 			break;
 		}
 		case 0x36: // ld (hl), *
@@ -1653,7 +1730,6 @@ void CPU::emulateInstruction(ubyte opcode)
 		}
 		case 0xF6: // or *
 		{
-			
 			orr(rByte(PC + 1));
 			PC++;
 			break;
@@ -1697,7 +1773,6 @@ void CPU::emulateInstruction(ubyte opcode)
 		}
 		case 0xFD: // ~!GB
 		{
-			// da2f
 #ifdef DEBUG
 			std::cout << "Opcode not supported by Gameboy: " << toHex(opcode) << " at " << toHex(PC) << std::endl;
 			system("pause"); // this is for debugging only
@@ -1712,6 +1787,11 @@ void CPU::emulateInstruction(ubyte opcode)
 		}
 		case 0xFF: // rst 0x38
 		{
+#ifdef DEBUG
+			std::cout << "rst 0x38\n\n";
+			dumpCPU();
+			system("pause");
+#endif
 			rst(0x38);
 			break;
 		}
@@ -1736,6 +1816,7 @@ int CPU::loadROM(const std::string& fileName)
 	{
 		return 1; // file load fail
 	}
+
 	if (ROMstr == nullptr)
 	{
 		delete[] ROMstr;
