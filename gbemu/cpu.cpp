@@ -655,6 +655,13 @@ void CPU::wByte(addr16 addr, byte val)
 			dumpCPU();
 			system("pause");
 		}
+		else if (addr == STAT && val != 0x0 && val != 0x4)
+		{
+			std::cout << "write to stat val = " << toHex(val) << std::endl;
+			std::cout << "stat before = " << toHex(rByte(STAT)) << std::endl;
+			dumpCPU();
+			system("pause");
+		}
 
 		internalmem[addr] = val;
 		if (addr >= 0xC000 && addr <= 0xDE00)
@@ -664,6 +671,20 @@ void CPU::wByte(addr16 addr, byte val)
 		else if (addr >= 0xE000 && addr <= 0xFE00)
 		{
 			internalmem[addr - 0x2000] = val; // emulate mirroring of RAM
+		}
+
+		// specialized internal memory areas (mmio with special cases)
+		if (addr == DIV)
+		{
+			internalmem[addr] = 0x0; // any write to DIV resets it to 0
+		}
+		else if (addr == DMA) // dma
+		{
+			dma();
+		}
+		else if (addr == JOYPAD) // joypad write
+		{
+			keyInfo.colID = A;
 		}
 	}
 	else
@@ -763,22 +784,9 @@ void CPU::updateTimer()
 			// update timer
 			const unsigned numTicks = NULL - startTime;
 			// get clock select frequency
-			unsigned freq = 0;
-			switch (timerControl & 0x3) // only first 2 bits
-			{
-				case 0x00:
-					freq = 4.096; // kHZ
-					break;
-				case 0x01: 
-					freq = 262.144; // KHz
-					break;
-				case 0x02:
-					freq = 65.536; // KHZ
-					break;
-				case 0x03:
-					freq = 16.384; // KHz
-					break;
-			}
+			const double freqs[] = { 4.096, 262.144, 65.536, 16.384 };
+			double freq = freqs[timerControl & 0x3];
+
 			// convert freqency to ticks (milliseconds)
 			double freqAsTicks = std::pow(freq, -1);
 			const ubyte tima = rByte(TIMA);
@@ -1562,15 +1570,6 @@ void CPU::emulateInstruction(ubyte opcode)
 			const ubyte low = static_cast<ubyte>(rByte(PC + 1)) & 0xFF;
 			const addr16 addr = 0xFF00 + low;
 			wByte(addr, A);
-
-			if (low == 0x46) // dma
-			{
-				dma();
-			}
-			else if (low == 0x00) // joypad write
-			{
-				keyInfo.colID = A;
-			}
 			PC += 2;
 			break;
 		}
